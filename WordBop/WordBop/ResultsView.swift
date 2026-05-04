@@ -12,6 +12,7 @@ struct ResultsView: View {
 					.foregroundStyle(Color.wbText)
 					.accessibilityAddTraits(.isHeader)
 					.accessibilityFocused(titleFocus, equals: .results)
+					.accessibilitySortPriority(100)
 
 				VStack(spacing: 2) {
 					Text("\(vm.score)")
@@ -88,6 +89,9 @@ struct ResultsView: View {
 			}
 			.padding(.horizontal, 20)
 			.padding(.vertical, 24)
+		}
+		.onAppear {
+			titleFocus.wrappedValue = .results
 		}
 	}
 

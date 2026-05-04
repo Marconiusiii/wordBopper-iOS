@@ -11,7 +11,7 @@ struct GameView: View {
 			let cellSize = cellSize(in: geo.size.width, height: safeHeight)
 
 			VStack(spacing: 0) {
-				Text("Playing WordBop")
+				Text(vm.gameplayHeading)
 					.font(.headline.weight(.black))
 					.foregroundStyle(Color.wbText)
 					.frame(maxWidth: .infinity, alignment: .leading)
@@ -21,6 +21,7 @@ struct GameView: View {
 					.background(Color.wbSurface)
 					.accessibilityAddTraits(.isHeader)
 					.accessibilityFocused(titleFocus, equals: .gameplay)
+					.accessibilitySortPriority(100)
 
 				GameHeaderBar()
 				ChainMeterBar()
@@ -36,6 +37,9 @@ struct GameView: View {
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity)
 			.ignoresSafeArea(edges: .bottom)
+		}
+		.onAppear {
+			titleFocus.wrappedValue = .gameplay
 		}
 	}
 
@@ -137,7 +141,6 @@ private struct ChainMeterBar: View {
 		.accessibilityElement(children: .ignore)
 		.accessibilityLabel("Chained words")
 		.accessibilityValue(vm.chainMeterValue)
-		.accessibilityAddTraits(vm.chainPowerUpActive ? .updatesFrequently : [])
 	}
 
 	private var chainGradient: LinearGradient {

@@ -12,21 +12,16 @@ struct StartView: View {
 					.foregroundStyle(Color.wbText)
 					.accessibilityAddTraits(.isHeader)
 					.accessibilityFocused(titleFocus, equals: .home)
+					.accessibilitySortPriority(100)
 
 				VStack(alignment: .leading, spacing: 6) {
-					Text("How to play")
-						.font(.headline.weight(.black))
-						.foregroundStyle(Color.wbText)
-						.accessibilityAddTraits(.isHeader)
-
 					let instructions = [
 						"Tap letter bubbles anywhere on the 5 by 5 grid to build words.",
 						"If you build a word with connected letters, you get a bonus.",
 						"Make three connected words in a row to activate a timed 3 times bonus.",
 						"Hit Make Word to score.",
 						"Used letters are replaced instantly.",
-						"Tip: Explore by Touch works great on mobile!",
-						"2 minutes on the clock. Go!",
+						"2 minutes on the clock. Go!"
 					]
 					ForEach(instructions, id: \.self) { item in
 						HStack(alignment: .top, spacing: 8) {
@@ -69,6 +64,9 @@ struct StartView: View {
 			}
 			.padding(.horizontal, 20)
 			.padding(.vertical, 24)
+		}
+		.onAppear {
+			titleFocus.wrappedValue = .home
 		}
 	}
 }

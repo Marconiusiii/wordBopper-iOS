@@ -36,6 +36,15 @@ final class GameViewModel {
 		"mmnnnnnnoooooooppqrrrrrsssssstttttttuuuuvvwwxyyz"
 	).map { String($0) }
 	static let colorCount = 8
+	static let gameplayHeadingPhrases = [
+		"Start bopping!",
+		"Bop to it!",
+		"Bop out some words!",
+		"Bop those letters!",
+		"Bop to the future!",
+		"Start your bopping!",
+		"Commence bopping!"
+	]
 
 	// MARK: - Navigation
 	var screen: GameScreen = .start
@@ -53,6 +62,7 @@ final class GameViewModel {
 	var chainPowerUpActive = false
 	var chainPowerUpSecondsLeft = 0
 	var largestLetterChain = 0
+	var gameplayHeading = GameViewModel.gameplayHeadingPhrases[0]
 
 	// MARK: - Best game
 	var bestGame = BestGame()
@@ -120,6 +130,7 @@ final class GameViewModel {
 		chainPowerUpActive = false
 		chainPowerUpSecondsLeft = 0
 		largestLetterChain = 0
+		gameplayHeading = randomGameplayHeading()
 
 		for row in 0..<5 {
 			for col in 0..<5 {
@@ -130,7 +141,6 @@ final class GameViewModel {
 		screen = .game
 		audio.playRoundStartSound()
 		startTimer()
-		announce("Game started. 25 letter bubbles are ready. Tap 3 or more letters to build words.")
 	}
 
 	func endGame() {
@@ -147,7 +157,6 @@ final class GameViewModel {
 	private func showResults() {
 		updateBestGame()
 		screen = .results
-		announce("Game over! You scored \(score) points with \(wordCount) words and \(totalLettersUsed) letters used.")
 	}
 
 	func goHome() {
@@ -185,14 +194,13 @@ final class GameViewModel {
 
 	func clearSelection() {
 		guard !selected.isEmpty else {
-			announce("Selection cleared.")
 			return
 		}
 		selected.removeAll()
 		audio.resetSelectSound()
 		secondsLeft = min(secondsLeft + 15, GameViewModel.gameDuration)
 		audio.playBonusSound()
-		announce("Try again! 15 bonus seconds added.")
+		announce("Cleared. 15 seconds added.")
 	}
 
 	// MARK: - Make word
@@ -202,7 +210,7 @@ final class GameViewModel {
 		let word = currentWord.lowercased()
 
 		guard dictionary.contains(word) else {
-			announce("\(word) is not a valid word. Try again.")
+			announce("\(word), not valid.")
 			audio.playInvalidSound()
 			resetChainStreak()
 			selected.removeAll()
@@ -318,6 +326,10 @@ final class GameViewModel {
 		Int.random(in: 0..<GameViewModel.colorCount)
 	}
 
+	private func randomGameplayHeading() -> String {
+		GameViewModel.gameplayHeadingPhrases.randomElement() ?? GameViewModel.gameplayHeadingPhrases[0]
+	}
+
 	// MARK: - Timer
 
 	private func startTimer() {
@@ -343,29 +355,25 @@ final class GameViewModel {
 	func announce(_ message: String) {
 		DispatchQueue.main.async {
 			self.announcementWorkItem?.cancel()
-			UIAccessibility.post(notification: .announcement, argument: "")
-
 			let workItem = DispatchWorkItem {
 				UIAccessibility.post(notification: .announcement, argument: message)
 			}
 			self.announcementWorkItem = workItem
-			DispatchQueue.main.asyncAfter(deadline: .now() + 0.08, execute: workItem)
+			DispatchQueue.main.async(execute: workItem)
 		}
 	}
 
 	private func wordAnnouncement(word: String, points: Int, chainBonus: Int, multiplier: Int, powerUpActivated: Bool) -> String {
-		var msg: String
+		var parts = ["\(word), \(points) points"]
 		if multiplier > 1 {
-			msg = "\(word) scored \(points) points with a 3 times chain bop. Total: \(score)."
+			parts.append("3 times")
 		} else if chainBonus > 0 {
-			msg = "\(word) scored \(points) points with a \(chainBonus) point chain bonus. Total: \(score)."
-		} else {
-			msg = "\(word) scored \(points) points. Total: \(score)."
+			parts.append("chain bonus")
 		}
 		if powerUpActivated {
-			msg += " 3 times chain bop ready. Make the next word in 15 seconds."
+			parts.append("3 times ready")
 		}
-		return msg
+		return parts.joined(separator: ", ") + "."
 	}
 
 	// MARK: - Best game

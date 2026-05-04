@@ -18,19 +18,7 @@ struct ContentView: View {
 			}
 		}
 		.preferredColorScheme(.dark)
-		.task {
-			moveFocus(to: vm.screen)
-		}
 		.onChange(of: vm.screen) { _, screen in
-			moveFocus(to: screen)
-		}
-	}
-
-	private func moveFocus(to screen: GameScreen) {
-		focusedTitle = nil
-
-		Task { @MainActor in
-			try? await Task.sleep(for: .milliseconds(120))
 			focusedTitle = ScreenTitleFocus(screen)
 		}
 	}
