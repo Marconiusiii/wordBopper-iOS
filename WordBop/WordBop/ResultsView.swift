@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ResultsView: View {
 	@Environment(GameViewModel.self) private var vm
-	@AccessibilityFocusState private var titleFocused: Bool
+	let titleFocus: AccessibilityFocusState<ScreenTitleFocus?>.Binding
 
 	var body: some View {
 		ScrollView {
@@ -11,7 +11,7 @@ struct ResultsView: View {
 					.font(.title2.weight(.black))
 					.foregroundStyle(Color.wbText)
 					.accessibilityAddTraits(.isHeader)
-					.accessibilityFocused($titleFocused)
+					.accessibilityFocused(titleFocus, equals: .results)
 
 				VStack(spacing: 2) {
 					Text("\(vm.score)")
@@ -88,9 +88,6 @@ struct ResultsView: View {
 			}
 			.padding(.horizontal, 20)
 			.padding(.vertical, 24)
-			.onAppear {
-				titleFocused = true
-			}
 		}
 	}
 

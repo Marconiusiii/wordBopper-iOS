@@ -2,7 +2,7 @@ import SwiftUI
 
 struct StartView: View {
 	@Environment(GameViewModel.self) private var vm
-	@AccessibilityFocusState private var titleFocused: Bool
+	let titleFocus: AccessibilityFocusState<ScreenTitleFocus?>.Binding
 
 	var body: some View {
 		ScrollView {
@@ -11,7 +11,7 @@ struct StartView: View {
 					.font(.largeTitle.weight(.black))
 					.foregroundStyle(Color.wbText)
 					.accessibilityAddTraits(.isHeader)
-					.accessibilityFocused($titleFocused)
+					.accessibilityFocused(titleFocus, equals: .home)
 
 				Text("Created by Chancey Fleet and Marco Salsiccia")
 					.font(.callout)
@@ -67,9 +67,6 @@ struct StartView: View {
 			}
 			.padding(.horizontal, 20)
 			.padding(.vertical, 24)
-			.onAppear {
-				titleFocused = true
-			}
 		}
 	}
 }

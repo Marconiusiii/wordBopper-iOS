@@ -4,6 +4,9 @@ final class AudioEngine {
 
 	private let engine = AVAudioEngine()
 	private let sampleRate: Double = 44100
+	private let playerCount = 18
+	private var voices: [AudioVoice] = []
+	private var nextPlayerIndex = 0
 	private var selectNoteIndex = 0
 	private var powerUpTimer: Timer?
 	private var powerUpStartedAt: Date?
@@ -23,7 +26,16 @@ final class AudioEngine {
 		} catch {}
 	}
 
-	private func setupEngine() {}
+	private func setupEngine() {
+		let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false)
+		for _ in 0..<playerCount {
+			let player = AVAudioPlayerNode()
+			engine.attach(player)
+			engine.connect(player, to: engine.mainMixerNode, format: format)
+			voices.append(AudioVoice(player: player))
+		}
+		engine.mainMixerNode.outputVolume = 0.82
+	}
 
 	// MARK: - Public sound interface
 
@@ -37,22 +49,22 @@ final class AudioEngine {
 		let step = selectNoteIndex
 		selectNoteIndex += 1
 		let freq = selectNotes[min(step, selectNotes.count - 1)]
-		let duration = 0.42
+		let duration = step >= 3 ? 0.64 : 0.44
 
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		// Marimba: 3 harmonics
 		let harmonics: [(Double, Double)] = [(1, 0.58), (2, 0.2), (3, 0.08)]
 		for (mult, amp) in harmonics {
 			ctx.addOsc(type: .sine, freq: freq * mult, start: 0, attackTime: 0.006,
-					   peakAmp: amp * 0.78, decayHalf: 0.06)
+					   peakAmp: amp * 0.58, releaseTime: 0.38, settleRatio: 0.35, settleTime: 0.05)
 		}
 		// Bright click attack
-		ctx.addNoise(start: 0, duration: 0.012, amplitude: 0.35 * 0.78, highpass: true)
+		ctx.addNoise(start: 0, duration: 0.01, amplitude: 0.18, highpass: true)
 		// Sparkle for 4th letter onward
 		if step >= 3 {
 			addSparkle(to: &ctx, step: step, masterGain: 1.0)
 		}
-		play(ctx.toBuffer())
+		play(ctx.toBuffer(), priority: .transient)
 	}
 
 	func playWordSound(wordLength: Int) {
@@ -66,27 +78,27 @@ final class AudioEngine {
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		for (i, freq) in notes.enumerated() {
 			let nd = Double(i) * spacing
-			ctx.addOsc(type: .sine,     freq: freq,       start: nd, attackTime: 0.012, peakAmp: 0.38 * masterVol, decayHalf: 0.2)
-			ctx.addOsc(type: .triangle, freq: freq * 2,   start: nd, attackTime: 0.012, peakAmp: 0.12 * masterVol, decayHalf: 0.2)
-			ctx.addOsc(type: .sine,     freq: freq * 0.5, start: nd, attackTime: 0.012, peakAmp: 0.18 * masterVol, decayHalf: 0.2)
+			ctx.addOsc(type: .sine,     freq: freq,       start: nd, attackTime: 0.012, peakAmp: 0.38 * masterVol, releaseTime: 0.85, settleRatio: 0.45, settleTime: 0.1)
+			ctx.addOsc(type: .triangle, freq: freq * 2,   start: nd, attackTime: 0.012, peakAmp: 0.12 * masterVol, releaseTime: 0.85, settleRatio: 0.45, settleTime: 0.1)
+			ctx.addOsc(type: .sine,     freq: freq * 0.5, start: nd, attackTime: 0.012, peakAmp: 0.18 * masterVol, releaseTime: 0.85, settleRatio: 0.45, settleTime: 0.1)
 		}
 		// Sub thump
 		let subFreq = wordLength >= 5 ? 130.0 : 110.0
-		let subVol = wordLength >= 7 ? 0.55 : wordLength >= 5 ? 0.42 : 0.3
+		let subVol = wordLength >= 7 ? 0.34 : wordLength >= 5 ? 0.26 : 0.18
 		ctx.addOscWithFreqSlide(freq: subFreq, endFreq: subFreq / 2, start: 0, duration: 0.22, peakAmp: subVol)
 		// Sparkle noise for medium/long words
 		if wordLength >= 5 {
 			ctx.addNoise(start: 0, duration: 0.045, amplitude: wordLength >= 7 ? 0.4 : 0.22, highpass: false, bandpass: true)
 		}
-		play(ctx.toBuffer())
+		play(ctx.toBuffer(), priority: .score)
 	}
 
 	func playInvalidSound() {
 		let duration = 0.3
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
-		ctx.addOscWithFreqSlide(freq: 280, endFreq: 80, start: 0, duration: 0.25, peakAmp: 0.5 * 0.8)
-		ctx.addNoise(start: 0, duration: 0.07, amplitude: 0.7 * 0.8, highpass: false)
-		play(ctx.toBuffer())
+		ctx.addOscWithFreqSlide(freq: 280, endFreq: 80, start: 0, duration: 0.25, peakAmp: 0.34)
+		ctx.addNoise(start: 0, duration: 0.07, amplitude: 0.32, highpass: false)
+		play(ctx.toBuffer(), priority: .transient)
 	}
 
 	func playBonusSound() {
@@ -94,10 +106,10 @@ final class AudioEngine {
 		let duration = 0.45
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		for (freq, delay) in pairs {
-			ctx.addOsc(type: .sine,     freq: freq,     start: delay, attackTime: 0.01, peakAmp: 0.42, decayHalf: 0.1)
-			ctx.addOsc(type: .triangle, freq: freq * 2, start: delay, attackTime: 0.001, peakAmp: 0.12, decayHalf: 0.07)
+			ctx.addOsc(type: .sine,     freq: freq,     start: delay, attackTime: 0.01, peakAmp: 0.42, releaseTime: 0.28)
+			ctx.addOsc(type: .triangle, freq: freq * 2, start: delay, attackTime: 0.001, peakAmp: 0.12, releaseTime: 0.2)
 		}
-		play(ctx.toBuffer())
+		play(ctx.toBuffer(), priority: .score)
 	}
 
 	func playConnectedWordSound(wordLength: Int) {
@@ -111,9 +123,10 @@ final class AudioEngine {
 		for (i, freq) in notes.enumerated() {
 			let t = Double(i) * 0.045
 			let type: OscType = i % 2 == 0 ? .sine : .triangle
-			ctx.addOsc(type: type, freq: freq, start: t, attackTime: 0.01, peakAmp: shimmerVol, decayHalf: 0.18)
+			ctx.addOsc(type: type, freq: freq, start: t, attackTime: 0.01, peakAmp: shimmerVol,
+					   releaseTime: 0.5, filter: FilterSpec(kind: .bandpass, frequency: freq, q: 8))
 		}
-		play(ctx.toBuffer())
+		play(ctx.toBuffer(), priority: .connected)
 	}
 
 	func playChainStreakSound(streak: Int) {
@@ -122,9 +135,9 @@ final class AudioEngine {
 		let fifth = root * 1.5
 		let duration = 0.46
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
-		ctx.addOsc(type: .sine,     freq: root,  start: 0, attackTime: 0.012, peakAmp: 0.24 * 0.42, decayHalf: 0.15)
-		ctx.addOsc(type: .triangle, freq: fifth, start: 0, attackTime: 0.012, peakAmp: 0.18 * 0.42, decayHalf: 0.15)
-		play(ctx.toBuffer())
+		ctx.addOsc(type: .sine,     freq: root,  start: 0, attackTime: 0.012, peakAmp: 0.1, releaseTime: 0.42)
+		ctx.addOsc(type: .triangle, freq: fifth, start: 0, attackTime: 0.012, peakAmp: 0.08, releaseTime: 0.42)
+		play(ctx.toBuffer(), priority: .connected)
 	}
 
 	func playRoundStartSound() {
@@ -136,10 +149,10 @@ final class AudioEngine {
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		for (i, freq) in notes.enumerated() {
 			let nd = Double(i) * 0.07
-			ctx.addOsc(type: .sine,     freq: freq,     start: nd, attackTime: 0.012, peakAmp: 0.34 * 0.8, decayHalf: 0.18)
-			ctx.addOsc(type: .triangle, freq: freq * 2, start: nd, attackTime: 0.012, peakAmp: 0.09 * 0.8, decayHalf: 0.18)
+			ctx.addOsc(type: .sine,     freq: freq,     start: nd, attackTime: 0.012, peakAmp: 0.27, releaseTime: 0.46)
+			ctx.addOsc(type: .triangle, freq: freq * 2, start: nd, attackTime: 0.012, peakAmp: 0.072, releaseTime: 0.46)
 		}
-		play(ctx.toBuffer())
+		play(ctx.toBuffer(), priority: .score)
 	}
 
 	func playRoundEndSound() {
@@ -148,23 +161,23 @@ final class AudioEngine {
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		for (i, freq) in notes.enumerated() {
 			let nd = Double(i) * 0.085
-			ctx.addOsc(type: .sine,     freq: freq,       start: nd, attackTime: 0.01, peakAmp: 0.34 * 0.88, decayHalf: 0.25)
-			ctx.addOsc(type: .triangle, freq: freq * 2,   start: nd, attackTime: 0.01, peakAmp: 0.10 * 0.88, decayHalf: 0.25)
-			ctx.addOsc(type: .sine,     freq: freq * 0.5, start: nd, attackTime: 0.01, peakAmp: 0.12 * 0.88, decayHalf: 0.25)
+			ctx.addOsc(type: .sine,     freq: freq,       start: nd, attackTime: 0.01, peakAmp: 0.3, releaseTime: 0.7)
+			ctx.addOsc(type: .triangle, freq: freq * 2,   start: nd, attackTime: 0.01, peakAmp: 0.088, releaseTime: 0.7)
+			ctx.addOsc(type: .sine,     freq: freq * 0.5, start: nd, attackTime: 0.01, peakAmp: 0.106, releaseTime: 0.7)
 		}
-		play(ctx.toBuffer())
+		play(ctx.toBuffer(), priority: .score)
 	}
 
 	func playTickSound(secondsLeft: Int) {
 		let freq = 600.0 + Double(10 - secondsLeft) * 66.0
-		let amplitude = secondsLeft <= 3 ? 0.55 : 0.38
+		let amplitude = secondsLeft <= 3 ? 0.34 : 0.24
 		let duration = 0.15
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
-		ctx.addOsc(type: .sine, freq: freq, start: 0, attackTime: 0.008, peakAmp: amplitude, decayHalf: 0.04)
+		ctx.addOsc(type: .sine, freq: freq, start: 0, attackTime: 0.008, peakAmp: amplitude, releaseTime: 0.12)
 		if secondsLeft <= 3 {
-			ctx.addOsc(type: .sine, freq: freq * 2, start: 0, attackTime: 0.001, peakAmp: 0.18, decayHalf: 0.035)
+			ctx.addOsc(type: .sine, freq: freq * 2, start: 0, attackTime: 0.001, peakAmp: 0.1, releaseTime: 0.1)
 		}
-		play(ctx.toBuffer())
+		play(ctx.toBuffer(), priority: .transient)
 	}
 
 	func startPowerUpChimes(duration: Double) {
@@ -195,7 +208,7 @@ final class AudioEngine {
 		let sparkleNotes: [Double] = [659.25, 698.46, 783.99, 880.00, 987.77, 1046.50,
 									  1174.66, 1318.51, 1396.91, 1567.98]
 		let sparkleCount = min(4, max(3, step - 1))
-		let sparkleGain = min(0.105, 0.035 + Double(step - 3) * 0.01) * masterGain
+		let sparkleGain = min(0.07, 0.024 + Double(step - 3) * 0.007) * masterGain
 		let rootIndex = min(step - 3, sparkleNotes.count - 4)
 		var phrase = Array(sparkleNotes[rootIndex..<min(rootIndex + sparkleCount, sparkleNotes.count)])
 		if step >= 7, phrase.count > 1 {
@@ -206,14 +219,15 @@ final class AudioEngine {
 
 		for (i, freq) in phrase.enumerated() {
 			let delay = 0.055 + Double(i) * 0.06
-			ctx.addOsc(type: .sine, freq: freq, start: delay, attackTime: 0.018, peakAmp: sparkleGain, decayHalf: 0.12)
+			ctx.addOsc(type: .sine, freq: freq, start: delay, attackTime: 0.018, peakAmp: sparkleGain,
+					   releaseTime: 0.36, filter: FilterSpec(kind: .lowpass, frequency: 2400, q: 0.7))
 		}
 	}
 
 	private func playPowerUpChime(progress: Double) {
 		let powerUpNotes: [Double] = [1046.50, 987.77, 880.00, 783.99, 698.46, 659.25, 587.33, 523.25]
 		let startIndex = min(Int(progress * 4), powerUpNotes.count - 3)
-		let level = max(0.018, 0.05 * (1 - progress))
+		let level = max(0.012, 0.032 * (1 - progress))
 
 		var indices = [startIndex, startIndex + 1, startIndex + 2]
 		indices = indices.map { min($0, powerUpNotes.count - 1) }
@@ -223,27 +237,69 @@ final class AudioEngine {
 		for (i, idx) in indices.enumerated() {
 			let delay = Double(i) * 0.08 + Double.random(in: 0..<0.035)
 			ctx.addOsc(type: .sine, freq: powerUpNotes[idx], start: delay,
-					   attackTime: 0.02, peakAmp: level, decayHalf: 0.2)
+					   attackTime: 0.02, peakAmp: level, releaseTime: 0.55,
+					   filter: FilterSpec(kind: .lowpass, frequency: 2600, q: 0.7))
 		}
-		play(ctx.toBuffer())
+		play(ctx.toBuffer(), priority: .ambient)
 	}
 
-	private func play(_ buffer: AVAudioPCMBuffer?) {
+	private func play(_ buffer: AVAudioPCMBuffer?, priority: SoundPriority) {
 		guard let buffer else { return }
-		let player = AVAudioPlayerNode()
-		engine.attach(player)
-		engine.connect(player, to: engine.mainMixerNode, format: buffer.format)
+		guard !voices.isEmpty else { return }
+		let duration = Double(buffer.frameLength) / sampleRate
+		guard let voiceIndex = nextVoiceIndex(for: priority) else { return }
+		let player = voices[voiceIndex].player
+		player.stop()
+		voices[voiceIndex].priority = priority
+		voices[voiceIndex].reservedUntil = Date().addingTimeInterval(duration + 0.035)
 		if !engine.isRunning { try? engine.start() }
-		player.scheduleBuffer(buffer) { [weak self] in
-			DispatchQueue.main.async { self?.engine.detach(player) }
-		}
+		player.scheduleBuffer(buffer, completionHandler: nil)
 		player.play()
+	}
+
+	private func nextVoiceIndex(for priority: SoundPriority) -> Int? {
+		let now = Date()
+		let count = voices.count
+
+		for offset in 0..<count {
+			let index = (nextPlayerIndex + offset) % count
+			let voice = voices[index]
+			if !voice.player.isPlaying || voice.reservedUntil <= now {
+				nextPlayerIndex = (index + 1) % count
+				return index
+			}
+		}
+
+		let replaceable = voices.indices
+			.filter { voices[$0].priority.rawValue < priority.rawValue }
+			.min { voices[$0].reservedUntil < voices[$1].reservedUntil }
+
+		if let replaceable {
+			nextPlayerIndex = (replaceable + 1) % count
+			return replaceable
+		}
+
+		return nil
 	}
 }
 
 // MARK: - Synthesis primitives
 
 private enum OscType { case sine, triangle, sawtooth }
+private enum SoundPriority: Int { case transient, ambient, score, connected }
+private enum FilterKind { case lowpass, highpass, bandpass }
+
+private struct AudioVoice {
+	let player: AVAudioPlayerNode
+	var priority: SoundPriority = .transient
+	var reservedUntil: Date = .distantPast
+}
+
+private struct FilterSpec {
+	let kind: FilterKind
+	let frequency: Double
+	let q: Double
+}
 
 private struct SynthContext {
 	let sampleRate: Double
@@ -254,12 +310,25 @@ private struct SynthContext {
 		self.samples = [Float](repeating: 0, count: Int(ceil(duration * sampleRate)))
 	}
 
-	mutating func addOsc(type: OscType, freq: Double, start: Double, attackTime: Double, peakAmp: Double, decayHalf: Double) {
+	mutating func addOsc(
+		type: OscType,
+		freq: Double,
+		start: Double,
+		attackTime: Double,
+		peakAmp: Double,
+		releaseTime: Double,
+		settleRatio: Double = 1.0,
+		settleTime: Double? = nil,
+		filter: FilterSpec? = nil
+	) {
 		let startSample = Int(start * sampleRate)
 		let attackSamples = max(1, Int(attackTime * sampleRate))
+		let releaseSamples = max(attackSamples + 1, Int(releaseTime * sampleRate))
+		let settleSamples = settleTime.map { max(attackSamples + 1, Int($0 * sampleRate)) }
 		let count = samples.count
+		var rendered = [Float](repeating: 0, count: count)
 
-		for i in startSample..<count {
+		for i in startSample..<min(count, startSample + releaseSamples) {
 			let t = Double(i) / sampleRate
 			let raw: Double
 			switch type {
@@ -277,12 +346,24 @@ private struct SynthContext {
 			let gain: Double
 			if elapsed < attackSamples {
 				gain = peakAmp * Double(elapsed) / Double(attackSamples)
+			} else if let settleSamples, elapsed < settleSamples {
+				let progress = Double(elapsed - attackSamples) / Double(max(1, settleSamples - attackSamples))
+				gain = exponentialRamp(from: peakAmp, to: peakAmp * settleRatio, progress: progress)
 			} else {
-				let decayElapsed = Double(elapsed - attackSamples) / sampleRate
-				let halfLife = max(decayHalf, 0.001)
-				gain = peakAmp * exp(-decayElapsed * 0.693 / halfLife)
+				let releaseStart = settleSamples ?? attackSamples
+				let startGain = peakAmp * settleRatio
+				let progress = Double(elapsed - releaseStart) / Double(max(1, releaseSamples - releaseStart))
+				gain = exponentialRamp(from: startGain, to: 0.001, progress: progress)
 			}
-			samples[i] += Float(raw * gain)
+			rendered[i] = Float(raw * gain)
+		}
+
+		if let filter {
+			applyBiquad(filter, to: &rendered)
+		}
+
+		for i in rendered.indices {
+			samples[i] += rendered[i]
 		}
 	}
 
@@ -321,16 +402,95 @@ private struct SynthContext {
 		}
 	}
 
+	private func exponentialRamp(from start: Double, to end: Double, progress: Double) -> Double {
+		let clamped = min(max(progress, 0), 1)
+		let safeStart = max(start, 0.0001)
+		let safeEnd = max(end, 0.0001)
+		return safeStart * pow(safeEnd / safeStart, clamped)
+	}
+
+	private func applyBiquad(_ spec: FilterSpec, to rendered: inout [Float]) {
+		let cutoff = min(max(spec.frequency, 20), sampleRate * 0.45)
+		let omega = 2.0 * .pi * cutoff / sampleRate
+		let alpha = sin(omega) / (2.0 * max(spec.q, 0.001))
+		let cosOmega = cos(omega)
+
+		let b0: Double
+		let b1: Double
+		let b2: Double
+		let a0: Double
+		let a1: Double
+		let a2: Double
+
+		switch spec.kind {
+		case .lowpass:
+			b0 = (1 - cosOmega) / 2
+			b1 = 1 - cosOmega
+			b2 = (1 - cosOmega) / 2
+			a0 = 1 + alpha
+			a1 = -2 * cosOmega
+			a2 = 1 - alpha
+		case .highpass:
+			b0 = (1 + cosOmega) / 2
+			b1 = -(1 + cosOmega)
+			b2 = (1 + cosOmega) / 2
+			a0 = 1 + alpha
+			a1 = -2 * cosOmega
+			a2 = 1 - alpha
+		case .bandpass:
+			b0 = alpha
+			b1 = 0
+			b2 = -alpha
+			a0 = 1 + alpha
+			a1 = -2 * cosOmega
+			a2 = 1 - alpha
+		}
+
+		var x1 = 0.0
+		var x2 = 0.0
+		var y1 = 0.0
+		var y2 = 0.0
+
+		for i in rendered.indices {
+			let x0 = Double(rendered[i])
+			let y0 = (b0 / a0) * x0 + (b1 / a0) * x1 + (b2 / a0) * x2 - (a1 / a0) * y1 - (a2 / a0) * y2
+			rendered[i] = Float(y0)
+			x2 = x1
+			x1 = x0
+			y2 = y1
+			y1 = y0
+		}
+	}
+
 	func toBuffer() -> AVAudioPCMBuffer? {
 		guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false) else { return nil }
-		let frameCount = UInt32(samples.count)
+		var rendered = samples
+		applyOutputPolish(to: &rendered)
+		let frameCount = UInt32(rendered.count)
 		guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return nil }
 		buffer.frameLength = frameCount
 		guard let channelData = buffer.floatChannelData?[0] else { return nil }
-		samples.withUnsafeBufferPointer { ptr in
-			channelData.update(from: ptr.baseAddress!, count: samples.count)
+		rendered.withUnsafeBufferPointer { ptr in
+			guard let baseAddress = ptr.baseAddress else { return }
+			channelData.update(from: baseAddress, count: rendered.count)
 		}
 		return buffer
 	}
-}
 
+	private func applyOutputPolish(to rendered: inout [Float]) {
+		guard !rendered.isEmpty else { return }
+
+		let fadeSamples = min(rendered.count, Int(sampleRate * 0.014))
+		if fadeSamples > 1 {
+			let start = rendered.count - fadeSamples
+			for i in 0..<fadeSamples {
+				let progress = Float(i) / Float(fadeSamples - 1)
+				rendered[start + i] *= 1 - progress
+			}
+		}
+
+		for i in rendered.indices {
+			rendered[i] = Float(tanh(Double(rendered[i]) * 0.82))
+		}
+	}
+}

@@ -3,7 +3,7 @@ import SwiftUI
 struct GameView: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
-	@AccessibilityFocusState private var titleFocused: Bool
+	let titleFocus: AccessibilityFocusState<ScreenTitleFocus?>.Binding
 
 	var body: some View {
 		GeometryReader { geo in
@@ -20,7 +20,7 @@ struct GameView: View {
 					.padding(.bottom, 6)
 					.background(Color.wbSurface)
 					.accessibilityAddTraits(.isHeader)
-					.accessibilityFocused($titleFocused)
+					.accessibilityFocused(titleFocus, equals: .gameplay)
 
 				GameHeaderBar()
 				ChainMeterBar()
@@ -34,9 +34,6 @@ struct GameView: View {
 				ActionBar()
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-			.onAppear {
-				titleFocused = true
-			}
 		}
 	}
 

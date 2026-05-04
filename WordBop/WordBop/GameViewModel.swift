@@ -62,6 +62,7 @@ final class GameViewModel {
 	private let dictionary = DictionaryService.shared
 	private var gameTimer: Timer?
 	private var powerUpTimer: Timer?
+	private var announcementWorkItem: DispatchWorkItem?
 
 	// MARK: - Computed
 	var currentWord: String { selected.map(\.letter).joined() }
@@ -129,6 +130,7 @@ final class GameViewModel {
 		screen = .game
 		audio.playRoundStartSound()
 		startTimer()
+		announce("Game started. 25 letter bubbles are ready. Tap 3 or more letters to build words.")
 	}
 
 	func endGame() {
@@ -145,9 +147,12 @@ final class GameViewModel {
 	private func showResults() {
 		updateBestGame()
 		screen = .results
+		announce("Game over! You scored \(score) points with \(wordCount) words and \(totalLettersUsed) letters used.")
 	}
 
 	func goHome() {
+		announcementWorkItem?.cancel()
+		announcementWorkItem = nil
 		screen = .start
 	}
 
@@ -179,7 +184,10 @@ final class GameViewModel {
 	}
 
 	func clearSelection() {
-		guard !selected.isEmpty else { return }
+		guard !selected.isEmpty else {
+			announce("Selection cleared.")
+			return
+		}
 		selected.removeAll()
 		audio.resetSelectSound()
 		secondsLeft = min(secondsLeft + 15, GameViewModel.gameDuration)
@@ -334,7 +342,14 @@ final class GameViewModel {
 	// For gameplay events (word scored, invalid, bonus) — reads over whatever is on screen
 	func announce(_ message: String) {
 		DispatchQueue.main.async {
-			UIAccessibility.post(notification: .announcement, argument: message)
+			self.announcementWorkItem?.cancel()
+			UIAccessibility.post(notification: .announcement, argument: "")
+
+			let workItem = DispatchWorkItem {
+				UIAccessibility.post(notification: .announcement, argument: message)
+			}
+			self.announcementWorkItem = workItem
+			DispatchQueue.main.asyncAfter(deadline: .now() + 0.08, execute: workItem)
 		}
 	}
 
