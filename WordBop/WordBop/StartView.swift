@@ -5,22 +5,22 @@ struct StartView: View {
 
 	var body: some View {
 		ScrollView {
-			VStack(spacing: 20) {
-				Text("WordBop")
-					.font(.system(size: 28, weight: .black))
-					.foregroundStyle(Color.wbText)
-					.accessibilityAddTraits(.isHeader)
-
-				Text("Created by Chancey Fleet and Marco Salsiccia")
-					.font(.system(size: 14))
-					.foregroundStyle(Color.wbMuted)
-					.multilineTextAlignment(.center)
-
-				VStack(alignment: .leading, spacing: 6) {
-					Text("How to play")
-						.font(.system(size: 17, weight: .black))
+				VStack(spacing: 20) {
+					Text("WordBop")
+						.font(.largeTitle.weight(.black))
 						.foregroundStyle(Color.wbText)
 						.accessibilityAddTraits(.isHeader)
+
+					Text("Created by Chancey Fleet and Marco Salsiccia")
+						.font(.callout)
+						.foregroundStyle(Color.wbMuted)
+						.multilineTextAlignment(.center)
+
+					VStack(alignment: .leading, spacing: 6) {
+						Text("How to play")
+							.font(.headline.weight(.black))
+							.foregroundStyle(Color.wbText)
+							.accessibilityAddTraits(.isHeader)
 
 					let instructions = [
 						"Tap letter bubbles anywhere on the 5 by 5 grid to build words.",
@@ -33,14 +33,14 @@ struct StartView: View {
 					]
 					ForEach(instructions, id: \.self) { item in
 						HStack(alignment: .top, spacing: 8) {
-							Text("•")
-								.foregroundStyle(Color.wbAccent5)
-								.accessibilityHidden(true)
-							Text(item)
-								.font(.system(size: 15))
-								.foregroundStyle(Color.wbText)
-								.fixedSize(horizontal: false, vertical: true)
-						}
+								Text("•")
+									.foregroundStyle(Color.wbAccent5)
+									.accessibilityHidden(true)
+								Text(item)
+									.font(.body)
+									.foregroundStyle(Color.wbText)
+									.fixedSize(horizontal: false, vertical: true)
+							}
 					}
 				}
 				.frame(maxWidth: .infinity, alignment: .leading)
@@ -48,12 +48,12 @@ struct StartView: View {
 
 				Button {
 					vm.startGame()
-				} label: {
-					Text("Start Game")
-						.font(.system(size: 20, weight: .black))
-						.foregroundStyle(Color.black)
-						.frame(maxWidth: .infinity)
-						.padding(.vertical, 16)
+					} label: {
+						Text("Start Game")
+							.font(.title3.weight(.black))
+							.foregroundStyle(Color.black)
+							.frame(maxWidth: .infinity)
+							.padding(.vertical, 16)
 						.background(
 							LinearGradient(colors: [.wbAccent1, .wbAccent2],
 										   startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -73,11 +73,11 @@ private struct BestGameCard: View {
 	let bestGame: BestGame
 
 	var body: some View {
-		VStack(spacing: 10) {
-			Text("Your best game")
-				.font(.system(size: 16, weight: .black))
-				.foregroundStyle(Color.wbText)
-				.accessibilityAddTraits(.isHeader)
+			VStack(spacing: 10) {
+				Text("Your best game")
+					.font(.headline.weight(.black))
+					.foregroundStyle(Color.wbText)
+					.accessibilityAddTraits(.isHeader)
 
 			LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
 				BestStat(label: "Highest score",  value: "\(bestGame.highestScore)")
@@ -99,12 +99,12 @@ private struct BestStat: View {
 	let value: String
 
 	var body: some View {
-		VStack(alignment: .leading, spacing: 2) {
-			Text(label)
-				.font(.system(size: 11, weight: .bold))
-				.foregroundStyle(Color.wbMuted)
-			Text(value)
-				.font(.system(.body, design: .monospaced).weight(.bold))
+			VStack(alignment: .leading, spacing: 2) {
+				Text(label)
+					.font(.caption.weight(.bold))
+					.foregroundStyle(Color.wbMuted)
+				Text(value)
+					.font(.system(.body, design: .monospaced).weight(.bold))
 				.foregroundStyle(Color.wbText)
 		}
 		.frame(maxWidth: .infinity, alignment: .leading)

@@ -12,6 +12,8 @@ extension Color {
 	static let wbAccent4     = Color(red: 0.239, green: 0.663, blue: 0.988)
 	static let wbAccent5     = Color(red: 0.447, green: 0.820, blue: 0.561)
 	static let wbTimerGreen  = Color(red: 0.447, green: 0.820, blue: 0.561)
+	static let wbSelectedBubble = Color(red: 0.275, green: 0.275, blue: 0.365)
+	static let wbSelectedText = Color.white
 
 	static let bubbleFill: [Color] = [
 		Color(red: 1.0,   green: 0.537, blue: 0.024),

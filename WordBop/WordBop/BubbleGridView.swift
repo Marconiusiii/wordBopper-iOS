@@ -22,6 +22,7 @@ struct BubbleGridView: View {
 }
 
 struct BubbleButton: View {
+	@Environment(\.accessibilityReduceMotion) private var reduceMotion
 	let bubble: Bubble
 	let isSelected: Bool
 	let size: CGFloat
@@ -40,22 +41,24 @@ struct BubbleButton: View {
 	var body: some View {
 		Button(action: action) {
 			Text(bubble.letter.uppercased())
-				.font(.system(size: size * 0.38, weight: .bold, design: .monospaced))
-				.foregroundStyle(isSelected ? Color(white: 0.42) : textColor)
+				.font(.system(.title2, design: .monospaced).weight(.bold))
+				.foregroundStyle(isSelected ? Color.wbSelectedText : textColor)
+				.minimumScaleFactor(0.6)
+				.lineLimit(1)
 				.frame(width: size, height: size)
 				.background(
 					Circle()
-						.fill(isSelected ? Color(red: 0.227, green: 0.227, blue: 0.290) : fillColor)
+						.fill(isSelected ? Color.wbSelectedBubble : fillColor)
 				)
 				.shadow(color: .black.opacity(isSelected ? 0 : 0.3), radius: 4, y: 3)
-				.scaleEffect(isSelected ? 0.88 : 1.0)
-				.animation(.spring(response: 0.2, dampingFraction: 0.6), value: isSelected)
+				.scaleEffect(reduceMotion ? 1.0 : (isSelected ? 0.88 : 1.0))
+				.animation(reduceMotion ? nil : .spring(response: 0.2, dampingFraction: 0.6), value: isSelected)
 		}
 		.buttonStyle(.plain)
 		.accessibilityLabel(bubble.letter.uppercased())
 		.accessibilityAddTraits(isSelected ? [.isSelected] : [])
 		.id(bubble.id)
-		.transition(.scale(scale: 0.0).combined(with: .opacity))
-		.animation(.spring(response: 0.3, dampingFraction: 0.6), value: bubble.id)
+		.transition(reduceMotion ? .identity : .scale(scale: 0.0).combined(with: .opacity))
+		.animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.6), value: bubble.id)
 	}
 }

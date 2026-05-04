@@ -8,6 +8,7 @@ final class AudioEngine {
 	private var powerUpTimer: Timer?
 	private var powerUpStartedAt: Date?
 	private var powerUpDuration: Double = 15
+	private var bufferCache: [SoundKey: AVAudioPCMBuffer] = [:]
 
 	// MARK: - Init
 
@@ -23,7 +24,9 @@ final class AudioEngine {
 		} catch {}
 	}
 
-	private func setupEngine() {}
+	private func setupEngine() {
+		engine.prepare()
+	}
 
 	// MARK: - Public sound interface
 
@@ -36,9 +39,15 @@ final class AudioEngine {
 									 523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50]
 		let step = selectNoteIndex
 		selectNoteIndex += 1
-		let freq = selectNotes[min(step, selectNotes.count - 1)]
-		let duration = 0.42
+		let noteIndex = min(step, selectNotes.count - 1)
+		let sparkleLevel = min(max(step - 3, 0), 8)
+		play(buffer(for: .select(noteIndex: noteIndex, sparkleLevel: sparkleLevel)) {
+			makeSelectBuffer(freq: selectNotes[noteIndex], step: step)
+		})
+	}
 
+	private func makeSelectBuffer(freq: Double, step: Int) -> AVAudioPCMBuffer? {
+		let duration = step >= 3 ? 0.7 : 0.45
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		// Marimba: 3 harmonics
 		let harmonics: [(Double, Double)] = [(1, 0.58), (2, 0.2), (3, 0.08)]
@@ -52,10 +61,17 @@ final class AudioEngine {
 		if step >= 3 {
 			addSparkle(to: &ctx, step: step, masterGain: 1.0)
 		}
-		play(ctx.toBuffer())
+		return ctx.toBuffer()
 	}
 
 	func playWordSound(wordLength: Int) {
+		let wordSoundSize = wordLength >= 7 ? 7 : wordLength >= 5 ? 5 : 3
+		play(buffer(for: .word(size: wordSoundSize)) {
+			makeWordBuffer(wordLength: wordLength)
+		})
+	}
+
+	private func makeWordBuffer(wordLength: Int) -> AVAudioPCMBuffer? {
 		let baseNotes: [Double] = [261.63, 329.63, 392.00, 493.88, 523.25, 659.25, 783.99]
 		let noteCount = wordLength >= 7 ? 7 : wordLength >= 5 ? 5 : 3
 		let masterVol = wordLength >= 7 ? 1.0 : wordLength >= 5 ? 0.82 : 0.65
@@ -78,18 +94,30 @@ final class AudioEngine {
 		if wordLength >= 5 {
 			ctx.addNoise(start: 0, duration: 0.045, amplitude: wordLength >= 7 ? 0.4 : 0.22, highpass: false, bandpass: true)
 		}
-		play(ctx.toBuffer())
+		return ctx.toBuffer()
 	}
 
 	func playInvalidSound() {
+		play(buffer(for: .invalid) {
+			makeInvalidBuffer()
+		})
+	}
+
+	private func makeInvalidBuffer() -> AVAudioPCMBuffer? {
 		let duration = 0.3
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		ctx.addOscWithFreqSlide(freq: 280, endFreq: 80, start: 0, duration: 0.25, peakAmp: 0.5 * 0.8)
 		ctx.addNoise(start: 0, duration: 0.07, amplitude: 0.7 * 0.8, highpass: false)
-		play(ctx.toBuffer())
+		return ctx.toBuffer()
 	}
 
 	func playBonusSound() {
+		play(buffer(for: .bonus) {
+			makeBonusBuffer()
+		})
+	}
+
+	private func makeBonusBuffer() -> AVAudioPCMBuffer? {
 		let pairs: [(Double, Double)] = [(784.0, 0), (1046.5, 0.14)]
 		let duration = 0.45
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
@@ -97,10 +125,17 @@ final class AudioEngine {
 			ctx.addOsc(type: .sine,     freq: freq,     start: delay, attackTime: 0.01, peakAmp: 0.42, decayHalf: 0.1)
 			ctx.addOsc(type: .triangle, freq: freq * 2, start: delay, attackTime: 0.001, peakAmp: 0.12, decayHalf: 0.07)
 		}
-		play(ctx.toBuffer())
+		return ctx.toBuffer()
 	}
 
 	func playConnectedWordSound(wordLength: Int) {
+		let noteCount = wordLength >= 7 ? 8 : wordLength >= 5 ? 6 : 4
+		play(buffer(for: .connected(noteCount: noteCount)) {
+			makeConnectedWordBuffer(wordLength: wordLength)
+		})
+	}
+
+	private func makeConnectedWordBuffer(wordLength: Int) -> AVAudioPCMBuffer? {
 		let noteCount = wordLength >= 7 ? 8 : wordLength >= 5 ? 6 : 4
 		let shimmerVol = wordLength >= 7 ? 0.26 : wordLength >= 5 ? 0.2 : 0.14
 		let allNotes: [Double] = [1046.5, 1318.51, 1567.98, 2093.0, 2637.02, 3135.96, 4186.01, 5274.04]
@@ -113,10 +148,16 @@ final class AudioEngine {
 			let type: OscType = i % 2 == 0 ? .sine : .triangle
 			ctx.addOsc(type: type, freq: freq, start: t, attackTime: 0.01, peakAmp: shimmerVol, decayHalf: 0.18)
 		}
-		play(ctx.toBuffer())
+		return ctx.toBuffer()
 	}
 
 	func playChainStreakSound(streak: Int) {
+		play(buffer(for: .chain(streak: min(streak, 3))) {
+			makeChainStreakBuffer(streak: streak)
+		})
+	}
+
+	private func makeChainStreakBuffer(streak: Int) -> AVAudioPCMBuffer? {
 		let fifthRoots: [Double] = [523.25, 587.33, 659.25]
 		let root = fifthRoots[min(streak - 1, fifthRoots.count - 1)]
 		let fifth = root * 1.5
@@ -124,7 +165,7 @@ final class AudioEngine {
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		ctx.addOsc(type: .sine,     freq: root,  start: 0, attackTime: 0.012, peakAmp: 0.24 * 0.42, decayHalf: 0.15)
 		ctx.addOsc(type: .triangle, freq: fifth, start: 0, attackTime: 0.012, peakAmp: 0.18 * 0.42, decayHalf: 0.15)
-		play(ctx.toBuffer())
+		return ctx.toBuffer()
 	}
 
 	func playRoundStartSound() {
@@ -139,7 +180,7 @@ final class AudioEngine {
 			ctx.addOsc(type: .sine,     freq: freq,     start: nd, attackTime: 0.012, peakAmp: 0.34 * 0.8, decayHalf: 0.18)
 			ctx.addOsc(type: .triangle, freq: freq * 2, start: nd, attackTime: 0.012, peakAmp: 0.09 * 0.8, decayHalf: 0.18)
 		}
-		play(ctx.toBuffer())
+		play(buffer(for: .roundStart(shape: shape.map(String.init).joined())) { ctx.toBuffer() })
 	}
 
 	func playRoundEndSound() {
@@ -152,10 +193,16 @@ final class AudioEngine {
 			ctx.addOsc(type: .triangle, freq: freq * 2,   start: nd, attackTime: 0.01, peakAmp: 0.10 * 0.88, decayHalf: 0.25)
 			ctx.addOsc(type: .sine,     freq: freq * 0.5, start: nd, attackTime: 0.01, peakAmp: 0.12 * 0.88, decayHalf: 0.25)
 		}
-		play(ctx.toBuffer())
+		play(buffer(for: .roundEnd) { ctx.toBuffer() })
 	}
 
 	func playTickSound(secondsLeft: Int) {
+		play(buffer(for: .tick(secondsLeft: secondsLeft)) {
+			makeTickBuffer(secondsLeft: secondsLeft)
+		})
+	}
+
+	private func makeTickBuffer(secondsLeft: Int) -> AVAudioPCMBuffer? {
 		let freq = 600.0 + Double(10 - secondsLeft) * 66.0
 		let amplitude = secondsLeft <= 3 ? 0.55 : 0.38
 		let duration = 0.15
@@ -164,7 +211,7 @@ final class AudioEngine {
 		if secondsLeft <= 3 {
 			ctx.addOsc(type: .sine, freq: freq * 2, start: 0, attackTime: 0.001, peakAmp: 0.18, decayHalf: 0.035)
 		}
-		play(ctx.toBuffer())
+		return ctx.toBuffer()
 	}
 
 	func startPowerUpChimes(duration: Double) {
@@ -239,6 +286,25 @@ final class AudioEngine {
 		}
 		player.play()
 	}
+
+	private func buffer(for key: SoundKey, make: () -> AVAudioPCMBuffer?) -> AVAudioPCMBuffer? {
+		if let cached = bufferCache[key] { return cached }
+		let rendered = make()
+		bufferCache[key] = rendered
+		return rendered
+	}
+}
+
+private enum SoundKey: Hashable {
+	case select(noteIndex: Int, sparkleLevel: Int)
+	case word(size: Int)
+	case invalid
+	case bonus
+	case connected(noteCount: Int)
+	case chain(streak: Int)
+	case roundStart(shape: String)
+	case roundEnd
+	case tick(secondsLeft: Int)
 }
 
 // MARK: - Synthesis primitives
@@ -323,14 +389,31 @@ private struct SynthContext {
 
 	func toBuffer() -> AVAudioPCMBuffer? {
 		guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false) else { return nil }
-		let frameCount = UInt32(samples.count)
+		var rendered = samples
+		applyOutputPolish(to: &rendered)
+		let frameCount = UInt32(rendered.count)
 		guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return nil }
 		buffer.frameLength = frameCount
 		guard let channelData = buffer.floatChannelData?[0] else { return nil }
-		samples.withUnsafeBufferPointer { ptr in
-			channelData.update(from: ptr.baseAddress!, count: samples.count)
+		rendered.withUnsafeBufferPointer { ptr in
+			guard let baseAddress = ptr.baseAddress else { return }
+			channelData.update(from: baseAddress, count: rendered.count)
 		}
 		return buffer
 	}
-}
 
+	private func applyOutputPolish(to rendered: inout [Float]) {
+		guard !rendered.isEmpty else { return }
+		let fadeSamples = min(rendered.count, Int(sampleRate * 0.012))
+		if fadeSamples > 1 {
+			let start = rendered.count - fadeSamples
+			for i in 0..<fadeSamples {
+				let gain = Float(fadeSamples - i) / Float(fadeSamples)
+				rendered[start + i] *= gain
+			}
+		}
+		for i in rendered.indices {
+			rendered[i] = Float(tanh(Double(rendered[i] * 0.9)))
+		}
+	}
+}
