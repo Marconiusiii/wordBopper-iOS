@@ -11,6 +11,7 @@ final class AudioEngine {
 	private var powerUpTimer: Timer?
 	private var powerUpStartedAt: Date?
 	private var powerUpDuration: Double = 15
+	private var powerUpChimeStep = 0
 
 	// MARK: - Init
 
@@ -184,15 +185,18 @@ final class AudioEngine {
 		stopPowerUpChimes()
 		powerUpStartedAt = Date()
 		powerUpDuration = duration
-		playPowerUpChime(progress: 0)
-		powerUpTimer = Timer.scheduledTimer(withTimeInterval: 1.2, repeats: true) { [weak self] _ in
+		powerUpChimeStep = 0
+		playPowerUpChime(progress: 0, step: powerUpChimeStep)
+		powerUpChimeStep += 1
+		powerUpTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
 			guard let self, let start = self.powerUpStartedAt else { return }
 			let elapsed = Date().timeIntervalSince(start)
 			if elapsed >= self.powerUpDuration {
 				self.stopPowerUpChimes()
 				return
 			}
-			self.playPowerUpChime(progress: elapsed / self.powerUpDuration)
+			self.playPowerUpChime(progress: elapsed / self.powerUpDuration, step: self.powerUpChimeStep)
+			self.powerUpChimeStep += 1
 		}
 	}
 
@@ -200,6 +204,7 @@ final class AudioEngine {
 		powerUpTimer?.invalidate()
 		powerUpTimer = nil
 		powerUpStartedAt = nil
+		powerUpChimeStep = 0
 	}
 
 	// MARK: - Private helpers
@@ -224,9 +229,10 @@ final class AudioEngine {
 		}
 	}
 
-	private func playPowerUpChime(progress: Double) {
-		let powerUpNotes: [Double] = [1046.50, 987.77, 880.00, 783.99, 698.46, 659.25, 587.33, 523.25]
-		let startIndex = min(Int(progress * 4), powerUpNotes.count - 3)
+	private func playPowerUpChime(progress: Double, step: Int) {
+		let powerUpNotes: [Double] = [2093.00, 1975.53, 1760.00, 1567.98, 1396.91, 1318.51, 1174.66,
+									  1046.50, 987.77, 880.00, 783.99, 698.46, 659.25, 587.33, 523.25]
+		let startIndex = min(step, powerUpNotes.count - 3)
 		let level = max(0.012, 0.032 * (1 - progress))
 
 		var indices = [startIndex, startIndex + 1, startIndex + 2]

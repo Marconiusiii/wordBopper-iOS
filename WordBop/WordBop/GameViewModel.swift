@@ -392,10 +392,12 @@ final class GameViewModel {
 	}
 
 	private func updateBestGame() {
-		let longest = madeWords.max(by: { $0.count < $1.count }) ?? ""
+		let longest = madeWords.reduce("") { current, word in
+			word.count >= current.count ? word : current
+		}
 		var changed = false
 		if score > bestGame.highestScore { bestGame.highestScore = score; changed = true }
-		if longest.count > bestGame.longestWord.count { bestGame.longestWord = longest; changed = true }
+		if !longest.isEmpty, longest.count >= bestGame.longestWord.count { bestGame.longestWord = longest; changed = true }
 		if wordCount > bestGame.mostWords { bestGame.mostWords = wordCount; changed = true }
 		if largestLetterChain > bestGame.largestLetterChain { bestGame.largestLetterChain = largestLetterChain; changed = true }
 		if changed { saveBestGame() }
