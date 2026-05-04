@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
 	@Environment(GameViewModel.self) private var vm
-	@Environment(\.accessibilityReduceMotion) private var reduceMotion
 
 	var body: some View {
 		ZStack {
@@ -11,16 +10,12 @@ struct ContentView: View {
 			switch vm.screen {
 			case .start:
 				StartView()
-					.transition(.opacity)
 			case .game:
 				GameView()
-					.transition(.opacity)
 			case .results:
 				ResultsView()
-					.transition(.opacity)
-				}
 			}
-			.animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: vm.screen)
-			.preferredColorScheme(.dark)
 		}
+		.preferredColorScheme(.dark)
 	}
+}

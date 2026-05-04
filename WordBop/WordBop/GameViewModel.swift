@@ -129,7 +129,6 @@ final class GameViewModel {
 		screen = .game
 		audio.playRoundStartSound()
 		startTimer()
-		postScreenChange("Game started. 25 letter bubbles are ready. Tap 3 or more letters to build words.")
 	}
 
 	func endGame() {
@@ -146,12 +145,10 @@ final class GameViewModel {
 	private func showResults() {
 		updateBestGame()
 		screen = .results
-		postScreenChange("Round complete. You scored \(score) points with \(wordCount) words.")
 	}
 
 	func goHome() {
 		screen = .start
-		postScreenChange("WordBop home screen.")
 	}
 
 	// MARK: - Bubble interaction
@@ -338,13 +335,6 @@ final class GameViewModel {
 	func announce(_ message: String) {
 		DispatchQueue.main.async {
 			UIAccessibility.post(notification: .announcement, argument: message)
-		}
-	}
-
-	// For full screen transitions — tells VoiceOver the entire screen has changed
-	private func postScreenChange(_ message: String) {
-		DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-			UIAccessibility.post(notification: .screenChanged, argument: message)
 		}
 	}
 
