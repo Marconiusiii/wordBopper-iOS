@@ -55,12 +55,18 @@ struct StartView: View {
 
 				BestGameCard(bestGame: vm.bestGame)
 
-				Text("© 2026 Chancey Fleet and Marco Salsiccia")
-					.font(.footnote)
-					.foregroundStyle(Color.wbMuted)
-					.multilineTextAlignment(.center)
-					.frame(maxWidth: .infinity)
-					.padding(.top, 4)
+				VStack(spacing: 6) {
+					Text("© 2026 Chancey Fleet and Marco Salsiccia")
+						.font(.footnote)
+						.foregroundStyle(Color.wbMuted)
+						.multilineTextAlignment(.center)
+						.frame(maxWidth: .infinity)
+
+					Link("Privacy Policy", destination: URL(string: "https://marconius.com/wbPrivacy/")!)
+						.font(.footnote.weight(.semibold))
+						.foregroundStyle(Color.wbAccent5)
+				}
+				.padding(.top, 4)
 			}
 			.padding(.horizontal, 20)
 			.padding(.vertical, 24)
