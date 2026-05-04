@@ -1,8 +1,8 @@
 import SwiftUI
+import UIKit
 
 struct StartView: View {
 	@Environment(GameViewModel.self) private var vm
-	let titleFocus: AccessibilityFocusState<ScreenTitleFocus?>.Binding
 
 	var body: some View {
 		ScrollView {
@@ -11,7 +11,6 @@ struct StartView: View {
 					.font(.largeTitle.weight(.black))
 					.foregroundStyle(Color.wbText)
 					.accessibilityAddTraits(.isHeader)
-					.accessibilityFocused(titleFocus, equals: .home)
 					.accessibilitySortPriority(100)
 
 				VStack(alignment: .leading, spacing: 6) {
@@ -61,10 +60,14 @@ struct StartView: View {
 						.foregroundStyle(Color.wbMuted)
 						.multilineTextAlignment(.center)
 						.frame(maxWidth: .infinity)
-
 					Link("Privacy Policy", destination: URL(string: "https://marconius.com/wbPrivacy/")!)
 						.font(.footnote.weight(.semibold))
 						.foregroundStyle(Color.wbAccent5)
+						.underline()
+						.accessibilityAddTraits(.isLink)
+						.accessibilityRemoveTraits(.isButton)
+						.accessibilityHint("Opens in external browser")
+
 				}
 				.padding(.top, 4)
 			}
@@ -72,7 +75,7 @@ struct StartView: View {
 			.padding(.vertical, 24)
 		}
 		.onAppear {
-			titleFocus.wrappedValue = .home
+			UIAccessibility.post(notification: .screenChanged, argument: "WordBop")
 		}
 	}
 }

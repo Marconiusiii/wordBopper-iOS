@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
 	@Environment(GameViewModel.self) private var vm
-	@AccessibilityFocusState private var focusedTitle: ScreenTitleFocus?
 
 	var body: some View {
 		ZStack {
@@ -10,33 +9,13 @@ struct ContentView: View {
 
 			switch vm.screen {
 			case .start:
-				StartView(titleFocus: $focusedTitle)
+				StartView()
 			case .game:
-				GameView(titleFocus: $focusedTitle)
+				GameView()
 			case .results:
-				ResultsView(titleFocus: $focusedTitle)
+				ResultsView()
 			}
 		}
 		.preferredColorScheme(.dark)
-		.onChange(of: vm.screen) { _, screen in
-			focusedTitle = ScreenTitleFocus(screen)
-		}
-	}
-}
-
-enum ScreenTitleFocus: Hashable {
-	case home
-	case gameplay
-	case results
-
-	init(_ screen: GameScreen) {
-		switch screen {
-		case .start:
-			self = .home
-		case .game:
-			self = .gameplay
-		case .results:
-			self = .results
-		}
 	}
 }

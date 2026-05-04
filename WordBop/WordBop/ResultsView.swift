@@ -1,8 +1,8 @@
 import SwiftUI
+import UIKit
 
 struct ResultsView: View {
 	@Environment(GameViewModel.self) private var vm
-	let titleFocus: AccessibilityFocusState<ScreenTitleFocus?>.Binding
 
 	var body: some View {
 		ScrollView {
@@ -11,7 +11,6 @@ struct ResultsView: View {
 					.font(.title2.weight(.black))
 					.foregroundStyle(Color.wbText)
 					.accessibilityAddTraits(.isHeader)
-					.accessibilityFocused(titleFocus, equals: .results)
 					.accessibilitySortPriority(100)
 
 				VStack(spacing: 2) {
@@ -91,7 +90,7 @@ struct ResultsView: View {
 			.padding(.vertical, 24)
 		}
 		.onAppear {
-			titleFocus.wrappedValue = .results
+			UIAccessibility.post(notification: .screenChanged, argument: "Round Complete")
 		}
 	}
 

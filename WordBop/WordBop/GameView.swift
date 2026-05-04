@@ -1,9 +1,9 @@
 import SwiftUI
+import UIKit
 
 struct GameView: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
-	let titleFocus: AccessibilityFocusState<ScreenTitleFocus?>.Binding
 
 	var body: some View {
 		GeometryReader { geo in
@@ -20,7 +20,6 @@ struct GameView: View {
 					.padding(.bottom, 6)
 					.background(Color.wbSurface)
 					.accessibilityAddTraits(.isHeader)
-					.accessibilityFocused(titleFocus, equals: .gameplay)
 					.accessibilitySortPriority(100)
 
 				GameHeaderBar()
@@ -39,7 +38,7 @@ struct GameView: View {
 			.ignoresSafeArea(edges: .bottom)
 		}
 		.onAppear {
-			titleFocus.wrappedValue = .gameplay
+			UIAccessibility.post(notification: .screenChanged, argument: vm.gameplayHeading)
 		}
 	}
 
