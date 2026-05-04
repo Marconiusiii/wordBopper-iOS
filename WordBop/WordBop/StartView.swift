@@ -13,11 +13,6 @@ struct StartView: View {
 					.accessibilityAddTraits(.isHeader)
 					.accessibilityFocused(titleFocus, equals: .home)
 
-				Text("Created by Chancey Fleet and Marco Salsiccia")
-					.font(.callout)
-					.foregroundStyle(Color.wbMuted)
-					.multilineTextAlignment(.center)
-
 				VStack(alignment: .leading, spacing: 6) {
 					Text("How to play")
 						.font(.headline.weight(.black))
@@ -64,6 +59,13 @@ struct StartView: View {
 				}
 
 				BestGameCard(bestGame: vm.bestGame)
+
+				Text("© 2026 Chancey Fleet and Marco Salsiccia")
+					.font(.footnote)
+					.foregroundStyle(Color.wbMuted)
+					.multilineTextAlignment(.center)
+					.frame(maxWidth: .infinity)
+					.padding(.top, 4)
 			}
 			.padding(.horizontal, 20)
 			.padding(.vertical, 24)

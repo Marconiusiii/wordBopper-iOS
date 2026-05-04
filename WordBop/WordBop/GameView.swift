@@ -28,8 +28,8 @@ struct GameView: View {
 
 				BubbleGridView(cellSize: cellSize)
 					.frame(maxWidth: .infinity)
-					.padding(.horizontal, 8)
-					.padding(.vertical, 8)
+					.padding(.horizontal, 4)
+					.padding(.vertical, 6)
 
 				ActionBar()
 			}
@@ -38,11 +38,11 @@ struct GameView: View {
 	}
 
 	private func cellSize(in width: CGFloat, height: CGFloat) -> CGFloat {
-		let actionBarHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 198 : 88
+		let actionBarHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 224 : 96
 		let reservedHeight: CGFloat = 47 + 56 + 36 + 56 + actionBarHeight + 16
 		let availableHeight = height - reservedHeight
-		let fromHeight = (availableHeight - 6 * 4) / 5
-		let fromWidth  = (width - 16 - 6 * 4) / 5
+		let fromHeight = availableHeight / 5
+		let fromWidth  = (width - 8) / 5
 		let minimumSize: CGFloat = dynamicTypeSize.isAccessibilitySize ? 48 : 44
 		return max(minimumSize, min(fromHeight, fromWidth, 72))
 	}
@@ -209,11 +209,19 @@ private struct ActionBar: View {
 		Group {
 			if dynamicTypeSize.isAccessibilitySize {
 				VStack(spacing: 10) {
-					actionButtons
+					makeWordButton
+					HStack(spacing: 10) {
+						clearButton
+						endGameButton
+					}
 				}
 			} else {
 				HStack(spacing: 10) {
-					actionButtons
+					clearButton
+						.frame(maxWidth: .infinity)
+					makeWordButton
+						.frame(maxWidth: .infinity)
+					endGameButton
 				}
 			}
 		}
@@ -226,16 +234,19 @@ private struct ActionBar: View {
 		}
 	}
 
-	@ViewBuilder
-	private var actionButtons: some View {
+	private var clearButton: some View {
 		Button("Clear") { vm.clearSelection() }
 			.buttonStyle(SecondaryButtonStyle())
 			.accessibilityLabel("Clear selected letters")
+	}
 
+	private var makeWordButton: some View {
 		Button("Make Word") { vm.makeWord() }
 			.buttonStyle(MakeWordBtnStyle())
 			.disabled(!vm.makeWordEnabled)
+	}
 
+	private var endGameButton: some View {
 		Button("End Game") { vm.endGame() }
 			.buttonStyle(DangerButtonStyle())
 	}
@@ -253,7 +264,7 @@ private struct MakeWordBtnStyle: ButtonStyle {
 			.font(.headline.weight(.black))
 			.foregroundStyle(isEnabled ? Color.black : Color.wbMuted)
 			.frame(maxWidth: .infinity)
-			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 60 : 52)
+			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 72 : 64)
 			.background(
 				isEnabled
 				? LinearGradient(colors: [.wbAccent5, .wbAccent4], startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -273,9 +284,9 @@ private struct SecondaryButtonStyle: ButtonStyle {
 		configuration.label
 			.font(.subheadline.weight(.bold))
 			.foregroundStyle(Color.wbMuted)
-			.frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 104 : 0)
-			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 60 : 52)
-			.padding(.horizontal, 14)
+			.frame(maxWidth: .infinity)
+			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 66 : 60)
+			.padding(.horizontal, 12)
 			.background(Color.wbPanel)
 			.clipShape(RoundedRectangle(cornerRadius: 14))
 			.overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08)))
@@ -292,9 +303,9 @@ private struct DangerButtonStyle: ButtonStyle {
 		configuration.label
 			.font(.subheadline.weight(.bold))
 			.foregroundStyle(Color.wbAccent2)
-			.frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 104 : 0)
-			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 60 : 52)
-			.padding(.horizontal, 14)
+			.frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 112 : 92)
+			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 66 : 52)
+			.padding(.horizontal, 12)
 			.background(Color.wbAccent2.opacity(0.15))
 			.clipShape(RoundedRectangle(cornerRadius: 14))
 			.overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.wbAccent2.opacity(0.25)))
