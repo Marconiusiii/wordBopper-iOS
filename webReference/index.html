@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Home - WordBop</title>
+<meta name="description" content="Bop some letters, make some words, boggle your Mind! An accessible word game for mobile and desktop.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<main id="app">
+
+	<!-- start screen -->
+	<div id="start-screen" class="screen active">
+		<div class="logo-mark" aria-hidden="true">wb</div>
+		<h1 class="game-title" id="gameTitleHeading" tabindex="-1">WordBop</h1>
+		<p>Created by Chancey Fleet and Marco Salsiccia</p>
+		<div class="demo-bubbles" aria-hidden="true">
+			<div class="demo-bubble">w</div>
+			<div class="demo-bubble">o</div>
+			<div class="demo-bubble">r</div>
+			<div class="demo-bubble">d</div>
+			<div class="demo-bubble">s</div>
+		</div>
+
+		<h2 class="instructions-heading">How to play</h2>
+		<ul class="instructions-list">
+			<li>Tap letter bubbles anywhere on the 5x5 grid to build words.</li>
+			<li>If you build a word with connected letters, you get a bonus.</li>
+			<li>Make three connected words in a row to activate a timed 3x bonus.</li>
+			<li>Hit make word to score.</li>
+			<li>Used letters are replaced instantly.</li>
+			<li>Hint: Explore by Touch works the best on mobile!</li>
+			<li>2 minutes on the clock. Go!</li>
+		</ul>
+
+		<button class="btn btn-primary" id="btn-start">
+			Start game
+		</button>
+
+		<div id="best-game">
+			<h2 id="best-game-heading">Your best game</h2>
+			<div id="best-game-stats">
+				<div class="best-game-stat" role="text">
+					<span class="best-game-label">Highest score</span>
+					<span class="best-game-value" id="best-high-score">0</span>
+				</div>
+				<div class="best-game-stat" role="text">
+					<span class="best-game-label">Longest word</span>
+					<span class="best-game-value" id="best-longest-word">None yet</span>
+				</div>
+				<div class="best-game-stat" role="text">
+					<span class="best-game-label">Most words</span>
+					<span class="best-game-value" id="best-most-words">0</span>
+				</div>
+				<div class="best-game-stat" role="text">
+					<span class="best-game-label">Largest letter chain</span>
+					<span class="best-game-value" id="best-largest-chain">0</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- game screen -->
+	<div id="game-screen" class="screen">
+		<h1 id="gameplayHeading" tabindex="-1">Start bopping!</h1>
+
+		<header id="game-header">
+			<div id="timer-wrap" role="text">
+				<span id="timer-label">Time</span>
+				<span id="timer-display">2:00</span>
+			</div>
+
+			<div id="score-wrap" role="text">
+				<span id="score-label">Score</span>
+				<span id="score-display">0</span>
+			</div>
+
+			<div id="words-wrap" role="text">
+				<span id="words-label">Words</span>
+				<span id="words-display">0</span>
+			</div>
+		</header>
+
+		<div id="chain-meter-wrap">
+			<label id="chain-meter-label" for="chain-meter">Chained Words</label>
+			<meter id="chain-meter" min="0" max="3" value="0" aria-valuetext="0 of 3 chains"></meter>
+			<span id="chain-meter-text" aria-hidden="true">0/3</span>
+		</div>
+
+		<!-- Current word being built -->
+		<section id="word-tray-wrap" aria-label="Word Tray">
+			<div id="word-tray-label" aria-hidden="true">Word tray</div>
+			<div id="word-tray" role="text">
+				<span id="word-tray-empty">Your word appears here as you bop letters.</span>
+			</div>
+		</section>
+		<!-- Letter field -->
+		<table id="bubble-table">
+			<caption>Letter bubbles</caption>
+			<tbody id="bubble-field">
+				<!-- Bubbles inserted by JavaScript -->
+			</tbody>
+		</table>
+
+		<!-- Action bar -->
+		<div id="action-bar">
+			<button id="btn-clear" class="btn" aria-label="Clear Selected Letters">Clear</button>
+			<button id="btn-make-word" class="btn" disabled>Make word</button>
+			<button id="btn-end-game" class="btn">End Game</button>
+		</div>
+
+	</div>
+
+	<!-- result screen -->
+	<div id="result-screen" class="screen">
+		<div class="result-header"><h1 id="roundCompleteHeading" tabindex="-1">Round complete</h1></div>
+		<div role="text">
+			<div class="result-score" id="final-score"></div>
+			<div class="result-sub">points</div>
+		</div>
+
+		<div id="result-stats">
+			<div class="result-stat" role="text">
+				<div class="result-stat-value result-stat-word-count" id="final-word-count">0</div>
+				<div class="result-stat-label">Words made</div>
+			</div>
+			<div class="result-stat" role="text">
+				<div class="result-stat-value result-stat-letters-used" id="final-letters-used">0</div>
+				<div class="result-stat-label">Letters used</div>
+			</div>
+			<div class="result-stat" role="text">
+				<div class="result-stat-value result-stat-average" id="final-avg">—</div>
+				<div class="result-stat-label">Average length</div>
+			</div>
+		</div>
+
+		<div id="words-list-wrap">
+			<h2 id="words-list-title">Your words</h2>
+			<ol id="words-list"></ol>
+		</div>
+
+		<button class="btn btn-primary" id="btn-play-again">Play again</button>
+		<button class="btn btn-secondary" id="btn-back-home">Home</button>
+	</div>
+
+
+<!-- Bonus badge -->
+<div id="bonus-badge"></div>
+
+<!-- Success toast -->
+<div id="toast"></div>
+	<div id="game-announcer" aria-live="polite" aria-atomic="true"></div>
+
+</main>
+<footer id="footer" class="footer-panel">
+<nav aria-label="Footer">
+<ul class="footer-links">
+<li><a href="https://marconius.com/">marconius.com</a></li>
+<li><a href="https://marconius.com/fun/audioInvaders/">Audio Invaders</a></li>
+<li><a href="https://marconius.com/fun/audioArcher/" id="audioArcher">Arcane Audio Archer</a></li>
+<li><a href="https://marconius.com/fun/rwit/" id="roll">Roll With It Typing Tutor</a></li>
+<li><a href="https://marconius.com/fun/whackABraille/">Whack A Braille!</a></li>
+<li><a href="https://apps.apple.com/us/app/whack-a-braille/id6760976367">Whack a Braille on iOS</a></li>
+<li><a href="mailto:marco@marconius.com?subject=WordBop%20Feedback">Send Feedback on WordBop</a></li>
+</ul>
+</nav>
+
+<p class="footer-copy small muted">
+&copy;<span id="copyrightYear"></span>
+Chancey Fleet and Marco Salsiccia, v.1.0.1
+</p>
+</footer>
+
+<script src="scripts/config.js" defer></script>
+<script src="scripts/audio.js" defer></script>
+<script src="scripts/dictionary.js" defer></script>
+<script src="scripts/app.js" defer></script>
+</body>
+</html>
