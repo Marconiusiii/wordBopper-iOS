@@ -31,14 +31,16 @@ struct GameView: View {
 					.padding(.horizontal, 4)
 					.padding(.vertical, 6)
 
-				ActionBar()
+				ActionBar(bottomInset: geo.safeAreaInsets.bottom)
+					.frame(maxHeight: .infinity)
 			}
-			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
+			.ignoresSafeArea(edges: .bottom)
 		}
 	}
 
 	private func cellSize(in width: CGFloat, height: CGFloat) -> CGFloat {
-		let actionBarHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 224 : 96
+		let actionBarHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 246 : 112
 		let reservedHeight: CGFloat = 47 + 56 + 36 + 56 + actionBarHeight + 16
 		let availableHeight = height - reservedHeight
 		let fromHeight = availableHeight / 5
@@ -204,30 +206,17 @@ private struct WordTrayBar: View {
 private struct ActionBar: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
+	let bottomInset: CGFloat
 
 	var body: some View {
-		Group {
-			if dynamicTypeSize.isAccessibilitySize {
-				VStack(spacing: 10) {
-					makeWordButton
-					HStack(spacing: 10) {
-						clearButton
-						endGameButton
-					}
-				}
-			} else {
-				HStack(spacing: 10) {
-					clearButton
-						.frame(maxWidth: .infinity)
-					makeWordButton
-						.frame(maxWidth: .infinity)
-					endGameButton
-				}
+		ZStack {
+			HStack(spacing: 0) {
+				clearButton
+				makeWordButton
+				endGameButton
 			}
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
 		}
-		.padding(.horizontal, 12)
-		.padding(.top, 10)
-		.padding(.bottom, 18)
 		.background(Color.wbSurface)
 		.overlay(alignment: .top) {
 			Divider().background(Color.white.opacity(0.07))
@@ -235,53 +224,56 @@ private struct ActionBar: View {
 	}
 
 	private var clearButton: some View {
-		Button("Clear") { vm.clearSelection() }
-			.buttonStyle(SecondaryButtonStyle())
-			.accessibilityLabel("Clear selected letters")
+		Button { vm.clearSelection() } label: {
+			ButtonZone(bottomInset: bottomInset) {
+				secondaryButtonVisual("Clear")
+			}
+		}
+		.buttonStyle(.plain)
+		.frame(maxWidth: .infinity, maxHeight: .infinity)
+		.contentShape(Rectangle())
+		.accessibilityLabel("Clear selected letters")
 	}
 
 	private var makeWordButton: some View {
-		Button("Make Word") { vm.makeWord() }
-			.buttonStyle(MakeWordBtnStyle())
-			.disabled(!vm.makeWordEnabled)
+		Button { vm.makeWord() } label: {
+			ButtonZone(bottomInset: bottomInset) {
+				makeWordButtonVisual("Make Word", enabled: vm.makeWordEnabled)
+			}
+		}
+		.buttonStyle(.plain)
+		.disabled(!vm.makeWordEnabled)
+		.frame(maxWidth: .infinity, maxHeight: .infinity)
+		.contentShape(Rectangle())
 	}
 
 	private var endGameButton: some View {
-		Button("End Game") { vm.endGame() }
-			.buttonStyle(DangerButtonStyle())
+		Button { vm.endGame() } label: {
+			ButtonZone(bottomInset: bottomInset) {
+				dangerButtonVisual("End Game")
+			}
+		}
+		.buttonStyle(.plain)
+		.frame(maxWidth: .infinity, maxHeight: .infinity)
+		.contentShape(Rectangle())
 	}
-}
 
-// MARK: - Button styles
-
-private struct MakeWordBtnStyle: ButtonStyle {
-	@Environment(\.isEnabled) private var isEnabled
-	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
-	@Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-	func makeBody(configuration: Configuration) -> some View {
-		configuration.label
+	private func makeWordButtonVisual(_ title: String, enabled: Bool) -> some View {
+		Text(title)
 			.font(.headline.weight(.black))
-			.foregroundStyle(isEnabled ? Color.black : Color.wbMuted)
+			.foregroundStyle(enabled ? Color.black : Color.wbMuted)
 			.frame(maxWidth: .infinity)
 			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 72 : 64)
 			.background(
-				isEnabled
+				enabled
 				? LinearGradient(colors: [.wbAccent5, .wbAccent4], startPoint: .topLeading, endPoint: .bottomTrailing)
 				: LinearGradient(colors: [.wbPanel, .wbPanel], startPoint: .topLeading, endPoint: .bottomTrailing)
 			)
 			.clipShape(RoundedRectangle(cornerRadius: 14))
-			.scaleEffect(reduceMotion ? 1.0 : (configuration.isPressed ? 0.95 : 1.0))
-			.animation(reduceMotion ? nil : .easeInOut(duration: 0.1), value: configuration.isPressed)
 	}
-}
 
-private struct SecondaryButtonStyle: ButtonStyle {
-	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
-	@Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-	func makeBody(configuration: Configuration) -> some View {
-		configuration.label
+	private func secondaryButtonVisual(_ title: String) -> some View {
+		Text(title)
 			.font(.subheadline.weight(.bold))
 			.foregroundStyle(Color.wbMuted)
 			.frame(maxWidth: .infinity)
@@ -290,17 +282,10 @@ private struct SecondaryButtonStyle: ButtonStyle {
 			.background(Color.wbPanel)
 			.clipShape(RoundedRectangle(cornerRadius: 14))
 			.overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08)))
-			.scaleEffect(reduceMotion ? 1.0 : (configuration.isPressed ? 0.95 : 1.0))
-			.animation(reduceMotion ? nil : .easeInOut(duration: 0.1), value: configuration.isPressed)
 	}
-}
 
-private struct DangerButtonStyle: ButtonStyle {
-	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
-	@Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-	func makeBody(configuration: Configuration) -> some View {
-		configuration.label
+	private func dangerButtonVisual(_ title: String) -> some View {
+		Text(title)
 			.font(.subheadline.weight(.bold))
 			.foregroundStyle(Color.wbAccent2)
 			.frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 112 : 92)
@@ -309,7 +294,26 @@ private struct DangerButtonStyle: ButtonStyle {
 			.background(Color.wbAccent2.opacity(0.15))
 			.clipShape(RoundedRectangle(cornerRadius: 14))
 			.overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.wbAccent2.opacity(0.25)))
-			.scaleEffect(reduceMotion ? 1.0 : (configuration.isPressed ? 0.95 : 1.0))
-			.animation(reduceMotion ? nil : .easeInOut(duration: 0.1), value: configuration.isPressed)
+	}
+}
+
+private struct ButtonZone<Content: View>: View {
+	let bottomInset: CGFloat
+	let content: Content
+
+	init(bottomInset: CGFloat, @ViewBuilder content: () -> Content) {
+		self.bottomInset = bottomInset
+		self.content = content()
+	}
+
+	var body: some View {
+		ZStack(alignment: .bottom) {
+			Color.clear
+			content
+				.padding(.horizontal, 5)
+				.padding(.bottom, bottomInset)
+		}
+		.frame(maxWidth: .infinity, maxHeight: .infinity)
+		.contentShape(Rectangle())
 	}
 }
