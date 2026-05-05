@@ -45,19 +45,21 @@ struct ResultsView: View {
 							.font(.callout)
 							.foregroundStyle(Color.wbMuted)
 						} else {
-							LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+							VStack(spacing: 8) {
 								ForEach(Array(vm.madeWords.enumerated()), id: \.offset) { _, word in
 									Text(word)
 										.font(.system(.callout, design: .monospaced).weight(.bold))
 										.foregroundStyle(Color.wbText)
 										.padding(.vertical, 5)
 										.padding(.horizontal, 10)
-									.frame(maxWidth: .infinity)
-									.background(Color.wbPanel)
-									.clipShape(RoundedRectangle(cornerRadius: 12))
-									.overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.08)))
+										.frame(maxWidth: .infinity)
+										.background(Color.wbPanel)
+										.clipShape(RoundedRectangle(cornerRadius: 12))
+										.overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.08)))
+										.accessibilityElement(children: .ignore)
+										.accessibilityLabel(word)
+								}
 							}
-						}
 					}
 				}
 				.padding(16)
@@ -76,6 +78,7 @@ struct ResultsView: View {
 									   startPoint: .topLeading, endPoint: .bottomTrailing)
 					)
 					.clipShape(Capsule())
+					.keyboardShortcut(.defaultAction)
 
 				Button("Home") { vm.goHome() }
 					.font(.subheadline.weight(.bold))
@@ -85,6 +88,7 @@ struct ResultsView: View {
 					.background(Color.wbPanel)
 					.clipShape(Capsule())
 					.overlay(Capsule().stroke(Color.white.opacity(0.08)))
+					.keyboardShortcut(.cancelAction)
 			}
 			.padding(.horizontal, 20)
 			.padding(.vertical, 24)

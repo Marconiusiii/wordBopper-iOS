@@ -232,6 +232,7 @@ private struct ActionBar: View {
 			}
 		}
 		.buttonStyle(.plain)
+		.keyboardShortcut(.cancelAction)
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 		.contentShape(Rectangle())
 		.accessibilityLabel("Clear selected letters")
@@ -245,6 +246,7 @@ private struct ActionBar: View {
 		}
 		.buttonStyle(.plain)
 		.disabled(!vm.makeWordEnabled)
+		.keyboardShortcut(.defaultAction)
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 		.contentShape(Rectangle())
 	}
@@ -256,6 +258,7 @@ private struct ActionBar: View {
 			}
 		}
 		.buttonStyle(.plain)
+		.keyboardShortcut(".", modifiers: .command)
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 		.contentShape(Rectangle())
 	}

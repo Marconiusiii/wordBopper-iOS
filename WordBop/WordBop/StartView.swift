@@ -53,6 +53,7 @@ struct StartView: View {
 							)
 							.clipShape(Capsule())
 					}
+					.keyboardShortcut(.defaultAction)
 
 					BestGameCard(bestGame: vm.bestGame)
 
@@ -157,11 +158,16 @@ private struct BestGameCard: View {
 				.foregroundStyle(Color.wbText)
 				.accessibilityAddTraits(.isHeader)
 
-			LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-				BestStat(label: "Highest score",  value: "\(bestGame.highestScore)")
-				BestStat(label: "Longest word",   value: bestGame.longestWord.isEmpty ? "None yet" : bestGame.longestWord)
-				BestStat(label: "Most words",     value: "\(bestGame.mostWords)")
-				BestStat(label: "Largest chain",  value: "\(bestGame.largestLetterChain)")
+			VStack(spacing: 10) {
+				HStack(spacing: 10) {
+					BestStat(label: "Highest score", value: "\(bestGame.highestScore)")
+					BestStat(label: "Longest word", value: bestGame.longestWord.isEmpty ? "None yet" : bestGame.longestWord)
+				}
+
+				HStack(spacing: 10) {
+					BestStat(label: "Most words", value: "\(bestGame.mostWords)")
+					BestStat(label: "Largest chain", value: "\(bestGame.largestLetterChain)")
+				}
 			}
 		}
 		.padding(14)
