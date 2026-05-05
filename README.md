@@ -16,7 +16,6 @@ Connected words earn bonus points. Make enough connected words in a row and you 
 - 3 times scoring boost
 - Best-game tracking for score, longest word, word count, and largest chain
 - Original game sounds
-- Privacy-friendly local play
 
 ## Accessibility
 
