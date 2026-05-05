@@ -3,80 +3,147 @@ import UIKit
 
 struct StartView: View {
 	@Environment(GameViewModel.self) private var vm
+	@State private var showingAbout = false
 
 	var body: some View {
-		ScrollView {
-			VStack(spacing: 20) {
-				Text("WordBop")
-					.font(.largeTitle.weight(.black))
-					.foregroundStyle(Color.wbText)
-					.accessibilityAddTraits(.isHeader)
-					.accessibilitySortPriority(100)
+		GeometryReader { geo in
+			ScrollView {
+				VStack(spacing: 20) {
+					Text("WordBopper")
+						.font(.largeTitle.weight(.black))
+						.foregroundStyle(Color.wbText)
+						.accessibilityAddTraits(.isHeader)
+						.accessibilitySortPriority(100)
 
-				VStack(alignment: .leading, spacing: 6) {
-					let instructions = [
-						"Tap letter bubbles anywhere on the 5 by 5 grid to build words.",
-						"If you build a word with connected letters, you get a bonus.",
-						"Make three connected words in a row to activate a timed 3 times bonus.",
-						"Hit Make Word to score.",
-						"Used letters are replaced instantly.",
-						"2 minutes on the clock. Go!"
-					]
-					ForEach(instructions, id: \.self) { item in
-						HStack(alignment: .top, spacing: 8) {
-							Text("•")
-								.foregroundStyle(Color.wbAccent5)
-								.accessibilityHidden(true)
-							Text(item)
-								.font(.body)
-								.foregroundStyle(Color.wbText)
-								.fixedSize(horizontal: false, vertical: true)
+					VStack(alignment: .leading, spacing: 6) {
+						let instructions = [
+							"Tap letter bubbles anywhere on the 5 by 5 grid to build words.",
+							"If you build a word with connected letters, you get a bonus.",
+							"Make three connected words in a row to activate a timed 3 times bonus.",
+							"Hit Make Word to score.",
+							"Used letters are replaced instantly.",
+							"2 minutes on the clock. Go!"
+						]
+						ForEach(instructions, id: \.self) { item in
+							HStack(alignment: .top, spacing: 8) {
+								Text("•")
+									.foregroundStyle(Color.wbAccent5)
+									.accessibilityHidden(true)
+								Text(item)
+									.font(.body)
+									.foregroundStyle(Color.wbText)
+									.fixedSize(horizontal: false, vertical: true)
+							}
 						}
 					}
+					.frame(maxWidth: .infinity, alignment: .leading)
+					.padding(.horizontal, 4)
+
+					Button {
+						vm.startGame()
+					} label: {
+						Text("Start Game")
+							.font(.title3.weight(.black))
+							.foregroundStyle(Color.black)
+							.frame(maxWidth: .infinity)
+							.padding(.vertical, 16)
+							.background(
+								LinearGradient(colors: [.wbAccent1, .wbAccent2],
+											   startPoint: .topLeading, endPoint: .bottomTrailing)
+							)
+							.clipShape(Capsule())
+					}
+
+					BestGameCard(bestGame: vm.bestGame)
+
+					aboutButton
 				}
-				.frame(maxWidth: .infinity, alignment: .leading)
-				.padding(.horizontal, 4)
+				.frame(maxWidth: .infinity)
+				.frame(minHeight: geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom, alignment: .top)
+				.padding(.horizontal, 20)
+				.padding(.top, 24)
+			}
+		}
+		.onAppear {
+			UIAccessibility.post(notification: .screenChanged, argument: "WordBopper")
+		}
+		.sheet(isPresented: $showingAbout) {
+			AboutWordBopperSheet()
+				.presentationDragIndicator(.hidden)
+		}
+	}
 
-				Button {
-					vm.startGame()
-				} label: {
-					Text("Start Game")
-						.font(.title3.weight(.black))
-						.foregroundStyle(Color.black)
-						.frame(maxWidth: .infinity)
-						.padding(.vertical, 16)
-						.background(
-							LinearGradient(colors: [.wbAccent1, .wbAccent2],
-										   startPoint: .topLeading, endPoint: .bottomTrailing)
-						)
-						.clipShape(Capsule())
-				}
+	private var aboutButton: some View {
+		Button {
+			showingAbout = true
+		} label: {
+			VStack(spacing: 0) {
+				Spacer(minLength: 0)
+				Text("About WordBopper")
+					.font(.footnote.weight(.semibold))
+					.foregroundStyle(Color.wbAccent5)
+					.underline()
+					.padding(.bottom, 24)
+			}
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
+			.contentShape(Rectangle())
+		}
+		.buttonStyle(.plain)
+		.frame(maxWidth: .infinity, maxHeight: .infinity)
+		.contentShape(Rectangle())
+	}
+}
 
-				BestGameCard(bestGame: vm.bestGame)
+private struct AboutWordBopperSheet: View {
+	@Environment(\.dismiss) private var dismiss
 
-				VStack(spacing: 6) {
-					Text("© 2026 Chancey Fleet and Marco Salsiccia")
-						.font(.footnote)
-						.foregroundStyle(Color.wbMuted)
-						.multilineTextAlignment(.center)
-						.frame(maxWidth: .infinity)
+	var body: some View {
+		NavigationStack {
+			VStack(spacing: 18) {
+				Text("About WordBopper")
+					.font(.title2.weight(.black))
+					.foregroundStyle(Color.wbText)
+					.accessibilityAddTraits(.isHeader)
+
+				Text("By Chancey Fleet and Marco Salsiccia")
+					.font(.body)
+					.foregroundStyle(Color.wbText)
+					.multilineTextAlignment(.center)
+
+				VStack(spacing: 8) {
+					Text("© 2026, \(versionText)")
 					Link("Privacy Policy", destination: URL(string: "https://marconius.com/wbPrivacy/")!)
-						.font(.footnote.weight(.semibold))
-						.foregroundStyle(Color.wbAccent5)
 						.underline()
 						.accessibilityAddTraits(.isLink)
 						.accessibilityRemoveTraits(.isButton)
 						.accessibilityHint("Opens in external browser")
-
 				}
-				.padding(.top, 4)
+				.font(.footnote.weight(.semibold))
+				.foregroundStyle(Color.wbMuted)
+				.multilineTextAlignment(.center)
+
+				Spacer(minLength: 0)
 			}
-			.padding(.horizontal, 20)
-			.padding(.vertical, 24)
+			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+			.padding(.horizontal, 24)
+			.padding(.top, 36)
+			.padding(.bottom, 24)
+			.background(Color.wbBackground)
+			.toolbar {
+				ToolbarItem(placement: .topBarTrailing) {
+					Button("Close") {
+						dismiss()
+					}
+				}
+			}
 		}
-		.onAppear {
-			UIAccessibility.post(notification: .screenChanged, argument: "WordBop")
-		}
+		.preferredColorScheme(.dark)
+	}
+
+	private var versionText: String {
+		let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
+		let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+		return "Version \(version) (\(build))"
 	}
 }
 
