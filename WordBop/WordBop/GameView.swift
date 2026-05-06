@@ -8,7 +8,7 @@ struct GameView: View {
 	var body: some View {
 		GeometryReader { geo in
 			let safeHeight = geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom
-			let cellSize = cellSize(in: geo.size.width, height: safeHeight)
+			let cellSize = cellSize(in: geo.size.width, height: safeHeight, nonStopMode: vm.nonStopMode)
 
 			VStack(spacing: 0) {
 				Text(vm.gameplayHeading)
@@ -22,8 +22,10 @@ struct GameView: View {
 					.accessibilityAddTraits(.isHeader)
 					.accessibilitySortPriority(100)
 
-				GameHeaderBar()
-				ChainMeterBar()
+				if !vm.nonStopMode {
+					GameHeaderBar()
+					ChainMeterBar()
+				}
 				WordTrayBar()
 
 				BubbleGridView(cellSize: cellSize)
@@ -42,9 +44,10 @@ struct GameView: View {
 		}
 	}
 
-	private func cellSize(in width: CGFloat, height: CGFloat) -> CGFloat {
+	private func cellSize(in width: CGFloat, height: CGFloat, nonStopMode: Bool) -> CGFloat {
 		let actionBarHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 246 : 112
-		let reservedHeight: CGFloat = 47 + 56 + 36 + 56 + actionBarHeight + 16
+		let statusBarsHeight: CGFloat = nonStopMode ? 0 : 56 + 36
+		let reservedHeight: CGFloat = 47 + statusBarsHeight + 56 + actionBarHeight + 16
 		let availableHeight = height - reservedHeight
 		let fromHeight = availableHeight / 5
 		let fromWidth  = (width - 8) / 5

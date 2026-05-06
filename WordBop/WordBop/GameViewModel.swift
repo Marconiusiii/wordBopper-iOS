@@ -50,6 +50,9 @@ final class GameViewModel {
 	var screen: GameScreen = .start
 
 	// MARK: - Game state
+	var nonStopMode = false {
+		didSet { saveNonStopMode() }
+	}
 	var bubbles: [Bubble] = []
 	var selected: [SelectedLetter] = []
 	var score = 0
@@ -113,6 +116,7 @@ final class GameViewModel {
 	// MARK: - Init
 	init() {
 		bestGame = loadBestGame()
+		nonStopMode = loadNonStopMode()
 	}
 
 	// MARK: - Game lifecycle
@@ -140,7 +144,7 @@ final class GameViewModel {
 
 		screen = .game
 		audio.playRoundStartSound()
-		startTimer()
+		if !nonStopMode { startTimer() }
 	}
 
 	func endGame() {
@@ -198,9 +202,13 @@ final class GameViewModel {
 		}
 		selected.removeAll()
 		audio.resetSelectSound()
-		secondsLeft = min(secondsLeft + 15, GameViewModel.gameDuration)
-		audio.playBonusSound()
-		announce("Cleared. 15 seconds added.")
+		if nonStopMode {
+			announce("Cleared.")
+		} else {
+			secondsLeft = min(secondsLeft + 15, GameViewModel.gameDuration)
+			audio.playBonusSound()
+			announce("Cleared. 15 seconds added.")
+		}
 	}
 
 	// MARK: - Make word
@@ -218,9 +226,9 @@ final class GameViewModel {
 			return
 		}
 
-		let chainBonus = calcChainBonus()
-		let basePoints = calcScore(word) + chainBonus
-		let multiplier = chainPowerUpActive ? 3 : 1
+		let chainBonus = nonStopMode ? 0 : calcChainBonus()
+		let basePoints = nonStopMode ? 0 : calcScore(word) + chainBonus
+		let multiplier = !nonStopMode && chainPowerUpActive ? 3 : 1
 		let points = basePoints * multiplier
 
 		let scoredIds = selected.map(\.bubbleId)
@@ -229,16 +237,16 @@ final class GameViewModel {
 
 		for id in scoredIds { replaceBubble(id: id) }
 
-		score += points
+		if !nonStopMode { score += points }
 		wordCount += 1
 		totalLettersUsed += word.count
 		madeWords.append(word)
-		if chainBonus > largestLetterChain { largestLetterChain = chainBonus }
+		if !nonStopMode, chainBonus > largestLetterChain { largestLetterChain = chainBonus }
 
 		audio.playWordSound(wordLength: word.count)
 
 		if chainPowerUpActive { stopPowerUp() }
-		let powerUpActivated = updateChainStreak(chainBonus: chainBonus)
+		let powerUpActivated = nonStopMode ? false : updateChainStreak(chainBonus: chainBonus)
 
 		announce(wordAnnouncement(word: word, points: points, chainBonus: chainBonus, multiplier: multiplier, powerUpActivated: powerUpActivated))
 	}
@@ -364,6 +372,7 @@ final class GameViewModel {
 	}
 
 	private func wordAnnouncement(word: String, points: Int, chainBonus: Int, multiplier: Int, powerUpActivated: Bool) -> String {
+		if nonStopMode { return "\(word)." }
 		var parts = ["\(word), \(points) points"]
 		if multiplier > 1 {
 			parts.append("3 times")
@@ -386,6 +395,14 @@ final class GameViewModel {
 		return saved
 	}
 
+	private func loadNonStopMode() -> Bool {
+		UserDefaults.standard.bool(forKey: "wordBopNonStopMode")
+	}
+
+	private func saveNonStopMode() {
+		UserDefaults.standard.set(nonStopMode, forKey: "wordBopNonStopMode")
+	}
+
 	private func saveBestGame() {
 		guard let data = try? JSONEncoder().encode(bestGame) else { return }
 		UserDefaults.standard.set(data, forKey: "wordBopBestGame")
@@ -396,10 +413,10 @@ final class GameViewModel {
 			word.count >= current.count ? word : current
 		}
 		var changed = false
-		if score > bestGame.highestScore { bestGame.highestScore = score; changed = true }
+		if !nonStopMode, score > bestGame.highestScore { bestGame.highestScore = score; changed = true }
 		if !longest.isEmpty, longest.count >= bestGame.longestWord.count { bestGame.longestWord = longest; changed = true }
 		if wordCount > bestGame.mostWords { bestGame.mostWords = wordCount; changed = true }
-		if largestLetterChain > bestGame.largestLetterChain { bestGame.largestLetterChain = largestLetterChain; changed = true }
+		if !nonStopMode, largestLetterChain > bestGame.largestLetterChain { bestGame.largestLetterChain = largestLetterChain; changed = true }
 		if changed { saveBestGame() }
 	}
 }

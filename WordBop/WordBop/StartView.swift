@@ -4,6 +4,7 @@ import UIKit
 struct StartView: View {
 	@Environment(GameViewModel.self) private var vm
 	@State private var showingAbout = false
+	@State private var showingGameSettings = false
 
 	var body: some View {
 		GeometryReader { geo in
@@ -39,6 +40,8 @@ struct StartView: View {
 					.frame(maxWidth: .infinity, alignment: .leading)
 					.padding(.horizontal, 4)
 
+					gameSettingsButton
+
 					Button {
 						vm.startGame()
 					} label: {
@@ -72,6 +75,23 @@ struct StartView: View {
 			AboutWordBopperSheet()
 				.presentationDragIndicator(.hidden)
 		}
+		.sheet(isPresented: $showingGameSettings) {
+			GameSettingsSheet()
+				.presentationDragIndicator(.hidden)
+		}
+	}
+
+	private var gameSettingsButton: some View {
+		Button {
+			showingGameSettings = true
+		} label: {
+			Text("Game Settings")
+				.font(.footnote.weight(.semibold))
+				.foregroundStyle(Color.wbAccent5)
+				.underline()
+				.padding(.vertical, 2)
+		}
+		.buttonStyle(.plain)
 	}
 
 	private var aboutButton: some View {
@@ -92,6 +112,44 @@ struct StartView: View {
 		.buttonStyle(.plain)
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 		.contentShape(Rectangle())
+	}
+}
+
+private struct GameSettingsSheet: View {
+	@Environment(GameViewModel.self) private var vm
+	@Environment(\.dismiss) private var dismiss
+
+	var body: some View {
+		NavigationStack {
+			VStack(spacing: 18) {
+				Text("Game Settings")
+					.font(.title2.weight(.black))
+					.foregroundStyle(Color.wbText)
+					.accessibilityAddTraits(.isHeader)
+
+				Toggle("Non-Stop Mode", isOn: Binding(
+					get: { vm.nonStopMode },
+					set: { vm.nonStopMode = $0 }
+				))
+					.font(.body)
+					.foregroundStyle(Color.wbText)
+				Text("Play without the timer, score, or chain bonuses. The game keeps tracking your words, letters used, average length, and longest word.") .font(.footnote) .foregroundStyle(Color.wbMuted) .frame(maxWidth: .infinity, alignment: .leading) .fixedSize(horizontal: false, vertical: true)
+				Spacer(minLength: 0)
+			}
+			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+			.padding(.horizontal, 24)
+			.padding(.top, 36)
+			.padding(.bottom, 24)
+			.background(Color.wbBackground)
+			.toolbar {
+				ToolbarItem(placement: .topBarTrailing) {
+					Button("Close") {
+						dismiss()
+					}
+				}
+			}
+		}
+		.preferredColorScheme(.dark)
 	}
 }
 

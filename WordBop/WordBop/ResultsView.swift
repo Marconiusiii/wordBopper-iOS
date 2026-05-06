@@ -13,24 +13,32 @@ struct ResultsView: View {
 					.accessibilityAddTraits(.isHeader)
 					.accessibilitySortPriority(100)
 
-				VStack(spacing: 2) {
-					Text("\(vm.score)")
-						.font(.system(.largeTitle, design: .monospaced).weight(.bold))
-						.foregroundStyle(
-							LinearGradient(colors: [.wbAccent1, .wbAccent3],
-										   startPoint: .topLeading, endPoint: .bottomTrailing)
-						)
-					Text("points")
-						.font(.body)
-						.foregroundStyle(Color.wbMuted)
+				if !vm.nonStopMode {
+					VStack(spacing: 2) {
+						Text("\(vm.score)")
+							.font(.system(.largeTitle, design: .monospaced).weight(.bold))
+							.foregroundStyle(
+								LinearGradient(colors: [.wbAccent1, .wbAccent3],
+											   startPoint: .topLeading, endPoint: .bottomTrailing)
+							)
+						Text("points")
+							.font(.body)
+							.foregroundStyle(Color.wbMuted)
+					}
+					.accessibilityElement(children: .ignore)
+					.accessibilityLabel("\(vm.score) points")
 				}
-				.accessibilityElement(children: .ignore)
-				.accessibilityLabel("\(vm.score) points")
 
-				HStack(spacing: 24) {
-					ResultStat(value: "\(vm.wordCount)",      label: "Words made",    color: .wbAccent4)
-					ResultStat(value: "\(vm.totalLettersUsed)", label: "Letters used", color: .wbAccent5)
-					ResultStat(value: averageLength,          label: "Average length", color: .wbAccent1)
+				VStack(spacing: 10) {
+					HStack(spacing: 16) {
+						ResultStat(value: "\(vm.wordCount)", label: "Words made", color: .wbAccent4)
+						ResultStat(value: "\(vm.totalLettersUsed)", label: "Letters used", color: .wbAccent5)
+					}
+
+					HStack(spacing: 16) {
+						ResultStat(value: averageLength, label: "Average length", color: .wbAccent1)
+						ResultStat(value: longestWord, label: "Longest word", color: .wbAccent3)
+					}
 				}
 				.frame(maxWidth: .infinity)
 
@@ -101,6 +109,10 @@ struct ResultsView: View {
 	private var averageLength: String {
 		guard vm.wordCount > 0 else { return "—" }
 		return String(format: "%.1f", Double(vm.totalLettersUsed) / Double(vm.wordCount))
+	}
+
+	private var longestWord: String {
+		vm.madeWords.max { $0.count < $1.count } ?? "—"
 	}
 }
 
