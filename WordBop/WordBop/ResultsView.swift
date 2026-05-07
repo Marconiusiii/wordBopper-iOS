@@ -13,21 +13,19 @@ struct ResultsView: View {
 					.accessibilityAddTraits(.isHeader)
 					.accessibilitySortPriority(100)
 
-				if !vm.nonStopMode {
-					VStack(spacing: 2) {
-						Text("\(vm.score)")
-							.font(.system(.largeTitle, design: .monospaced).weight(.bold))
-							.foregroundStyle(
-								LinearGradient(colors: [.wbAccent1, .wbAccent3],
-											   startPoint: .topLeading, endPoint: .bottomTrailing)
-							)
-						Text("points")
-							.font(.body)
-							.foregroundStyle(Color.wbMuted)
-					}
-					.accessibilityElement(children: .ignore)
-					.accessibilityLabel("\(vm.score) points")
+				VStack(spacing: 2) {
+					Text("\(vm.score)")
+						.font(.system(.largeTitle, design: .monospaced).weight(.bold))
+						.foregroundStyle(
+							LinearGradient(colors: [.wbAccent1, .wbAccent3],
+										   startPoint: .topLeading, endPoint: .bottomTrailing)
+						)
+					Text("points")
+						.font(.body)
+						.foregroundStyle(Color.wbMuted)
 				}
+				.accessibilityElement(children: .ignore)
+				.accessibilityLabel("\(vm.score) points")
 
 				VStack(spacing: 10) {
 					HStack(spacing: 16) {

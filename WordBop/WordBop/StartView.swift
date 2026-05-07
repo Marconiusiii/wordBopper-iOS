@@ -133,7 +133,13 @@ private struct GameSettingsSheet: View {
 				))
 					.font(.body)
 					.foregroundStyle(Color.wbText)
-				Text("Play without the timer, score, or chain bonuses. The game keeps tracking your words, letters used, average length, and longest word.") .font(.footnote) .foregroundStyle(Color.wbMuted) .frame(maxWidth: .infinity, alignment: .leading) .fixedSize(horizontal: false, vertical: true)
+
+				Text("Play without the timer. Score, chain bonuses, made words, letters used, average length, and longest word are still tracked.")
+					.font(.footnote)
+					.foregroundStyle(Color.wbMuted)
+					.frame(maxWidth: .infinity, alignment: .leading)
+					.fixedSize(horizontal: false, vertical: true)
+
 				Spacer(minLength: 0)
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -216,7 +222,12 @@ private struct BestGameCard: View {
 				.foregroundStyle(Color.wbText)
 				.accessibilityAddTraits(.isHeader)
 
-			VStack(spacing: 10) {
+			VStack(alignment: .leading, spacing: 14) {
+				Text("Timed")
+					.font(.caption.weight(.bold))
+					.foregroundStyle(Color.wbMuted)
+					.accessibilityAddTraits(.isHeader)
+
 				HStack(spacing: 10) {
 					BestStat(label: "Highest score", value: "\(bestGame.highestScore)")
 					BestStat(label: "Longest word", value: bestGame.longestWord.isEmpty ? "None yet" : bestGame.longestWord)
@@ -225,6 +236,16 @@ private struct BestGameCard: View {
 				HStack(spacing: 10) {
 					BestStat(label: "Most words", value: "\(bestGame.mostWords)")
 					BestStat(label: "Largest chain", value: "\(bestGame.largestLetterChain)")
+				}
+
+				Text("Non-Stop")
+					.font(.caption.weight(.bold))
+					.foregroundStyle(Color.wbMuted)
+					.accessibilityAddTraits(.isHeader)
+
+				HStack(spacing: 10) {
+					BestStat(label: "Best score", value: "\(bestGame.highestNonStopScore)")
+					BestStat(label: "Most words", value: "\(bestGame.mostNonStopWords)")
 				}
 			}
 		}

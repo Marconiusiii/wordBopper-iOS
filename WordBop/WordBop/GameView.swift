@@ -8,7 +8,7 @@ struct GameView: View {
 	var body: some View {
 		GeometryReader { geo in
 			let safeHeight = geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom
-			let cellSize = cellSize(in: geo.size.width, height: safeHeight, nonStopMode: vm.nonStopMode)
+			let cellSize = cellSize(in: geo.size.width, height: safeHeight)
 
 			VStack(spacing: 0) {
 				Text(vm.gameplayHeading)
@@ -22,10 +22,8 @@ struct GameView: View {
 					.accessibilityAddTraits(.isHeader)
 					.accessibilitySortPriority(100)
 
-				if !vm.nonStopMode {
-					GameHeaderBar()
-					ChainMeterBar()
-				}
+				GameHeaderBar()
+				ChainMeterBar()
 				WordTrayBar()
 
 				BubbleGridView(cellSize: cellSize)
@@ -44,10 +42,9 @@ struct GameView: View {
 		}
 	}
 
-	private func cellSize(in width: CGFloat, height: CGFloat, nonStopMode: Bool) -> CGFloat {
+	private func cellSize(in width: CGFloat, height: CGFloat) -> CGFloat {
 		let actionBarHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 246 : 112
-		let statusBarsHeight: CGFloat = nonStopMode ? 0 : 56 + 36
-		let reservedHeight: CGFloat = 47 + statusBarsHeight + 56 + actionBarHeight + 16
+		let reservedHeight: CGFloat = 47 + 56 + 36 + 56 + actionBarHeight + 16
 		let availableHeight = height - reservedHeight
 		let fromHeight = availableHeight / 5
 		let fromWidth  = (width - 8) / 5
@@ -63,16 +60,18 @@ private struct GameHeaderBar: View {
 
 	var body: some View {
 		HStack {
-			VStack(alignment: .leading, spacing: 2) {
-				Text("Time")
-					.font(.caption.weight(.bold))
-					.foregroundStyle(Color.wbMuted)
-				Text(vm.formattedTime)
-					.font(.system(.title2, design: .monospaced).weight(.bold))
-					.foregroundStyle(vm.timerIsWarning ? Color.wbAccent2 : Color.wbTimerGreen)
-					.contentTransition(.numericText())
+			if !vm.nonStopMode {
+				VStack(alignment: .leading, spacing: 2) {
+					Text("Time")
+						.font(.caption.weight(.bold))
+						.foregroundStyle(Color.wbMuted)
+					Text(vm.formattedTime)
+						.font(.system(.title2, design: .monospaced).weight(.bold))
+						.foregroundStyle(vm.timerIsWarning ? Color.wbAccent2 : Color.wbTimerGreen)
+						.contentTransition(.numericText())
+				}
+				Spacer()
 			}
-			Spacer()
 			VStack(spacing: 2) {
 				Text("Score")
 					.font(.caption.weight(.bold))
@@ -100,7 +99,12 @@ private struct GameHeaderBar: View {
 			Divider().background(Color.white.opacity(0.06))
 		}
 		.accessibilityElement(children: .ignore)
-		.accessibilityLabel("Time: \(vm.formattedTime), Score: \(vm.score), Words: \(vm.wordCount)")
+		.accessibilityLabel(headerAccessibilityLabel)
+	}
+
+	private var headerAccessibilityLabel: String {
+		if vm.nonStopMode { return "Score: \(vm.score), Words: \(vm.wordCount)" }
+		return "Time: \(vm.formattedTime), Score: \(vm.score), Words: \(vm.wordCount)"
 	}
 }
 

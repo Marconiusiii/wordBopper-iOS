@@ -18,8 +18,10 @@ struct SelectedLetter {
 
 struct BestGame: Codable {
 	var highestScore: Int = 0
+	var highestNonStopScore: Int = 0
 	var longestWord: String = ""
 	var mostWords: Int = 0
+	var mostNonStopWords: Int = 0
 	var largestLetterChain: Int = 0
 }
 
@@ -226,9 +228,9 @@ final class GameViewModel {
 			return
 		}
 
-		let chainBonus = nonStopMode ? 0 : calcChainBonus()
-		let basePoints = nonStopMode ? 0 : calcScore(word) + chainBonus
-		let multiplier = !nonStopMode && chainPowerUpActive ? 3 : 1
+		let chainBonus = calcChainBonus()
+		let basePoints = calcScore(word) + chainBonus
+		let multiplier = chainPowerUpActive ? 3 : 1
 		let points = basePoints * multiplier
 
 		let scoredIds = selected.map(\.bubbleId)
@@ -237,16 +239,16 @@ final class GameViewModel {
 
 		for id in scoredIds { replaceBubble(id: id) }
 
-		if !nonStopMode { score += points }
+		score += points
 		wordCount += 1
 		totalLettersUsed += word.count
 		madeWords.append(word)
-		if !nonStopMode, chainBonus > largestLetterChain { largestLetterChain = chainBonus }
+		if chainBonus > largestLetterChain { largestLetterChain = chainBonus }
 
 		audio.playWordSound(wordLength: word.count)
 
 		if chainPowerUpActive { stopPowerUp() }
-		let powerUpActivated = nonStopMode ? false : updateChainStreak(chainBonus: chainBonus)
+		let powerUpActivated = updateChainStreak(chainBonus: chainBonus)
 
 		announce(wordAnnouncement(word: word, points: points, chainBonus: chainBonus, multiplier: multiplier, powerUpActivated: powerUpActivated))
 	}
@@ -372,7 +374,6 @@ final class GameViewModel {
 	}
 
 	private func wordAnnouncement(word: String, points: Int, chainBonus: Int, multiplier: Int, powerUpActivated: Bool) -> String {
-		if nonStopMode { return "\(word)." }
 		var parts = ["\(word), \(points) points"]
 		if multiplier > 1 {
 			parts.append("3 times")
@@ -413,10 +414,16 @@ final class GameViewModel {
 			word.count >= current.count ? word : current
 		}
 		var changed = false
-		if !nonStopMode, score > bestGame.highestScore { bestGame.highestScore = score; changed = true }
+		if nonStopMode {
+			if score > bestGame.highestNonStopScore { bestGame.highestNonStopScore = score; changed = true }
+			if wordCount > bestGame.mostNonStopWords { bestGame.mostNonStopWords = wordCount; changed = true }
+		} else if score > bestGame.highestScore {
+			bestGame.highestScore = score
+			changed = true
+		}
 		if !longest.isEmpty, longest.count >= bestGame.longestWord.count { bestGame.longestWord = longest; changed = true }
 		if wordCount > bestGame.mostWords { bestGame.mostWords = wordCount; changed = true }
-		if !nonStopMode, largestLetterChain > bestGame.largestLetterChain { bestGame.largestLetterChain = largestLetterChain; changed = true }
+		if largestLetterChain > bestGame.largestLetterChain { bestGame.largestLetterChain = largestLetterChain; changed = true }
 		if changed { saveBestGame() }
 	}
 }
