@@ -142,7 +142,7 @@ final class AudioEngine {
 	}
 
 	func playChainMultiplierScoreSound(wordLength: Int) {
-		let duration = 0.72
+		let duration = 1.36
 		let masterVol = wordLength >= 7 ? 1.0 : wordLength >= 5 ? 0.88 : 0.76
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 
@@ -164,13 +164,25 @@ final class AudioEngine {
 					   filter: FilterSpec(kind: .bandpass, frequency: freq, q: 9))
 		}
 
-		let finishStart = 0.34
-		let finishNotes: [Double] = [1046.5, 1318.51, 1567.98, 2093.0]
+		let preChimeNotes: [Double] = [783.99, 1046.5, 1318.51]
+		for (i, freq) in preChimeNotes.enumerated() {
+			let delay = 0.255 + Double(i) * 0.04
+			ctx.addOsc(type: .sine, freq: freq, start: delay, attackTime: 0.004,
+					   peakAmp: 0.105 * masterVol, releaseTime: 0.26,
+					   filter: FilterSpec(kind: .bandpass, frequency: freq, q: 8))
+		}
+
+		let finishStart = 0.39
+		let finishNotes: [Double] = [261.63, 392.0, 523.25, 659.25, 1046.5, 1318.51, 1567.98, 2093.0]
 		for freq in finishNotes {
-			ctx.addOsc(type: .sine, freq: freq, start: finishStart, attackTime: 0.014,
-					   peakAmp: 0.12 * masterVol, releaseTime: 0.36, settleRatio: 0.35, settleTime: 0.08)
-			ctx.addOsc(type: .triangle, freq: freq * 2, start: finishStart, attackTime: 0.008,
-					   peakAmp: 0.035 * masterVol, releaseTime: 0.28, settleRatio: 0.3, settleTime: 0.06)
+			ctx.addOscWithVibrato(type: .sine, freq: freq, start: finishStart, attackTime: 0.014,
+								  peakAmp: 0.115 * masterVol, releaseTime: 0.92,
+								  vibratoRate: 5.2, vibratoDepthCents: 7.0, vibratoDelay: 0.12,
+								  settleRatio: 0.42, settleTime: 0.14)
+			ctx.addOscWithVibrato(type: .triangle, freq: freq * 2, start: finishStart, attackTime: 0.008,
+								  peakAmp: 0.026 * masterVol, releaseTime: 0.78,
+								  vibratoRate: 5.2, vibratoDepthCents: 4.0, vibratoDelay: 0.14,
+								  settleRatio: 0.28, settleTime: 0.12)
 		}
 		ctx.addNoise(start: 0.03, duration: 0.18, amplitude: 0.16 * masterVol, highpass: true)
 		ctx.addNoise(start: finishStart, duration: 0.09, amplitude: 0.09 * masterVol, highpass: false, bandpass: true)
@@ -194,7 +206,15 @@ final class AudioEngine {
 	}
 
 	func playRoundEndSound() {
-		let notes: [Double] = [392.00, 523.25, 659.25, 783.99, 1046.50]
+		let chordTones: [Double] = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]
+		var noteIndex = Int.random(in: 0...4)
+		var notes: [Double] = []
+		for _ in 0..<6 {
+			notes.append(chordTones[noteIndex])
+			let turn = [-2, -1, 1, 2, 3].randomElement() ?? 1
+			noteIndex = min(max(noteIndex + turn, 0), chordTones.count - 1)
+		}
+		notes.append(2093.00)
 		let duration = Double(notes.count) * 0.085 + 0.75
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		for (i, freq) in notes.enumerated() {
@@ -423,6 +443,62 @@ private struct SynthContext {
 			let decayProgress = progress
 			let gain = peakAmp * exp(-decayProgress * 3.5)
 			samples[i] += Float(sin(phase) * gain)
+		}
+	}
+
+	mutating func addOscWithVibrato(
+		type: OscType,
+		freq: Double,
+		start: Double,
+		attackTime: Double,
+		peakAmp: Double,
+		releaseTime: Double,
+		vibratoRate: Double,
+		vibratoDepthCents: Double,
+		vibratoDelay: Double,
+		settleRatio: Double = 1.0,
+		settleTime: Double? = nil
+	) {
+		let startSample = Int(start * sampleRate)
+		let attackSamples = max(1, Int(attackTime * sampleRate))
+		let releaseSamples = max(attackSamples + 1, Int(releaseTime * sampleRate))
+		let settleSamples = settleTime.map { max(attackSamples + 1, Int($0 * sampleRate)) }
+		let count = samples.count
+		var phase = 0.0
+
+		for i in startSample..<min(count, startSample + releaseSamples) {
+			let elapsed = i - startSample
+			let elapsedTime = Double(elapsed) / sampleRate
+			let vibratoProgress = min(max((elapsedTime - vibratoDelay) / 0.18, 0), 1)
+			let vibratoCents = sin(2.0 * .pi * vibratoRate * elapsedTime) * vibratoDepthCents * vibratoProgress
+			let currentFreq = freq * pow(2.0, vibratoCents / 1200.0)
+			phase += 2.0 * .pi * currentFreq / sampleRate
+
+			let raw: Double
+			switch type {
+			case .sine:
+				raw = sin(phase)
+			case .triangle:
+				let p = phase / (2.0 * .pi)
+				raw = 2.0 * abs(2.0 * (p - floor(p + 0.5))) - 1.0
+			case .sawtooth:
+				let p = phase / (2.0 * .pi)
+				raw = 2.0 * (p - floor(p + 0.5))
+			}
+
+			let gain: Double
+			if elapsed < attackSamples {
+				gain = peakAmp * Double(elapsed) / Double(attackSamples)
+			} else if let settleSamples, elapsed < settleSamples {
+				let progress = Double(elapsed - attackSamples) / Double(max(1, settleSamples - attackSamples))
+				gain = exponentialRamp(from: peakAmp, to: peakAmp * settleRatio, progress: progress)
+			} else {
+				let releaseStart = settleSamples ?? attackSamples
+				let startGain = peakAmp * settleRatio
+				let progress = Double(elapsed - releaseStart) / Double(max(1, releaseSamples - releaseStart))
+				gain = exponentialRamp(from: startGain, to: 0.001, progress: progress)
+			}
+			samples[i] += Float(raw * gain)
 		}
 	}
 

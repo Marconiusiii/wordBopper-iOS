@@ -224,11 +224,11 @@ final class GameViewModel {
 		}
 		selected.removeAll()
 		audio.resetSelectSound()
+		audio.playBonusSound()
 		if nonStopMode {
 			announce("Cleared.")
 		} else {
 			secondsLeft = min(secondsLeft + 15, GameViewModel.gameDuration)
-			audio.playBonusSound()
 			announce("Cleared. 15 seconds added.")
 		}
 	}
@@ -265,8 +265,11 @@ final class GameViewModel {
 		madeWords.append(word)
 		if chainBonus > largestLetterChain { largestLetterChain = chainBonus }
 
-		audio.playWordSound(wordLength: word.count)
-		if multiplier > 1 { audio.playChainMultiplierScoreSound(wordLength: word.count) }
+		if multiplier > 1 {
+			audio.playChainMultiplierScoreSound(wordLength: word.count)
+		} else {
+			audio.playWordSound(wordLength: word.count)
+		}
 
 		if chainPowerUpActive { stopPowerUp() }
 		let powerUpActivated = updateChainStreak(chainBonus: chainBonus)
