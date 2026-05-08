@@ -11,7 +11,12 @@ struct BubbleGridView: View {
 					ForEach(0..<5, id: \.self) { col in
 						let bubble = vm.bubbles[row * 5 + col]
 						let selected = vm.isSelected(bubble)
-						BubbleButton(bubble: bubble, isSelected: selected, size: cellSize) {
+						BubbleButton(
+							bubble: bubble,
+							isSelected: selected,
+							size: cellSize,
+							speakLetterPositions: vm.speakLetterPositions
+						) {
 							vm.tapBubble(bubble)
 						}
 					}
@@ -26,6 +31,7 @@ struct BubbleButton: View {
 	let bubble: Bubble
 	let isSelected: Bool
 	let size: CGFloat
+	let speakLetterPositions: Bool
 	let action: () -> Void
 
 	private var fillColor: Color {
@@ -59,6 +65,7 @@ struct BubbleButton: View {
 		}
 		.buttonStyle(.plain)
 		.accessibilityLabel(bubble.letter.lowercased())
+		.accessibilityValue(speakLetterPositions ? "\(bubble.col + 1) \(bubble.row + 1)" : "")
 		.accessibilityAddTraits(isSelected ? [.isSelected] : [])
 		.id(bubble.id)
 		.transition(reduceMotion ? .identity : .scale(scale: 0.0).combined(with: .opacity))

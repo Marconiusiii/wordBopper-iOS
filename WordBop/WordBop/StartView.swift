@@ -134,7 +134,20 @@ private struct GameSettingsSheet: View {
 					.font(.body)
 					.foregroundStyle(Color.wbText)
 
-				Text("Play without the timer. Score, chain bonuses, made words, letters used, average length, and longest word are still tracked.")
+				Text("Bop to the Top! Non-Stop mode takes away the game timer, so bop as many letters and make as many words as you want!")
+					.font(.footnote)
+					.foregroundStyle(Color.wbMuted)
+					.frame(maxWidth: .infinity, alignment: .leading)
+					.fixedSize(horizontal: false, vertical: true)
+
+				Toggle("Speak Letter Positions", isOn: Binding(
+					get: { vm.speakLetterPositions },
+					set: { vm.speakLetterPositions = $0 }
+				))
+					.font(.body)
+					.foregroundStyle(Color.wbText)
+
+				Text("Adds Column and Row locations to the letters, like \"B, 2 5\" for Column 2, Row 5.")
 					.font(.footnote)
 					.foregroundStyle(Color.wbMuted)
 					.frame(maxWidth: .infinity, alignment: .leading)
@@ -214,39 +227,61 @@ private struct AboutWordBopperSheet: View {
 
 private struct BestGameCard: View {
 	let bestGame: BestGame
+	@State private var isExpanded = false
 
 	var body: some View {
 		VStack(spacing: 10) {
-			Text("Your best game")
-				.font(.headline.weight(.black))
+			Button {
+				isExpanded.toggle()
+			} label: {
+				HStack {
+					Text("Your best game")
+						.font(.headline.weight(.black))
+					Spacer()
+					Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+						.font(.caption.weight(.bold))
+						.accessibilityHidden(true)
+				}
 				.foregroundStyle(Color.wbText)
-				.accessibilityAddTraits(.isHeader)
+			}
+			.buttonStyle(.plain)
+			.accessibilityAddTraits(.isHeader)
+			.accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
 
-			VStack(alignment: .leading, spacing: 14) {
-				Text("Timed")
-					.font(.caption.weight(.bold))
-					.foregroundStyle(Color.wbMuted)
-					.accessibilityAddTraits(.isHeader)
+			if isExpanded {
+				VStack(alignment: .leading, spacing: 14) {
+					Text("Timed")
+						.font(.caption.weight(.bold))
+						.foregroundStyle(Color.wbMuted)
+						.accessibilityAddTraits(.isHeader)
 
-				HStack(spacing: 10) {
-					BestStat(label: "Highest score", value: "\(bestGame.highestScore)")
-					BestStat(label: "Longest word", value: bestGame.longestWord.isEmpty ? "None yet" : bestGame.longestWord)
+					HStack(spacing: 10) {
+						BestStat(label: "Highest score", value: "\(bestGame.highestScore)")
+						BestStat(label: "Longest word", value: bestGame.longestWord.isEmpty ? "None yet" : bestGame.longestWord)
+					}
+
+					HStack(spacing: 10) {
+						BestStat(label: "Most words", value: "\(bestGame.mostWords)")
+						BestStat(label: "Largest chain", value: "\(bestGame.largestLetterChain)")
+					}
+
+					Text("Non-Stop")
+						.font(.caption.weight(.bold))
+						.foregroundStyle(Color.wbMuted)
+						.accessibilityAddTraits(.isHeader)
+
+					HStack(spacing: 10) {
+						BestStat(label: "Best score", value: "\(bestGame.highestNonStopScore)")
+						BestStat(label: "Longest word", value: bestGame.longestNonStopWord.isEmpty ? "None yet" : bestGame.longestNonStopWord)
+					}
+
+					HStack(spacing: 10) {
+						BestStat(label: "Most words", value: "\(bestGame.mostNonStopWords)")
+						BestStat(label: "Largest chain", value: "\(bestGame.largestNonStopLetterChain)")
+					}
 				}
-
-				HStack(spacing: 10) {
-					BestStat(label: "Most words", value: "\(bestGame.mostWords)")
-					BestStat(label: "Largest chain", value: "\(bestGame.largestLetterChain)")
-				}
-
-				Text("Non-Stop")
-					.font(.caption.weight(.bold))
-					.foregroundStyle(Color.wbMuted)
-					.accessibilityAddTraits(.isHeader)
-
-				HStack(spacing: 10) {
-					BestStat(label: "Best score", value: "\(bestGame.highestNonStopScore)")
-					BestStat(label: "Most words", value: "\(bestGame.mostNonStopWords)")
-				}
+				.frame(maxWidth: .infinity, alignment: .leading)
+				.transition(.opacity)
 			}
 		}
 		.padding(14)

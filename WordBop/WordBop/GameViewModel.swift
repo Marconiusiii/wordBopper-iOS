@@ -20,9 +20,25 @@ struct BestGame: Codable {
 	var highestScore: Int = 0
 	var highestNonStopScore: Int = 0
 	var longestWord: String = ""
+	var longestNonStopWord: String = ""
 	var mostWords: Int = 0
 	var mostNonStopWords: Int = 0
 	var largestLetterChain: Int = 0
+	var largestNonStopLetterChain: Int = 0
+
+	init() {}
+
+	init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+		highestScore = try container.decodeIfPresent(Int.self, forKey: .highestScore) ?? 0
+		highestNonStopScore = try container.decodeIfPresent(Int.self, forKey: .highestNonStopScore) ?? 0
+		longestWord = try container.decodeIfPresent(String.self, forKey: .longestWord) ?? ""
+		longestNonStopWord = try container.decodeIfPresent(String.self, forKey: .longestNonStopWord) ?? ""
+		mostWords = try container.decodeIfPresent(Int.self, forKey: .mostWords) ?? 0
+		mostNonStopWords = try container.decodeIfPresent(Int.self, forKey: .mostNonStopWords) ?? 0
+		largestLetterChain = try container.decodeIfPresent(Int.self, forKey: .largestLetterChain) ?? 0
+		largestNonStopLetterChain = try container.decodeIfPresent(Int.self, forKey: .largestNonStopLetterChain) ?? 0
+	}
 }
 
 enum GameScreen { case start, game, results }
@@ -54,6 +70,9 @@ final class GameViewModel {
 	// MARK: - Game state
 	var nonStopMode = false {
 		didSet { saveNonStopMode() }
+	}
+	var speakLetterPositions = false {
+		didSet { saveSpeakLetterPositions() }
 	}
 	var bubbles: [Bubble] = []
 	var selected: [SelectedLetter] = []
@@ -119,6 +138,7 @@ final class GameViewModel {
 	init() {
 		bestGame = loadBestGame()
 		nonStopMode = loadNonStopMode()
+		speakLetterPositions = loadSpeakLetterPositions()
 	}
 
 	// MARK: - Game lifecycle
@@ -246,6 +266,7 @@ final class GameViewModel {
 		if chainBonus > largestLetterChain { largestLetterChain = chainBonus }
 
 		audio.playWordSound(wordLength: word.count)
+		if multiplier > 1 { audio.playChainMultiplierScoreSound(wordLength: word.count) }
 
 		if chainPowerUpActive { stopPowerUp() }
 		let powerUpActivated = updateChainStreak(chainBonus: chainBonus)
@@ -400,8 +421,16 @@ final class GameViewModel {
 		UserDefaults.standard.bool(forKey: "wordBopNonStopMode")
 	}
 
+	private func loadSpeakLetterPositions() -> Bool {
+		UserDefaults.standard.bool(forKey: "wordBopSpeakLetterPositions")
+	}
+
 	private func saveNonStopMode() {
 		UserDefaults.standard.set(nonStopMode, forKey: "wordBopNonStopMode")
+	}
+
+	private func saveSpeakLetterPositions() {
+		UserDefaults.standard.set(speakLetterPositions, forKey: "wordBopSpeakLetterPositions")
 	}
 
 	private func saveBestGame() {
@@ -416,14 +445,15 @@ final class GameViewModel {
 		var changed = false
 		if nonStopMode {
 			if score > bestGame.highestNonStopScore { bestGame.highestNonStopScore = score; changed = true }
+			if !longest.isEmpty, longest.count >= bestGame.longestNonStopWord.count { bestGame.longestNonStopWord = longest; changed = true }
 			if wordCount > bestGame.mostNonStopWords { bestGame.mostNonStopWords = wordCount; changed = true }
-		} else if score > bestGame.highestScore {
-			bestGame.highestScore = score
-			changed = true
+			if largestLetterChain > bestGame.largestNonStopLetterChain { bestGame.largestNonStopLetterChain = largestLetterChain; changed = true }
+		} else {
+			if score > bestGame.highestScore { bestGame.highestScore = score; changed = true }
+			if !longest.isEmpty, longest.count >= bestGame.longestWord.count { bestGame.longestWord = longest; changed = true }
+			if wordCount > bestGame.mostWords { bestGame.mostWords = wordCount; changed = true }
+			if largestLetterChain > bestGame.largestLetterChain { bestGame.largestLetterChain = largestLetterChain; changed = true }
 		}
-		if !longest.isEmpty, longest.count >= bestGame.longestWord.count { bestGame.longestWord = longest; changed = true }
-		if wordCount > bestGame.mostWords { bestGame.mostWords = wordCount; changed = true }
-		if largestLetterChain > bestGame.largestLetterChain { bestGame.largestLetterChain = largestLetterChain; changed = true }
 		if changed { saveBestGame() }
 	}
 }

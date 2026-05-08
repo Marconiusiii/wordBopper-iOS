@@ -141,6 +141,43 @@ final class AudioEngine {
 		play(ctx.toBuffer(), priority: .connected)
 	}
 
+	func playChainMultiplierScoreSound(wordLength: Int) {
+		let duration = 0.72
+		let masterVol = wordLength >= 7 ? 1.0 : wordLength >= 5 ? 0.88 : 0.76
+		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
+
+		let glissStart = wordLength >= 7 ? 987.77 : 880.0
+		let glissEnd = wordLength >= 7 ? 3951.07 : 3135.96
+		ctx.addOscWithFreqSlide(freq: glissStart, endFreq: glissEnd, start: 0.02, duration: 0.32, peakAmp: 0.18 * masterVol)
+		ctx.addOscWithFreqSlide(freq: glissStart * 1.5, endFreq: glissEnd * 1.25, start: 0.055, duration: 0.28, peakAmp: 0.08 * masterVol)
+
+		let sparkleNotes: [Double] = [1318.51, 1567.98, 2093.0, 2637.02, 3135.96, 4186.01]
+		for (i, freq) in sparkleNotes.enumerated() {
+			let delay = 0.045 + Double(i) * 0.038
+			let amp = (i == sparkleNotes.count - 1 ? 0.13 : 0.075) * masterVol
+			ctx.addOsc(type: i % 2 == 0 ? .sine : .triangle,
+					   freq: freq,
+					   start: delay,
+					   attackTime: 0.006,
+					   peakAmp: amp,
+					   releaseTime: 0.34,
+					   filter: FilterSpec(kind: .bandpass, frequency: freq, q: 9))
+		}
+
+		let finishStart = 0.34
+		let finishNotes: [Double] = [1046.5, 1318.51, 1567.98, 2093.0]
+		for freq in finishNotes {
+			ctx.addOsc(type: .sine, freq: freq, start: finishStart, attackTime: 0.014,
+					   peakAmp: 0.12 * masterVol, releaseTime: 0.36, settleRatio: 0.35, settleTime: 0.08)
+			ctx.addOsc(type: .triangle, freq: freq * 2, start: finishStart, attackTime: 0.008,
+					   peakAmp: 0.035 * masterVol, releaseTime: 0.28, settleRatio: 0.3, settleTime: 0.06)
+		}
+		ctx.addNoise(start: 0.03, duration: 0.18, amplitude: 0.16 * masterVol, highpass: true)
+		ctx.addNoise(start: finishStart, duration: 0.09, amplitude: 0.09 * masterVol, highpass: false, bandpass: true)
+
+		play(ctx.toBuffer(), priority: .connected)
+	}
+
 	func playRoundStartSound() {
 		let chordNotes: [Double] = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]
 		let shapes = [[0,1,2,3],[2,1,3,0],[1,3,2,4],[3,2,4,5],[4,2,3,1]]
