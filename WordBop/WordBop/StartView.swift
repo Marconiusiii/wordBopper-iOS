@@ -1,3 +1,4 @@
+import MessageUI
 import SwiftUI
 import UIKit
 
@@ -243,6 +244,10 @@ private struct GameSettingsSheet: View {
 
 private struct AboutWordBopperSheet: View {
 	@Environment(\.dismiss) private var dismiss
+	@Environment(\.openURL) private var openURL
+
+	@AccessibilityFocusState private var isFeedbackButtonFocused: Bool
+	@State private var isShowingMailComposer = false
 
 	var body: some View {
 		NavigationStack {
@@ -256,6 +261,16 @@ private struct AboutWordBopperSheet: View {
 					.font(.body)
 					.foregroundStyle(Color.wbText)
 					.multilineTextAlignment(.center)
+
+				Button("Send Game Feedback") {
+					if MFMailComposeViewController.canSendMail() {
+						isShowingMailComposer = true
+					} else {
+						openMailFallback()
+					}
+				}
+				.accessibilityHint("Opens Mail so you can send feedback about the game.")
+				.accessibilityFocused($isFeedbackButtonFocused)
 
 				VStack(spacing: 8) {
 					Link("Privacy Policy", destination: URL(string: "https://marconius.com/wbPrivacy/")!)
@@ -285,7 +300,33 @@ private struct AboutWordBopperSheet: View {
 				}
 			}
 		}
+		.sheet(isPresented: $isShowingMailComposer, onDismiss: refocusFeedbackButton) {
+			MailComposerView(
+				recipient: "marco@marconius.com",
+				subject: "WordBoppper iOS Feedback",
+				body: nil,
+				onFinish: { _ in }
+			)
+		}
 		.preferredColorScheme(.dark)
+	}
+
+	private func openMailFallback() {
+		let subject =
+			"WordBoppper iOS Feedback"
+			.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+
+		let mailURL =
+			URL(string: "mailto:marco@marconius.com?subject=\(subject)")!
+
+		openURL(mailURL)
+		refocusFeedbackButton()
+	}
+
+	private func refocusFeedbackButton() {
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+			isFeedbackButtonFocused = true
+		}
 	}
 
 	private var versionText: String {

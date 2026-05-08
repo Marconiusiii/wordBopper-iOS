@@ -61,6 +61,9 @@ final class GameViewModel {
 		"Bop those letters!",
 		"Bop to the future!",
 		"Start your bopping!",
+		"Bop til you Drop!",
+		"Bop All The Things!",
+		"Bop to the Top!",
 		"Commence bopping!"
 	]
 
