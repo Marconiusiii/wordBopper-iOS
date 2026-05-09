@@ -188,6 +188,7 @@ private struct InstructionsSheet: View {
 private struct GameSettingsSheet: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dismiss) private var dismiss
+	@Namespace private var bubbleTextColorNamespace
 
 	var body: some View {
 		NavigationStack {
@@ -227,6 +228,11 @@ private struct GameSettingsSheet: View {
 					Text("Bubble Text Color")
 						.font(.body)
 						.foregroundStyle(Color.wbText)
+						.accessibilityLabeledPair(
+							role: .label,
+							id: "bubbleTextColor",
+							in: bubbleTextColorNamespace
+						)
 
 					Picker("Bubble Text Color", selection: Binding(
 						get: { vm.bubbleTextColorOption },
@@ -237,8 +243,12 @@ private struct GameSettingsSheet: View {
 						}
 					}
 					.pickerStyle(.segmented)
+					.accessibilityLabeledPair(
+						role: .content,
+						id: "bubbleTextColor",
+						in: bubbleTextColorNamespace
+					)
 				}
-				.accessibilityElement(children: .combine)
 				
 				Text("Pick your preference of light or dark text for the bubbles. Either option will still have colorful bubbles to bop!")
 					.font(.footnote)

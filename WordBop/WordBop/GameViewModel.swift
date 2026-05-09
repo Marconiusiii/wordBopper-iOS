@@ -125,7 +125,7 @@ final class GameViewModel {
 
 	var wordTrayLabel: String {
 		if selected.isEmpty { return "Word tray, empty" }
-		return "Word tray: " + selected.map { $0.letter.uppercased() }.joined(separator: ", ")
+		return "Word tray: " + selected.map { $0.letter.lowercased() }.joined(separator: ", ")
 	}
 
 	var chainMeterValue: String {
@@ -249,10 +249,10 @@ final class GameViewModel {
 		audio.resetSelectSound()
 		audio.playBonusSound()
 		if nonStopMode {
-			announce("Cleared.")
+			announce(GameplayAnnouncements.cleared)
 		} else {
 			secondsLeft = min(secondsLeft + 15, GameViewModel.gameDuration)
-			announce("Cleared. 15 seconds added.")
+			announce(GameplayAnnouncements.clearedWithTimeBonus)
 		}
 	}
 
@@ -263,11 +263,11 @@ final class GameViewModel {
 		let word = currentWord.lowercased()
 
 		guard dictionary.contains(word) else {
-			announce("\(word), not valid.")
 			audio.playInvalidSound()
 			resetChainStreak()
 			selected.removeAll()
 			audio.resetSelectSound()
+			announce(GameplayAnnouncements.invalidWord(word))
 			return
 		}
 
@@ -297,7 +297,13 @@ final class GameViewModel {
 		if chainPowerUpActive { stopPowerUp() }
 		let powerUpActivated = updateChainStreak(chainBonus: chainBonus)
 
-		announce(wordAnnouncement(word: word, points: points, chainBonus: chainBonus, multiplier: multiplier, powerUpActivated: powerUpActivated))
+		announce(GameplayAnnouncements.scoredWord(
+			word: word,
+			points: points,
+			chainBonus: chainBonus,
+			multiplier: multiplier,
+			powerUpActivated: powerUpActivated
+		))
 	}
 
 	// MARK: - Scoring
@@ -408,7 +414,6 @@ final class GameViewModel {
 
 	// MARK: - Announcements
 
-	// For gameplay events (word scored, invalid, bonus) — reads over whatever is on screen
 	func announce(_ message: String) {
 		DispatchQueue.main.async {
 			self.announcementWorkItem?.cancel()
@@ -416,21 +421,8 @@ final class GameViewModel {
 				UIAccessibility.post(notification: .announcement, argument: message)
 			}
 			self.announcementWorkItem = workItem
-			DispatchQueue.main.async(execute: workItem)
+			DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: workItem)
 		}
-	}
-
-	private func wordAnnouncement(word: String, points: Int, chainBonus: Int, multiplier: Int, powerUpActivated: Bool) -> String {
-		var parts = ["\(word), \(points) points"]
-		if multiplier > 1 {
-			parts.append("3 times")
-		} else if chainBonus > 0 {
-			parts.append("chain bonus")
-		}
-		if powerUpActivated {
-			parts.append("3 times ready")
-		}
-		return parts.joined(separator: ", ") + "."
 	}
 
 	// MARK: - Best game

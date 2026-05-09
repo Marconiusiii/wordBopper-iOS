@@ -208,7 +208,7 @@ private struct WordTrayBar: View {
 							.foregroundStyle(Color.wbMuted)
 					} else {
 						ForEach(vm.selected, id: \.bubbleId) { sel in
-							Text(sel.letter.uppercased())
+							Text(sel.letter.lowercased())
 								.font(.system(.title3, design: .monospaced).weight(.bold))
 								.foregroundStyle(Color.black)
 								.frame(width: 36, height: 36)
