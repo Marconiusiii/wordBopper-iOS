@@ -21,32 +21,15 @@ struct StartView: View {
 
 				startScreenTopRow
 
-				Button {
-					vm.startGame()
-				} label: {
-					ZStack {
-						Color.clear
-						Text("Start Game")
-							.font(.title3.weight(.black))
-							.foregroundStyle(Color.black)
-							.frame(maxWidth: .infinity)
-							.padding(.vertical, 20)
-							.background(
-								LinearGradient(colors: [.wbAccent1, .wbAccent2],
-											   startPoint: .topLeading, endPoint: .bottomTrailing)
-							)
-							.clipShape(Capsule())
-					}
-					.frame(maxWidth: .infinity)
-					.frame(minHeight: 84)
-					.contentShape(Rectangle())
-				}
-				.keyboardShortcut(.defaultAction)
+				startGameButton
+					.layoutPriority(3)
 
 				BestGameCard(bestGame: vm.bestGame)
+					.layoutPriority(2)
 
+				Spacer(minLength: 0)
+				
 				aboutButton
-					.frame(maxHeight: .infinity)
 					.layoutPriority(1)
 			}
 			.frame(maxWidth: .infinity)
@@ -79,6 +62,26 @@ struct StartView: View {
 		}
 		.frame(maxWidth: .infinity)
 		.frame(minHeight: 58)
+	}
+
+	private var startGameButton: some View {
+		Button {
+			vm.startGame()
+		} label: {
+			ZStack {
+				LinearGradient(colors: [.wbAccent1, .wbAccent2],
+							   startPoint: .topLeading, endPoint: .bottomTrailing)
+				Text("Start Game")
+					.font(.title.weight(.black))
+					.foregroundStyle(Color.black)
+					.frame(maxWidth: .infinity)
+			}
+			.frame(maxWidth: .infinity)
+			.frame(minHeight: 132)
+			.clipShape(RoundedRectangle(cornerRadius: 28))
+			.contentShape(Rectangle())
+		}
+		.keyboardShortcut(.defaultAction)
 	}
 
 	private var howToPlayButton: some View {
@@ -120,7 +123,6 @@ struct StartView: View {
 				.foregroundStyle(Color.wbAccent5)
 				.underline()
 				.frame(maxWidth: .infinity)
-				.frame(maxHeight: .infinity)
 				.frame(minHeight: 58)
 				.contentShape(Rectangle())
 		}
@@ -404,7 +406,7 @@ private struct AboutWordBopperSheet: View {
 
 private struct BestGameCard: View {
 	let bestGame: BestGame
-	@State private var isExpanded = false
+	@State private var isExpanded = true
 
 	var body: some View {
 		VStack(spacing: 0) {
@@ -434,7 +436,7 @@ private struct BestGameCard: View {
 					Text("Timed")
 						.font(.caption.weight(.bold))
 						.foregroundStyle(Color.wbMuted)
-						.frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+						.frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
 						.padding(.horizontal, 14)
 						.accessibilityAddTraits(.isHeader)
 						.accessibilityElement(children: .combine)
@@ -452,7 +454,7 @@ private struct BestGameCard: View {
 					Text("Non-Stop")
 						.font(.caption.weight(.bold))
 						.foregroundStyle(Color.wbMuted)
-						.frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+						.frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
 						.padding(.horizontal, 14)
 						.accessibilityAddTraits(.isHeader)
 						.accessibilityElement(children: .combine)
@@ -492,8 +494,8 @@ private struct BestStat: View {
 				.foregroundStyle(Color.wbText)
 		}
 		.padding(.horizontal, 14)
-		.padding(.vertical, 10)
-		.frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
+		.padding(.vertical, 8)
+		.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
 		.contentShape(Rectangle())
 		.accessibilityElement(children: .ignore)
 		.accessibilityLabel("\(label): \(value)")
