@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import UIKit
 
 struct Bubble: Identifiable {
@@ -28,6 +29,25 @@ enum BubbleTextColorOption: String, CaseIterable, Identifiable {
 			"Dark Text"
 		case .light:
 			"Light Text"
+		}
+	}
+}
+
+enum GameAnnouncementVerbosity: String, CaseIterable, Identifiable {
+	case normal
+	case low
+	case off
+
+	var id: String { rawValue }
+
+	var label: String {
+		switch self {
+		case .normal:
+			"Normal"
+		case .low:
+			"Low"
+		case .off:
+			"Off"
 		}
 	}
 }
@@ -96,6 +116,9 @@ final class GameViewModel {
 	var bubbleTextColorOption: BubbleTextColorOption = .dark {
 		didSet { saveBubbleTextColorOption() }
 	}
+	var gameAnnouncementVerbosity: GameAnnouncementVerbosity = .normal {
+		didSet { saveGameAnnouncementVerbosity() }
+	}
 	var bubbles: [Bubble] = []
 	var selected: [SelectedLetter] = []
 	var score = 0
@@ -162,6 +185,7 @@ final class GameViewModel {
 		nonStopMode = loadNonStopMode()
 		speakLetterPositions = loadSpeakLetterPositions()
 		bubbleTextColorOption = loadBubbleTextColorOption()
+		gameAnnouncementVerbosity = loadGameAnnouncementVerbosity()
 	}
 
 	// MARK: - Game lifecycle
@@ -249,10 +273,10 @@ final class GameViewModel {
 		audio.resetSelectSound()
 		audio.playBonusSound()
 		if nonStopMode {
-			announce(GameplayAnnouncements.cleared)
+			announce(GameplayAnnouncements.cleared, includeInLowVerbosity: true)
 		} else {
 			secondsLeft = min(secondsLeft + 15, GameViewModel.gameDuration)
-			announce(GameplayAnnouncements.clearedWithTimeBonus)
+			announce(GameplayAnnouncements.clearedWithTimeBonus, includeInLowVerbosity: true)
 		}
 	}
 
@@ -267,7 +291,7 @@ final class GameViewModel {
 			resetChainStreak()
 			selected.removeAll()
 			audio.resetSelectSound()
-			announce(GameplayAnnouncements.invalidWord(word))
+			announce(GameplayAnnouncements.invalidWord(word), includeInLowVerbosity: true)
 			return
 		}
 
@@ -302,8 +326,9 @@ final class GameViewModel {
 			points: points,
 			chainBonus: chainBonus,
 			multiplier: multiplier,
-			powerUpActivated: powerUpActivated
-		))
+			powerUpActivated: powerUpActivated,
+			verbosity: gameAnnouncementVerbosity
+		), includeInLowVerbosity: true)
 	}
 
 	// MARK: - Scoring
@@ -414,14 +439,15 @@ final class GameViewModel {
 
 	// MARK: - Announcements
 
-	func announce(_ message: String) {
+	func announce(_ message: String, includeInLowVerbosity: Bool = false) {
+		if gameAnnouncementVerbosity == .off { return }
+		if gameAnnouncementVerbosity == .low, !includeInLowVerbosity { return }
 		DispatchQueue.main.async {
 			self.announcementWorkItem?.cancel()
-			let workItem = DispatchWorkItem {
-				UIAccessibility.post(notification: .announcement, argument: message)
-			}
-			self.announcementWorkItem = workItem
-			DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: workItem)
+			var announcement = AttributedString(message)
+			announcement.accessibilitySpeechAnnouncementPriority = .high
+			AccessibilityNotification.Announcement(announcement).post()
+			self.announcementWorkItem = nil
 		}
 	}
 
@@ -450,6 +476,13 @@ final class GameViewModel {
 		return BubbleTextColorOption(rawValue: saved) ?? .dark
 	}
 
+	private func loadGameAnnouncementVerbosity() -> GameAnnouncementVerbosity {
+		guard let saved = UserDefaults.standard.string(forKey: "wordBopGameAnnouncementVerbosity") else {
+			return .normal
+		}
+		return GameAnnouncementVerbosity(rawValue: saved) ?? .normal
+	}
+
 	private func saveNonStopMode() {
 		UserDefaults.standard.set(nonStopMode, forKey: "wordBopNonStopMode")
 	}
@@ -460,6 +493,10 @@ final class GameViewModel {
 
 	private func saveBubbleTextColorOption() {
 		UserDefaults.standard.set(bubbleTextColorOption.rawValue, forKey: "wordBopBubbleTextColorOption")
+	}
+
+	private func saveGameAnnouncementVerbosity() {
+		UserDefaults.standard.set(gameAnnouncementVerbosity.rawValue, forKey: "wordBopGameAnnouncementVerbosity")
 	}
 
 	private func saveBestGame() {

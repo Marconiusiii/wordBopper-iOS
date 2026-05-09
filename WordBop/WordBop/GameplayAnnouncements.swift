@@ -11,18 +11,23 @@ enum GameplayAnnouncements {
 		points: Int,
 		chainBonus: Int,
 		multiplier: Int,
-		powerUpActivated: Bool
+		powerUpActivated: Bool,
+		verbosity: GameAnnouncementVerbosity
 	) -> String {
+		if verbosity == .low {
+			return powerUpActivated ? "3 times active!" : "\(points) points."
+		}
+
+		if powerUpActivated {
+			return "3 times active!"
+		}
+
 		var parts = ["\(word), \(points) points"]
 
 		if multiplier > 1 {
 			parts.append("3 times")
 		} else if chainBonus > 0 {
 			parts.append("chain bonus")
-		}
-
-		if powerUpActivated {
-			parts.append("3 times ready")
 		}
 
 		return parts.joined(separator: ", ") + "."

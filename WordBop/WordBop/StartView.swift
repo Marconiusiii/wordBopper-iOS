@@ -189,6 +189,7 @@ private struct GameSettingsSheet: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dismiss) private var dismiss
 	@Namespace private var bubbleTextColorNamespace
+	@Namespace private var gameAnnouncementsNamespace
 
 	var body: some View {
 		NavigationStack {
@@ -251,6 +252,38 @@ private struct GameSettingsSheet: View {
 				}
 				
 				Text("Pick your preference of light or dark text for the bubbles. Either option will still have colorful bubbles to bop!")
+					.font(.footnote)
+					.foregroundStyle(Color.wbMuted)
+					.frame(maxWidth: .infinity, alignment: .leading)
+					.fixedSize(horizontal: false, vertical: true)
+
+				VStack(alignment: .leading, spacing: 8) {
+					Text("Game Announcements")
+						.font(.body)
+						.foregroundStyle(Color.wbText)
+						.accessibilityLabeledPair(
+							role: .label,
+							id: "gameAnnouncements",
+							in: gameAnnouncementsNamespace
+						)
+
+					Picker("Game Announcements", selection: Binding(
+						get: { vm.gameAnnouncementVerbosity },
+						set: { vm.gameAnnouncementVerbosity = $0 }
+					)) {
+						ForEach(GameAnnouncementVerbosity.allCases) { option in
+							Text(option.label).tag(option)
+						}
+					}
+					.pickerStyle(.segmented)
+					.accessibilityLabeledPair(
+						role: .content,
+						id: "gameAnnouncements",
+						in: gameAnnouncementsNamespace
+					)
+				}
+
+				Text("Controls spoken game announcements for scoring, invalid words, and cleared letters.")
 					.font(.footnote)
 					.foregroundStyle(Color.wbMuted)
 					.frame(maxWidth: .infinity, alignment: .leading)
