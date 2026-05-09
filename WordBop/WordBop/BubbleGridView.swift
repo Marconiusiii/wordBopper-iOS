@@ -15,7 +15,8 @@ struct BubbleGridView: View {
 							bubble: bubble,
 							isSelected: selected,
 							size: cellSize,
-							speakLetterPositions: vm.speakLetterPositions
+							speakLetterPositions: vm.speakLetterPositions,
+							textColorOption: vm.bubbleTextColorOption
 						) {
 							vm.tapBubble(bubble)
 						}
@@ -32,30 +33,47 @@ struct BubbleButton: View {
 	let isSelected: Bool
 	let size: CGFloat
 	let speakLetterPositions: Bool
+	let textColorOption: BubbleTextColorOption
 	let action: () -> Void
 
 	private var fillColor: Color {
-		guard bubble.colorIndex < Color.bubbleFill.count else { return .wbAccent4 }
-		return Color.bubbleFill[bubble.colorIndex]
+		let palette = Color.bubbleFill(for: textColorOption)
+		guard bubble.colorIndex < palette.count else { return palette[0] }
+		return palette[bubble.colorIndex]
 	}
 
 	private var textColor: Color {
-		guard bubble.colorIndex < Color.bubbleText.count else { return .black }
-		return Color.bubbleText[bubble.colorIndex]
+		Color.bubbleText(for: textColorOption)
+	}
+
+	private var selectedFillColor: Color {
+		Color.selectedBubbleFill(for: textColorOption)
+	}
+
+	private var selectedTextColor: Color {
+		Color.selectedBubbleText(for: textColorOption)
+	}
+
+	private var selectedRingColor: Color {
+		Color.selectedBubbleRing(for: textColorOption)
 	}
 
 	var body: some View {
 		Button(action: action) {
 			ZStack {
 				Circle()
-					.fill(isSelected ? Color.wbSelectedBubble : fillColor)
+					.fill(isSelected ? selectedFillColor : fillColor)
+					.overlay {
+						Circle()
+							.stroke(isSelected ? selectedRingColor : Color.clear, lineWidth: isSelected ? 4 : 0)
+					}
 					.frame(width: bubbleSize, height: bubbleSize)
 					.shadow(color: .black.opacity(isSelected ? 0 : 0.3), radius: 4, y: 3)
 					.scaleEffect(reduceMotion ? 1.0 : (isSelected ? 0.88 : 1.0))
 
 				Text(bubble.letter.lowercased())
 					.font(.system(.title2, design: .monospaced).weight(.bold))
-					.foregroundStyle(isSelected ? Color.wbSelectedText : textColor)
+					.foregroundStyle(isSelected ? selectedTextColor : textColor)
 					.minimumScaleFactor(0.6)
 					.lineLimit(1)
 			}

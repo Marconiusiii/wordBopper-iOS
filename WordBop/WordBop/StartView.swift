@@ -223,6 +223,24 @@ private struct GameSettingsSheet: View {
 					.frame(maxWidth: .infinity, alignment: .leading)
 					.fixedSize(horizontal: false, vertical: true)
 
+				Picker("Bubble Letter Color", selection: Binding(
+					get: { vm.bubbleTextColorOption },
+					set: { vm.bubbleTextColorOption = $0 }
+				)) {
+					ForEach(BubbleTextColorOption.allCases) { option in
+						Text(option.label).tag(option)
+					}
+				}
+				.pickerStyle(.segmented)
+				.font(.body)
+				.foregroundStyle(Color.wbText)
+
+				Text("Changes the bubble colors so the letter text stays consistent and meets contrast requirements.")
+					.font(.footnote)
+					.foregroundStyle(Color.wbMuted)
+					.frame(maxWidth: .infinity, alignment: .leading)
+					.fixedSize(horizontal: false, vertical: true)
+
 				Spacer(minLength: 0)
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

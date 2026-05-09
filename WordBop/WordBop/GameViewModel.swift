@@ -16,6 +16,22 @@ struct SelectedLetter {
 	let col: Int
 }
 
+enum BubbleTextColorOption: String, CaseIterable, Identifiable {
+	case dark
+	case light
+
+	var id: String { rawValue }
+
+	var label: String {
+		switch self {
+		case .dark:
+			"Dark Text"
+		case .light:
+			"Light Text"
+		}
+	}
+}
+
 struct BestGame: Codable {
 	var highestScore: Int = 0
 	var highestNonStopScore: Int = 0
@@ -76,6 +92,9 @@ final class GameViewModel {
 	}
 	var speakLetterPositions = false {
 		didSet { saveSpeakLetterPositions() }
+	}
+	var bubbleTextColorOption: BubbleTextColorOption = .dark {
+		didSet { saveBubbleTextColorOption() }
 	}
 	var bubbles: [Bubble] = []
 	var selected: [SelectedLetter] = []
@@ -142,6 +161,7 @@ final class GameViewModel {
 		bestGame = loadBestGame()
 		nonStopMode = loadNonStopMode()
 		speakLetterPositions = loadSpeakLetterPositions()
+		bubbleTextColorOption = loadBubbleTextColorOption()
 	}
 
 	// MARK: - Game lifecycle
@@ -431,12 +451,23 @@ final class GameViewModel {
 		UserDefaults.standard.bool(forKey: "wordBopSpeakLetterPositions")
 	}
 
+	private func loadBubbleTextColorOption() -> BubbleTextColorOption {
+		guard let saved = UserDefaults.standard.string(forKey: "wordBopBubbleTextColorOption") else {
+			return .dark
+		}
+		return BubbleTextColorOption(rawValue: saved) ?? .dark
+	}
+
 	private func saveNonStopMode() {
 		UserDefaults.standard.set(nonStopMode, forKey: "wordBopNonStopMode")
 	}
 
 	private func saveSpeakLetterPositions() {
 		UserDefaults.standard.set(speakLetterPositions, forKey: "wordBopSpeakLetterPositions")
+	}
+
+	private func saveBubbleTextColorOption() {
+		UserDefaults.standard.set(bubbleTextColorOption.rawValue, forKey: "wordBopBubbleTextColorOption")
 	}
 
 	private func saveBestGame() {
