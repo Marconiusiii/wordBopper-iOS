@@ -57,49 +57,74 @@ struct GameView: View {
 
 private struct GameHeaderBar: View {
 	@Environment(GameViewModel.self) private var vm
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
 	var body: some View {
-		HStack {
-			if !vm.nonStopMode {
-				VStack(alignment: .leading, spacing: 2) {
-					Text("Time")
-						.font(.caption.weight(.bold))
-						.foregroundStyle(Color.wbMuted)
-					Text(vm.formattedTime)
-						.font(.system(.title2, design: .monospaced).weight(.bold))
-						.foregroundStyle(vm.timerIsWarning ? Color.wbAccent2 : Color.wbTimerGreen)
-						.contentTransition(.numericText())
-				}
-				Spacer()
+		HStack(spacing: 0) {
+			statsContent
+				.frame(maxWidth: .infinity, maxHeight: .infinity)
+				.padding(.horizontal, 16)
+				.padding(.vertical, 10)
+				.accessibilityElement(children: .ignore)
+				.accessibilityLabel(headerAccessibilityLabel)
+
+			Button { vm.endGame() } label: {
+				Text("End Game")
+					.font(.subheadline.weight(.bold))
+					.foregroundStyle(Color.wbAccent2)
+					.multilineTextAlignment(.center)
+					.minimumScaleFactor(0.8)
+					.frame(width: endGameButtonWidth)
+					.frame(maxHeight: .infinity)
+					.background(Color.wbAccent2.opacity(0.15))
+					.overlay(alignment: .leading) {
+						Divider().background(Color.wbAccent2.opacity(0.25))
+					}
 			}
-			VStack(spacing: 2) {
-				Text("Score")
-					.font(.caption.weight(.bold))
-					.foregroundStyle(Color.wbMuted)
-				Text("\(vm.score)")
-					.font(.system(.title2, design: .monospaced).weight(.bold))
-					.foregroundStyle(Color.wbAccent1)
-					.contentTransition(.numericText())
-			}
-			Spacer()
-			VStack(alignment: .trailing, spacing: 2) {
-				Text("Words")
-					.font(.caption.weight(.bold))
-					.foregroundStyle(Color.wbMuted)
-				Text("\(vm.wordCount)")
-					.font(.system(.title2, design: .monospaced).weight(.bold))
-					.foregroundStyle(Color.wbAccent4)
-					.contentTransition(.numericText())
-			}
+			.buttonStyle(.plain)
+			.keyboardShortcut(".", modifiers: .command)
+			.contentShape(Rectangle())
+			.accessibilityLabel("End game")
 		}
-		.padding(.horizontal, 16)
-		.padding(.vertical, 10)
+		.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 70 : 56)
 		.background(Color.wbSurface)
 		.overlay(alignment: .bottom) {
 			Divider().background(Color.white.opacity(0.06))
 		}
-		.accessibilityElement(children: .ignore)
-		.accessibilityLabel(headerAccessibilityLabel)
+	}
+
+	private var statsContent: some View {
+		HStack {
+			if !vm.nonStopMode {
+				statBlock(
+					label: "Time",
+					value: vm.formattedTime,
+					color: vm.timerIsWarning ? .wbAccent2 : .wbTimerGreen,
+					alignment: .leading
+				)
+				Spacer(minLength: 8)
+			}
+
+			statBlock(label: "Score", value: "\(vm.score)", color: .wbAccent1)
+			Spacer(minLength: 8)
+			statBlock(label: "Words", value: "\(vm.wordCount)", color: .wbAccent4, alignment: .trailing)
+		}
+	}
+
+	private func statBlock(label: String, value: String, color: Color, alignment: HorizontalAlignment = .center) -> some View {
+		VStack(alignment: alignment, spacing: 2) {
+			Text(label)
+				.font(.caption.weight(.bold))
+				.foregroundStyle(Color.wbMuted)
+			Text(value)
+				.font(.system(.title2, design: .monospaced).weight(.bold))
+				.foregroundStyle(color)
+				.contentTransition(.numericText())
+		}
+	}
+
+	private var endGameButtonWidth: CGFloat {
+		dynamicTypeSize.isAccessibilitySize ? 132 : 104
 	}
 
 	private var headerAccessibilityLabel: String {
@@ -218,11 +243,10 @@ private struct ActionBar: View {
 	let bottomInset: CGFloat
 
 	var body: some View {
-		ZStack {
+		GeometryReader { geo in
 			HStack(spacing: 0) {
-				clearButton
+				clearButton(width: geo.size.width * 0.34)
 				makeWordButton
-				endGameButton
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity)
 		}
@@ -232,15 +256,16 @@ private struct ActionBar: View {
 		}
 	}
 
-	private var clearButton: some View {
+	private func clearButton(width: CGFloat) -> some View {
 		Button { vm.clearSelection() } label: {
 			ButtonZone(bottomInset: bottomInset) {
-				secondaryButtonVisual("Clear")
+				secondaryButtonVisual("Clear Letters")
 			}
 		}
 		.buttonStyle(.plain)
 		.keyboardShortcut(.cancelAction)
-		.frame(maxWidth: .infinity, maxHeight: .infinity)
+		.frame(width: width)
+		.frame(maxHeight: .infinity)
 		.contentShape(Rectangle())
 		.accessibilityLabel("Clear selected letters")
 	}
@@ -254,18 +279,6 @@ private struct ActionBar: View {
 		.buttonStyle(.plain)
 		.disabled(!vm.makeWordEnabled)
 		.keyboardShortcut(.defaultAction)
-		.frame(maxWidth: .infinity, maxHeight: .infinity)
-		.contentShape(Rectangle())
-	}
-
-	private var endGameButton: some View {
-		Button { vm.endGame() } label: {
-			ButtonZone(bottomInset: bottomInset) {
-				dangerButtonVisual("End Game")
-			}
-		}
-		.buttonStyle(.plain)
-		.keyboardShortcut(".", modifiers: .command)
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 		.contentShape(Rectangle())
 	}
@@ -296,17 +309,6 @@ private struct ActionBar: View {
 			.overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08)))
 	}
 
-	private func dangerButtonVisual(_ title: String) -> some View {
-		Text(title)
-			.font(.subheadline.weight(.bold))
-			.foregroundStyle(Color.wbAccent2)
-			.frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 112 : 92)
-			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 66 : 52)
-			.padding(.horizontal, 12)
-			.background(Color.wbAccent2.opacity(0.15))
-			.clipShape(RoundedRectangle(cornerRadius: 14))
-			.overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.wbAccent2.opacity(0.25)))
-	}
 }
 
 private struct ButtonZone<Content: View>: View {
