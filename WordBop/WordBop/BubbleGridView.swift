@@ -1,5 +1,33 @@
 import SwiftUI
 
+let phonetics = [
+	"Alpha",
+	"Bravo",
+	"Charlie",
+	"Delta",
+	"Echo",
+	"Foxtrot",
+	"Golf",
+	"Hotel",
+	"India",
+	"Juliet",
+	"Kilo",
+	"Lima",
+	"Mike",
+	"November",
+	"Oscar",
+	"Papa",
+	"Quebec",
+	"Romeo",
+	"Sierra",
+	"Tango",
+	"Uniform",
+	"Victor",
+	"Whiskey",
+	"XRay",
+	"Yankee",
+	"Zulu"
+]
 struct BubbleGridView: View {
 	@Environment(GameViewModel.self) private var vm
 	let cellSize: CGFloat
@@ -16,6 +44,7 @@ struct BubbleGridView: View {
 							isSelected: selected,
 							size: cellSize,
 							speakLetterPositions: vm.speakLetterPositions,
+							speakLetterPhonetics: vm.speakLetterPhonetics,
 							textColorOption: vm.bubbleTextColorOption
 						) {
 							vm.tapBubble(bubble)
@@ -33,6 +62,7 @@ struct BubbleButton: View {
 	let isSelected: Bool
 	let size: CGFloat
 	let speakLetterPositions: Bool
+	let speakLetterPhonetics: Bool
 	let textColorOption: BubbleTextColorOption
 	let action: () -> Void
 
@@ -56,6 +86,15 @@ struct BubbleButton: View {
 
 	private var selectedRingColor: Color {
 		Color.selectedBubbleRing(for: textColorOption)
+	}
+
+	private var accessibilityLetterLabel: String {
+		let letter = bubble.letter.lowercased()
+		guard speakLetterPhonetics else { return letter }
+		guard let scalar = letter.unicodeScalars.first else { return letter }
+		let index = Int(scalar.value) - Int(UnicodeScalar("a").value)
+		guard phonetics.indices.contains(index) else { return letter }
+		return "\(letter), \(phonetics[index])"
 	}
 
 	var body: some View {
@@ -82,7 +121,7 @@ struct BubbleButton: View {
 			.animation(reduceMotion ? nil : .spring(response: 0.2, dampingFraction: 0.6), value: isSelected)
 		}
 		.buttonStyle(.plain)
-		.accessibilityLabel(bubble.letter.lowercased())
+		.accessibilityLabel(accessibilityLetterLabel)
 		.accessibilityValue(speakLetterPositions ? "\(bubble.col + 1) \(bubble.row + 1)" : "")
 		.accessibilityAddTraits(isSelected ? [.isSelected] : [])
 		.id(bubble.id)

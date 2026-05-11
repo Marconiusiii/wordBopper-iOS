@@ -44,6 +44,10 @@ final class AudioEngine {
 		selectNoteIndex = 0
 	}
 
+	func stepSelectSoundBack() {
+		selectNoteIndex = max(0, selectNoteIndex - 1)
+	}
+
 	func playSelectSound() {
 		let selectNotes: [Double] = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88,
 									 523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50]
@@ -65,6 +69,17 @@ final class AudioEngine {
 		if step >= 3 {
 			addSparkle(to: &ctx, step: step, masterGain: 1.0)
 		}
+		play(ctx.toBuffer(), priority: .transient)
+	}
+
+	func playDeselectSound() {
+		let duration = 0.28
+		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
+		ctx.addOscWithFreqSlide(freq: 523.25, endFreq: 392.0, start: 0, duration: 0.18, peakAmp: 0.11)
+		ctx.addOsc(type: .sine, freq: 261.63, start: 0.035, attackTime: 0.01,
+				   peakAmp: 0.07, releaseTime: 0.22, settleRatio: 0.35, settleTime: 0.06)
+		ctx.addOsc(type: .triangle, freq: 784.0, start: 0.01, attackTime: 0.004,
+				   peakAmp: 0.025, releaseTime: 0.12, filter: FilterSpec(kind: .lowpass, frequency: 1800, q: 0.7))
 		play(ctx.toBuffer(), priority: .transient)
 	}
 
@@ -287,19 +302,33 @@ final class AudioEngine {
 	}
 
 	private func playPowerUpChime(progress: Double, step: Int) {
-		let powerUpNotes: [Double] = [2093.00, 1975.53, 1760.00, 1567.98, 1396.91, 1318.51, 1174.66,
-									  1046.50, 987.77, 880.00, 783.99, 698.46, 659.25, 587.33, 523.25]
-		let startIndex = min(step, powerUpNotes.count - 3)
+		let powerUpGroups: [[Double]] = [
+			[2093.00, 1975.53, 1760.00],
+			[1975.53, 1760.00, 1567.98],
+			[1760.00, 1567.98, 1396.91],
+			[1567.98, 1396.91, 1318.51],
+			[1396.91, 1318.51, 1174.66],
+			[1318.51, 1174.66, 1046.50],
+			[1174.66, 1046.50, 987.77],
+			[1046.50, 987.77, 880.00],
+			[987.77, 880.00, 783.99],
+			[880.00, 783.99, 698.46],
+			[783.99, 698.46, 659.25],
+			[698.46, 659.25, 587.33],
+			[659.25, 587.33, 523.25],
+			[493.88, 440.00, 392.00],
+			[440.00, 392.00, 349.23],
+			[392.00, 349.23, 329.63],
+			[349.23, 329.63, 293.66],
+			[329.63, 293.66, 261.63]
+		]
+		let notes = powerUpGroups[min(step, powerUpGroups.count - 1)]
 		let level = max(0.012, 0.032 * (1 - progress))
-
-		var indices = [startIndex, startIndex + 1, startIndex + 2]
-		indices = indices.map { min($0, powerUpNotes.count - 1) }
-
-		let duration = Double(indices.count) * 0.115 + 0.6
+		let duration = Double(notes.count) * 0.115 + 0.6
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
-		for (i, idx) in indices.enumerated() {
+		for (i, freq) in notes.enumerated() {
 			let delay = Double(i) * 0.08 + Double.random(in: 0..<0.035)
-			ctx.addOsc(type: .sine, freq: powerUpNotes[idx], start: delay,
+			ctx.addOsc(type: .sine, freq: freq, start: delay,
 					   attackTime: 0.02, peakAmp: level, releaseTime: 0.55,
 					   filter: FilterSpec(kind: .lowpass, frequency: 2600, q: 0.7))
 		}

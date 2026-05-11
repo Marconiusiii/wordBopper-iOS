@@ -135,11 +135,10 @@ private struct InstructionsSheet: View {
 
 	private let instructions = [
 		"Tap letter bubbles anywhere on the 5 by 5 grid to build words.",
-		"If you build a word with connected letters, you get a bonus.",
-		"Make three connected words in a row to activate a timed 3 times bonus.",
-		"Hit Make Word to score.",
-		"Used letters are replaced instantly.",
-		"Timed Mode has 2 minutes on the clock. Non-Stop mode turns off the Timer and lets you Bop til you drop!"
+		"Build words from letters that are next to each other to earn a bonus. Do this three times in a row to activate a timed 3x score multiplier.",
+"Hit Make Word to score. Hit Clear Letters to deselect all selected letters and get 15 seconds added to the timer in Timed mode.",
+		"Timed Mode has 2 minutes on the clock. Non-Stop mode turns off the Timer and lets you Bop til you drop!",
+		"For VoiceOver users, use Vertical Navigation in your rotor or explore by touch to quickly navigate the grid."
 	]
 
 	var body: some View {
@@ -222,6 +221,19 @@ private struct GameSettingsSheet: View {
 					.foregroundStyle(Color.wbText)
 
 				Text("Adds Column and Row locations to the letters, like \"B, 2 5\" for Column 2, Row 5.")
+					.font(.footnote)
+					.foregroundStyle(Color.wbMuted)
+					.frame(maxWidth: .infinity, alignment: .leading)
+					.fixedSize(horizontal: false, vertical: true)
+
+				Toggle("Speak Letter Phonetics", isOn: Binding(
+					get: { vm.speakLetterPhonetics },
+					set: { vm.speakLetterPhonetics = $0 }
+				))
+					.font(.body)
+					.foregroundStyle(Color.wbText)
+
+				Text("Adds the phonetic version of the bubble letters to the announcement, such as \"a, Alpha.\"")
 					.font(.footnote)
 					.foregroundStyle(Color.wbMuted)
 					.frame(maxWidth: .infinity, alignment: .leading)

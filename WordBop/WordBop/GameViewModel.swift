@@ -113,6 +113,9 @@ final class GameViewModel {
 	var speakLetterPositions = false {
 		didSet { saveSpeakLetterPositions() }
 	}
+	var speakLetterPhonetics = false {
+		didSet { saveSpeakLetterPhonetics() }
+	}
 	var bubbleTextColorOption: BubbleTextColorOption = .dark {
 		didSet { saveBubbleTextColorOption() }
 	}
@@ -184,6 +187,7 @@ final class GameViewModel {
 		bestGame = loadBestGame()
 		nonStopMode = loadNonStopMode()
 		speakLetterPositions = loadSpeakLetterPositions()
+		speakLetterPhonetics = loadSpeakLetterPhonetics()
 		bubbleTextColorOption = loadBubbleTextColorOption()
 		gameAnnouncementVerbosity = loadGameAnnouncementVerbosity()
 	}
@@ -262,6 +266,8 @@ final class GameViewModel {
 
 	private func deselectBubble(_ bubble: Bubble) {
 		selected.removeAll { $0.bubbleId == bubble.id }
+		audio.stepSelectSoundBack()
+		audio.playDeselectSound()
 		if selected.isEmpty { audio.resetSelectSound() }
 	}
 
@@ -469,6 +475,10 @@ final class GameViewModel {
 		UserDefaults.standard.bool(forKey: "wordBopSpeakLetterPositions")
 	}
 
+	private func loadSpeakLetterPhonetics() -> Bool {
+		UserDefaults.standard.bool(forKey: "wordBopSpeakLetterPhonetics")
+	}
+
 	private func loadBubbleTextColorOption() -> BubbleTextColorOption {
 		guard let saved = UserDefaults.standard.string(forKey: "wordBopBubbleTextColorOption") else {
 			return .dark
@@ -489,6 +499,10 @@ final class GameViewModel {
 
 	private func saveSpeakLetterPositions() {
 		UserDefaults.standard.set(speakLetterPositions, forKey: "wordBopSpeakLetterPositions")
+	}
+
+	private func saveSpeakLetterPhonetics() {
+		UserDefaults.standard.set(speakLetterPhonetics, forKey: "wordBopSpeakLetterPhonetics")
 	}
 
 	private func saveBubbleTextColorOption() {
