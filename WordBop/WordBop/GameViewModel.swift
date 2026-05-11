@@ -319,12 +319,12 @@ final class GameViewModel {
 		if chainBonus > largestLetterChain { largestLetterChain = chainBonus }
 
 		if multiplier > 1 {
+			stopPowerUp()
 			audio.playChainMultiplierScoreSound(wordLength: word.count)
 		} else {
 			audio.playWordSound(wordLength: word.count)
 		}
 
-		if chainPowerUpActive { stopPowerUp() }
 		let powerUpActivated = updateChainStreak(chainBonus: chainBonus)
 
 		announce(GameplayAnnouncements.scoredWord(

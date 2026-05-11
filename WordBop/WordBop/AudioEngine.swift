@@ -258,16 +258,17 @@ final class AudioEngine {
 		powerUpStartedAt = Date()
 		powerUpDuration = duration
 		powerUpChimeStep = 0
-		playPowerUpChime(progress: 0, step: powerUpChimeStep)
+		playPowerUpChime(step: powerUpChimeStep, progress: 0)
 		powerUpChimeStep += 1
-		powerUpTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+		let chimeInterval = duration / Double(powerUpChimeGroups.count)
+		powerUpTimer = Timer.scheduledTimer(withTimeInterval: chimeInterval, repeats: true) { [weak self] _ in
 			guard let self, let start = self.powerUpStartedAt else { return }
 			let elapsed = Date().timeIntervalSince(start)
-			if elapsed >= self.powerUpDuration {
+			if elapsed >= self.powerUpDuration || self.powerUpChimeStep >= self.powerUpChimeGroups.count {
 				self.stopPowerUpChimes()
 				return
 			}
-			self.playPowerUpChime(progress: elapsed / self.powerUpDuration, step: self.powerUpChimeStep)
+			self.playPowerUpChime(step: self.powerUpChimeStep, progress: elapsed / self.powerUpDuration)
 			self.powerUpChimeStep += 1
 		}
 	}
@@ -301,8 +302,8 @@ final class AudioEngine {
 		}
 	}
 
-	private func playPowerUpChime(progress: Double, step: Int) {
-		let powerUpGroups: [[Double]] = [
+	private var powerUpChimeGroups: [[Double]] {
+		[
 			[2093.00, 1975.53, 1760.00],
 			[1975.53, 1760.00, 1567.98],
 			[1760.00, 1567.98, 1396.91],
@@ -315,14 +316,12 @@ final class AudioEngine {
 			[880.00, 783.99, 698.46],
 			[783.99, 698.46, 659.25],
 			[698.46, 659.25, 587.33],
-			[659.25, 587.33, 523.25],
-			[493.88, 440.00, 392.00],
-			[440.00, 392.00, 349.23],
-			[392.00, 349.23, 329.63],
-			[349.23, 329.63, 293.66],
-			[329.63, 293.66, 261.63]
+			[659.25, 587.33, 523.25]
 		]
-		let notes = powerUpGroups[min(step, powerUpGroups.count - 1)]
+	}
+
+	private func playPowerUpChime(step: Int, progress: Double) {
+		let notes = powerUpChimeGroups[min(step, powerUpChimeGroups.count - 1)]
 		let level = max(0.012, 0.032 * (1 - progress))
 		let duration = Double(notes.count) * 0.115 + 0.6
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
