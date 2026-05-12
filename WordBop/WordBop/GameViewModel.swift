@@ -73,9 +73,9 @@ enum GameMode: String, CaseIterable, Identifiable {
 	var settingsBlurb: String {
 		switch self {
 		case .timed:
-			"Make as many words as you can in 2 minutes!"
+			"Make as many words as you can in 2 minutes! Letters change as you use them."
 		case .bopple:
-			"Bopped letters will not change when you make words! How many words can you create in 3 minutes?"
+			"Bopped letters will not change when you make words. Words must be made up of letters that are next to each other in the grid. How many words can you create in 3 minutes?"
 		case .nonStop:
 			"Bop to the Top! Non-Stop mode takes away the game timer, so bop as many letters and make as many words as you want!"
 		}
@@ -140,6 +140,14 @@ final class GameViewModel {
 		"Bop All The Things!",
 		"Bop to the Top!",
 		"Commence bopping!"
+	]
+	static let boppleGameplayHeadingPhrases = [
+		"The Boppler Effect",
+		"Bopple Away!",
+		"All the Bopples",
+		"Boplift Your Vocabulary!",
+		"The Bopple Exquisite",
+		"The Bopple Bops Back"
 	]
 
 	// MARK: - Navigation
@@ -360,9 +368,9 @@ final class GameViewModel {
 			return
 		}
 
-		let chainBonus = calcChainBonus()
+		let chainBonus = gameMode == .bopple ? 0 : calcChainBonus()
 		let basePoints = calcScore(word) + chainBonus
-		let multiplier = chainPowerUpActive ? 3 : 1
+		let multiplier = gameMode == .bopple ? 1 : (chainPowerUpActive ? 3 : 1)
 		let points = basePoints * multiplier
 
 		let scoredIds = selected.map(\.bubbleId)
@@ -377,7 +385,7 @@ final class GameViewModel {
 		wordCount += 1
 		totalLettersUsed += word.count
 		madeWords.append(word)
-		if chainBonus > largestLetterChain { largestLetterChain = chainBonus }
+		if gameMode != .bopple, chainBonus > largestLetterChain { largestLetterChain = chainBonus }
 
 		if multiplier > 1 {
 			stopPowerUp()
@@ -386,7 +394,7 @@ final class GameViewModel {
 			audio.playWordSound(wordLength: word.count)
 		}
 
-		let powerUpActivated = updateChainStreak(chainBonus: chainBonus)
+		let powerUpActivated = gameMode == .bopple ? false : updateChainStreak(chainBonus: chainBonus)
 
 		announce(GameplayAnnouncements.scoredWord(
 			word: word,
@@ -401,10 +409,26 @@ final class GameViewModel {
 	// MARK: - Scoring
 
 	private func calcScore(_ word: String) -> Int {
+		if gameMode == .bopple { return calcBoppleScore(word) }
 		var pts = word.count
 		if word.count >= 5 { pts += word.count }
 		if word.count >= 7 { pts += word.count * 2 }
 		return pts
+	}
+
+	private func calcBoppleScore(_ word: String) -> Int {
+		switch word.count {
+		case 3...4:
+			1
+		case 5:
+			2
+		case 6:
+			3
+		case 7:
+			5
+		default:
+			11
+		}
 	}
 
 	private func calcChainBonus() -> Int {
@@ -482,7 +506,10 @@ final class GameViewModel {
 	}
 
 	private func randomGameplayHeading() -> String {
-		GameViewModel.gameplayHeadingPhrases.randomElement() ?? GameViewModel.gameplayHeadingPhrases[0]
+		if gameMode == .bopple {
+			return GameViewModel.boppleGameplayHeadingPhrases.randomElement() ?? GameViewModel.boppleGameplayHeadingPhrases[0]
+		}
+		return GameViewModel.gameplayHeadingPhrases.randomElement() ?? GameViewModel.gameplayHeadingPhrases[0]
 	}
 
 	private var gameDuration: Int {
@@ -610,7 +637,6 @@ final class GameViewModel {
 			if score > bestGame.highestBoppleScore { bestGame.highestBoppleScore = score; changed = true }
 			if !longest.isEmpty, longest.count >= bestGame.longestBoppleWord.count { bestGame.longestBoppleWord = longest; changed = true }
 			if wordCount > bestGame.mostBoppleWords { bestGame.mostBoppleWords = wordCount; changed = true }
-			if largestLetterChain > bestGame.largestBoppleLetterChain { bestGame.largestBoppleLetterChain = largestLetterChain; changed = true }
 		case .nonStop:
 			if score > bestGame.highestNonStopScore { bestGame.highestNonStopScore = score; changed = true }
 			if !longest.isEmpty, longest.count >= bestGame.longestNonStopWord.count { bestGame.longestNonStopWord = longest; changed = true }

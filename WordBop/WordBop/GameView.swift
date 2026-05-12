@@ -23,7 +23,9 @@ struct GameView: View {
 					.accessibilitySortPriority(100)
 
 				GameHeaderBar()
-				ChainMeterBar()
+				if vm.gameMode != .bopple {
+					ChainMeterBar()
+				}
 				WordTrayBar()
 
 				BubbleGridView(cellSize: cellSize)

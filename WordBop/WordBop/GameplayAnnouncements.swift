@@ -20,15 +20,17 @@ enum GameplayAnnouncements {
 		powerUpActivated: Bool,
 		verbosity: GameAnnouncementVerbosity
 	) -> String {
+		let pointText = points == 1 ? "1 point" : "\(points) points"
+
 		if verbosity == .low {
-			return powerUpActivated ? "3 times active!" : "\(points) points."
+			return powerUpActivated ? "3 times active!" : "\(pointText)."
 		}
 
 		if powerUpActivated {
 			return "3 times active!"
 		}
 
-		var parts = ["\(word), \(points) points"]
+		var parts = ["\(word), \(pointText)"]
 
 		if multiplier > 1 {
 			parts.append("3 times")
