@@ -52,14 +52,48 @@ enum GameAnnouncementVerbosity: String, CaseIterable, Identifiable {
 	}
 }
 
+enum GameMode: String, CaseIterable, Identifiable {
+	case timed
+	case bopple
+	case nonStop
+
+	var id: String { rawValue }
+
+	var label: String {
+		switch self {
+		case .timed:
+			"Timed"
+		case .bopple:
+			"Bopple"
+		case .nonStop:
+			"Non-Stop"
+		}
+	}
+
+	var settingsBlurb: String {
+		switch self {
+		case .timed:
+			"Make as many words as you can in 2 minutes!"
+		case .bopple:
+			"Bopped letters will not change when you make words! How many words can you create in 3 minutes?"
+		case .nonStop:
+			"Bop to the Top! Non-Stop mode takes away the game timer, so bop as many letters and make as many words as you want!"
+		}
+	}
+}
+
 struct BestGame: Codable {
 	var highestScore: Int = 0
+	var highestBoppleScore: Int = 0
 	var highestNonStopScore: Int = 0
 	var longestWord: String = ""
+	var longestBoppleWord: String = ""
 	var longestNonStopWord: String = ""
 	var mostWords: Int = 0
+	var mostBoppleWords: Int = 0
 	var mostNonStopWords: Int = 0
 	var largestLetterChain: Int = 0
+	var largestBoppleLetterChain: Int = 0
 	var largestNonStopLetterChain: Int = 0
 
 	init() {}
@@ -67,12 +101,16 @@ struct BestGame: Codable {
 	init(from decoder: Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		highestScore = try container.decodeIfPresent(Int.self, forKey: .highestScore) ?? 0
+		highestBoppleScore = try container.decodeIfPresent(Int.self, forKey: .highestBoppleScore) ?? 0
 		highestNonStopScore = try container.decodeIfPresent(Int.self, forKey: .highestNonStopScore) ?? 0
 		longestWord = try container.decodeIfPresent(String.self, forKey: .longestWord) ?? ""
+		longestBoppleWord = try container.decodeIfPresent(String.self, forKey: .longestBoppleWord) ?? ""
 		longestNonStopWord = try container.decodeIfPresent(String.self, forKey: .longestNonStopWord) ?? ""
 		mostWords = try container.decodeIfPresent(Int.self, forKey: .mostWords) ?? 0
+		mostBoppleWords = try container.decodeIfPresent(Int.self, forKey: .mostBoppleWords) ?? 0
 		mostNonStopWords = try container.decodeIfPresent(Int.self, forKey: .mostNonStopWords) ?? 0
 		largestLetterChain = try container.decodeIfPresent(Int.self, forKey: .largestLetterChain) ?? 0
+		largestBoppleLetterChain = try container.decodeIfPresent(Int.self, forKey: .largestBoppleLetterChain) ?? 0
 		largestNonStopLetterChain = try container.decodeIfPresent(Int.self, forKey: .largestNonStopLetterChain) ?? 0
 	}
 }
@@ -83,7 +121,8 @@ enum GameScreen { case start, game, results }
 final class GameViewModel {
 
 	// MARK: - Config
-	static let gameDuration = 120
+	static let timedGameDuration = 120
+	static let boppleGameDuration = 180
 	static let totalBubbles = 25
 	static let letterPool: [String] = Array(
 		"aaaaaaaaaabbccddddeeeeeeeeeefffggghhhhiiiiiiijkllll" +
@@ -107,8 +146,8 @@ final class GameViewModel {
 	var screen: GameScreen = .start
 
 	// MARK: - Game state
-	var nonStopMode = false {
-		didSet { saveNonStopMode() }
+	var gameMode: GameMode = .timed {
+		didSet { saveGameMode() }
 	}
 	var speakLetterPositions = false {
 		didSet { saveSpeakLetterPositions() }
@@ -128,7 +167,7 @@ final class GameViewModel {
 	var wordCount = 0
 	var totalLettersUsed = 0
 	var madeWords: [String] = []
-	var secondsLeft = GameViewModel.gameDuration
+	var secondsLeft = GameViewModel.timedGameDuration
 	var gameActive = false
 	var connectedWordStreak = 0
 	var chainPowerUpActive = false
@@ -178,6 +217,8 @@ final class GameViewModel {
 
 	var makeWordEnabled: Bool { selected.count >= 3 }
 
+	var showsTimer: Bool { gameMode != .nonStop }
+
 	func isSelected(_ bubble: Bubble) -> Bool {
 		selected.contains(where: { $0.bubbleId == bubble.id })
 	}
@@ -185,7 +226,7 @@ final class GameViewModel {
 	// MARK: - Init
 	init() {
 		bestGame = loadBestGame()
-		nonStopMode = loadNonStopMode()
+		gameMode = loadGameMode()
 		speakLetterPositions = loadSpeakLetterPositions()
 		speakLetterPhonetics = loadSpeakLetterPhonetics()
 		bubbleTextColorOption = loadBubbleTextColorOption()
@@ -201,7 +242,7 @@ final class GameViewModel {
 		wordCount = 0
 		totalLettersUsed = 0
 		madeWords = []
-		secondsLeft = GameViewModel.gameDuration
+		secondsLeft = gameDuration
 		gameActive = true
 		connectedWordStreak = 0
 		chainPowerUpActive = false
@@ -217,7 +258,7 @@ final class GameViewModel {
 
 		screen = .game
 		audio.playRoundStartSound()
-		if !nonStopMode { startTimer() }
+		if showsTimer { startTimer() }
 	}
 
 	func endGame() {
@@ -278,11 +319,11 @@ final class GameViewModel {
 		selected.removeAll()
 		audio.resetSelectSound()
 		audio.playBonusSound()
-		if nonStopMode {
-			announce(GameplayAnnouncements.cleared, includeInLowVerbosity: true)
-		} else {
-			secondsLeft = min(secondsLeft + 15, GameViewModel.gameDuration)
+		if gameMode == .timed {
+			secondsLeft = min(secondsLeft + 15, gameDuration)
 			announce(GameplayAnnouncements.clearedWithTimeBonus, includeInLowVerbosity: true)
+		} else {
+			announce(GameplayAnnouncements.cleared, includeInLowVerbosity: true)
 		}
 	}
 
@@ -292,12 +333,30 @@ final class GameViewModel {
 		guard gameActive, selected.count >= 3 else { return }
 		let word = currentWord.lowercased()
 
+		if gameMode == .bopple, calcChainBonus() == 0 {
+			audio.playInvalidSound()
+			resetChainStreak()
+			selected.removeAll()
+			audio.resetSelectSound()
+			announce(GameplayAnnouncements.disconnectedBoppleWord, includeInLowVerbosity: true)
+			return
+		}
+
 		guard dictionary.contains(word) else {
 			audio.playInvalidSound()
 			resetChainStreak()
 			selected.removeAll()
 			audio.resetSelectSound()
 			announce(GameplayAnnouncements.invalidWord(word), includeInLowVerbosity: true)
+			return
+		}
+
+		if gameMode == .bopple, madeWords.contains(word) {
+			audio.playInvalidSound()
+			resetChainStreak()
+			selected.removeAll()
+			audio.resetSelectSound()
+			announce(GameplayAnnouncements.duplicateWord(word), includeInLowVerbosity: true)
 			return
 		}
 
@@ -310,7 +369,9 @@ final class GameViewModel {
 		selected.removeAll()
 		audio.resetSelectSound()
 
-		for id in scoredIds { replaceBubble(id: id) }
+		if gameMode != .bopple {
+			for id in scoredIds { replaceBubble(id: id) }
+		}
 
 		score += points
 		wordCount += 1
@@ -424,6 +485,17 @@ final class GameViewModel {
 		GameViewModel.gameplayHeadingPhrases.randomElement() ?? GameViewModel.gameplayHeadingPhrases[0]
 	}
 
+	private var gameDuration: Int {
+		switch gameMode {
+		case .timed:
+			GameViewModel.timedGameDuration
+		case .bopple:
+			GameViewModel.boppleGameDuration
+		case .nonStop:
+			GameViewModel.timedGameDuration
+		}
+	}
+
 	// MARK: - Timer
 
 	private func startTimer() {
@@ -467,8 +539,12 @@ final class GameViewModel {
 		return saved
 	}
 
-	private func loadNonStopMode() -> Bool {
-		UserDefaults.standard.bool(forKey: "wordBopNonStopMode")
+	private func loadGameMode() -> GameMode {
+		if let saved = UserDefaults.standard.string(forKey: "wordBopGameMode"),
+		   let mode = GameMode(rawValue: saved) {
+			return mode
+		}
+		return UserDefaults.standard.bool(forKey: "wordBopNonStopMode") ? .nonStop : .timed
 	}
 
 	private func loadSpeakLetterPositions() -> Bool {
@@ -493,8 +569,9 @@ final class GameViewModel {
 		return GameAnnouncementVerbosity(rawValue: saved) ?? .normal
 	}
 
-	private func saveNonStopMode() {
-		UserDefaults.standard.set(nonStopMode, forKey: "wordBopNonStopMode")
+	private func saveGameMode() {
+		UserDefaults.standard.set(gameMode.rawValue, forKey: "wordBopGameMode")
+		UserDefaults.standard.set(gameMode == .nonStop, forKey: "wordBopNonStopMode")
 	}
 
 	private func saveSpeakLetterPositions() {
@@ -523,16 +600,22 @@ final class GameViewModel {
 			word.count >= current.count ? word : current
 		}
 		var changed = false
-		if nonStopMode {
-			if score > bestGame.highestNonStopScore { bestGame.highestNonStopScore = score; changed = true }
-			if !longest.isEmpty, longest.count >= bestGame.longestNonStopWord.count { bestGame.longestNonStopWord = longest; changed = true }
-			if wordCount > bestGame.mostNonStopWords { bestGame.mostNonStopWords = wordCount; changed = true }
-			if largestLetterChain > bestGame.largestNonStopLetterChain { bestGame.largestNonStopLetterChain = largestLetterChain; changed = true }
-		} else {
+		switch gameMode {
+		case .timed:
 			if score > bestGame.highestScore { bestGame.highestScore = score; changed = true }
 			if !longest.isEmpty, longest.count >= bestGame.longestWord.count { bestGame.longestWord = longest; changed = true }
 			if wordCount > bestGame.mostWords { bestGame.mostWords = wordCount; changed = true }
 			if largestLetterChain > bestGame.largestLetterChain { bestGame.largestLetterChain = largestLetterChain; changed = true }
+		case .bopple:
+			if score > bestGame.highestBoppleScore { bestGame.highestBoppleScore = score; changed = true }
+			if !longest.isEmpty, longest.count >= bestGame.longestBoppleWord.count { bestGame.longestBoppleWord = longest; changed = true }
+			if wordCount > bestGame.mostBoppleWords { bestGame.mostBoppleWords = wordCount; changed = true }
+			if largestLetterChain > bestGame.largestBoppleLetterChain { bestGame.largestBoppleLetterChain = largestLetterChain; changed = true }
+		case .nonStop:
+			if score > bestGame.highestNonStopScore { bestGame.highestNonStopScore = score; changed = true }
+			if !longest.isEmpty, longest.count >= bestGame.longestNonStopWord.count { bestGame.longestNonStopWord = longest; changed = true }
+			if wordCount > bestGame.mostNonStopWords { bestGame.mostNonStopWords = wordCount; changed = true }
+			if largestLetterChain > bestGame.largestNonStopLetterChain { bestGame.largestNonStopLetterChain = largestLetterChain; changed = true }
 		}
 		if changed { saveBestGame() }
 	}

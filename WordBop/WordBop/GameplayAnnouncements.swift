@@ -6,6 +6,12 @@ enum GameplayAnnouncements {
 		"\(word), not valid."
 	}
 
+	static func duplicateWord(_ word: String) -> String {
+		"\(word), already found."
+	}
+
+	static let disconnectedBoppleWord = "Bopple words must use connected letters."
+
 	static func scoredWord(
 		word: String,
 		points: Int,

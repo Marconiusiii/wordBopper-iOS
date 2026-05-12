@@ -58,6 +58,7 @@ struct BubbleGridView: View {
 
 struct BubbleButton: View {
 	@Environment(\.accessibilityReduceMotion) private var reduceMotion
+	@Environment(\.legibilityWeight) private var legibilityWeight
 	let bubble: Bubble
 	let isSelected: Bool
 	let size: CGFloat
@@ -110,10 +111,10 @@ struct BubbleButton: View {
 					.shadow(color: .black.opacity(isSelected ? 0 : 0.3), radius: 4, y: 3)
 					.scaleEffect(reduceMotion ? 1.0 : (isSelected ? 0.88 : 1.0))
 
-				Text(bubble.letter.lowercased())
-					.font(.system(.title2, design: .monospaced).weight(.bold))
+				Text(bubble.letter.uppercased())
+					.font(.system(size: bubbleLetterSize, weight: letterWeight, design: .monospaced))
 					.foregroundStyle(isSelected ? selectedTextColor : textColor)
-					.minimumScaleFactor(0.6)
+					.minimumScaleFactor(0.55)
 					.lineLimit(1)
 			}
 			.frame(width: size, height: size)
@@ -131,5 +132,13 @@ struct BubbleButton: View {
 
 	private var bubbleSize: CGFloat {
 		size * 0.92
+	}
+
+	private var bubbleLetterSize: CGFloat {
+		min(size * 0.58, 40)
+	}
+
+	private var letterWeight: Font.Weight {
+		legibilityWeight == .bold ? .black : .bold
 	}
 }

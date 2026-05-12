@@ -136,8 +136,8 @@ private struct InstructionsSheet: View {
 	private let instructions = [
 		"Tap letter bubbles anywhere on the 5 by 5 grid to build words.",
 		"Build words from letters that are next to each other to earn a bonus. Do this three times in a row to activate a timed 3x score multiplier.",
-"Hit Make Word to score. Hit Clear Letters to deselect all selected letters and get 15 seconds added to the timer in Timed mode.",
-		"Timed Mode has 2 minutes on the clock. Non-Stop mode turns off the Timer and lets you Bop til you drop!",
+		"Hit Make Word to score. Hit Clear Letters to deselect all selected letters and get 15 seconds added to the timer in Timed mode.",
+		"Timed mode has 2 minutes on the clock. Bopple mode gives you 3 minutes with a fixed board. Non-Stop mode turns off the timer and lets you Bop til you drop!",
 		"For VoiceOver users, use Vertical Navigation in your rotor or explore by touch to quickly navigate the grid."
 	]
 
@@ -189,6 +189,7 @@ private struct InstructionsSheet: View {
 private struct GameSettingsSheet: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dismiss) private var dismiss
+	@Namespace private var gameModeNamespace
 	@Namespace private var bubbleTextColorNamespace
 	@Namespace private var gameAnnouncementsNamespace
 
@@ -200,14 +201,33 @@ private struct GameSettingsSheet: View {
 					.foregroundStyle(Color.wbText)
 					.accessibilityAddTraits(.isHeader)
 
-				Toggle("Non-Stop Mode", isOn: Binding(
-					get: { vm.nonStopMode },
-					set: { vm.nonStopMode = $0 }
-				))
-					.font(.body)
-					.foregroundStyle(Color.wbText)
+				VStack(alignment: .leading, spacing: 8) {
+					Text("Game Mode")
+						.font(.body)
+						.foregroundStyle(Color.wbText)
+						.accessibilityLabeledPair(
+							role: .label,
+							id: "gameMode",
+							in: gameModeNamespace
+						)
 
-				Text("Bop to the Top! Non-Stop mode takes away the game timer, so bop as many letters and make as many words as you want!")
+					Picker("Game Mode", selection: Binding(
+						get: { vm.gameMode },
+						set: { vm.gameMode = $0 }
+					)) {
+						ForEach(GameMode.allCases) { mode in
+							Text(mode.label).tag(mode)
+						}
+					}
+					.pickerStyle(.segmented)
+					.accessibilityLabeledPair(
+						role: .content,
+						id: "gameMode",
+						in: gameModeNamespace
+					)
+				}
+
+				Text(vm.gameMode.settingsBlurb)
 					.font(.footnote)
 					.foregroundStyle(Color.wbMuted)
 					.frame(maxWidth: .infinity, alignment: .leading)
@@ -445,7 +465,7 @@ private struct BestGameCard: View {
 
 			if isExpanded {
 				VStack(alignment: .leading, spacing: 0) {
-					Text("Timed")
+					Text("Timed Mode")
 						.font(.caption.weight(.bold))
 						.foregroundStyle(Color.wbMuted)
 						.frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
@@ -463,7 +483,25 @@ private struct BestGameCard: View {
 						BestStat(label: "Largest chain", value: "\(bestGame.largestLetterChain)")
 					}
 
-					Text("Non-Stop")
+					Text("Bopple Mode")
+						.font(.caption.weight(.bold))
+						.foregroundStyle(Color.wbMuted)
+						.frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+						.padding(.horizontal, 14)
+						.accessibilityAddTraits(.isHeader)
+						.accessibilityElement(children: .combine)
+
+					HStack(spacing: 0) {
+						BestStat(label: "Best score", value: "\(bestGame.highestBoppleScore)")
+						BestStat(label: "Longest word", value: bestGame.longestBoppleWord.isEmpty ? "None yet" : bestGame.longestBoppleWord)
+					}
+
+					HStack(spacing: 0) {
+						BestStat(label: "Most words", value: "\(bestGame.mostBoppleWords)")
+						BestStat(label: "Largest chain", value: "\(bestGame.largestBoppleLetterChain)")
+					}
+
+					Text("Non-Stop Mode")
 						.font(.caption.weight(.bold))
 						.foregroundStyle(Color.wbMuted)
 						.frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)

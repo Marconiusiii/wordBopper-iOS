@@ -95,7 +95,7 @@ private struct GameHeaderBar: View {
 
 	private var statsContent: some View {
 		HStack {
-			if !vm.nonStopMode {
+			if vm.showsTimer {
 				statBlock(
 					label: "Time",
 					value: vm.formattedTime,
@@ -128,7 +128,7 @@ private struct GameHeaderBar: View {
 	}
 
 	private var headerAccessibilityLabel: String {
-		if vm.nonStopMode { return "Score: \(vm.score), Words: \(vm.wordCount)" }
+		if !vm.showsTimer { return "Score: \(vm.score), Words: \(vm.wordCount)" }
 		return "Time: \(vm.formattedTime), Score: \(vm.score), Words: \(vm.wordCount)"
 	}
 }
@@ -193,6 +193,7 @@ private struct ChainMeterBar: View {
 private struct WordTrayBar: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.accessibilityReduceMotion) private var reduceMotion
+	@Environment(\.legibilityWeight) private var legibilityWeight
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 4) {
@@ -208,9 +209,11 @@ private struct WordTrayBar: View {
 							.foregroundStyle(Color.wbMuted)
 					} else {
 						ForEach(vm.selected, id: \.bubbleId) { sel in
-							Text(sel.letter.lowercased())
-								.font(.system(.title3, design: .monospaced).weight(.bold))
+							Text(sel.letter.uppercased())
+								.font(.system(.title2, design: .monospaced).weight(letterWeight))
 								.foregroundStyle(Color.black)
+								.minimumScaleFactor(0.55)
+								.lineLimit(1)
 								.frame(width: 36, height: 36)
 								.background(Color.wbAccent4)
 								.clipShape(RoundedRectangle(cornerRadius: 10))
@@ -232,6 +235,10 @@ private struct WordTrayBar: View {
 		}
 		.accessibilityElement(children: .ignore)
 		.accessibilityLabel(vm.wordTrayLabel)
+	}
+
+	private var letterWeight: Font.Weight {
+		legibilityWeight == .bold ? .black : .bold
 	}
 }
 
