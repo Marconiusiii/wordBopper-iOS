@@ -248,6 +248,13 @@ private struct GameSettingsSheet: View {
 
 						SettingsDescriptionRow("Adds the phonetic version of the bubble letters to the announcement, such as \"a, Alpha.\"")
 
+						SettingsToggleRow(title: "BopAway", isOn: Binding(
+							get: { vm.bopAway },
+							set: { vm.bopAway = $0 }
+						))
+
+						SettingsDescriptionRow("For an extra challenge, BopAway will instantly replace a deselected letter with a new letter. If you clear selected letters, all of those letters will be replaced. Bop wisely!")
+
 						SettingsPickerBlock(title: "Bubble Text Color", namespace: bubbleTextColorNamespace, pairID: "bubbleTextColor") {
 							Picker("Bubble Text Color", selection: Binding(
 								get: { vm.bubbleTextColorOption },

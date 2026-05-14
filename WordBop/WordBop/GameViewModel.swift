@@ -163,6 +163,9 @@ final class GameViewModel {
 	var speakLetterPhonetics = false {
 		didSet { saveSpeakLetterPhonetics() }
 	}
+	var bopAway = false {
+		didSet { saveBopAway() }
+	}
 	var bubbleTextColorOption: BubbleTextColorOption = .dark {
 		didSet { saveBubbleTextColorOption() }
 	}
@@ -237,6 +240,7 @@ final class GameViewModel {
 		gameMode = loadGameMode()
 		speakLetterPositions = loadSpeakLetterPositions()
 		speakLetterPhonetics = loadSpeakLetterPhonetics()
+		bopAway = loadBopAway()
 		bubbleTextColorOption = loadBubbleTextColorOption()
 		gameAnnouncementVerbosity = loadGameAnnouncementVerbosity()
 	}
@@ -314,6 +318,7 @@ final class GameViewModel {
 	}
 
 	private func deselectBubble(_ bubble: Bubble) {
+		replaceBubbleIfBopAway(id: bubble.id)
 		selected.removeAll { $0.bubbleId == bubble.id }
 		audio.stepSelectSoundBack()
 		audio.playDeselectSound()
@@ -324,7 +329,9 @@ final class GameViewModel {
 		guard !selected.isEmpty else {
 			return
 		}
+		let clearedIds = selected.map(\.bubbleId)
 		selected.removeAll()
+		for id in clearedIds { replaceBubbleIfBopAway(id: id) }
 		audio.resetSelectSound()
 		audio.playBonusSound()
 		if gameMode == .timed {
@@ -497,6 +504,11 @@ final class GameViewModel {
 		bubbles[idx] = Bubble(letter: randomLetter(), colorIndex: randomColor(), row: old.row, col: old.col)
 	}
 
+	private func replaceBubbleIfBopAway(id: UUID) {
+		guard bopAway, gameMode != .bopple else { return }
+		replaceBubble(id: id)
+	}
+
 	private func randomLetter() -> String {
 		GameViewModel.letterPool[Int.random(in: 0..<GameViewModel.letterPool.count)]
 	}
@@ -582,6 +594,10 @@ final class GameViewModel {
 		UserDefaults.standard.bool(forKey: "wordBopSpeakLetterPhonetics")
 	}
 
+	private func loadBopAway() -> Bool {
+		UserDefaults.standard.bool(forKey: "wordBopBopAway")
+	}
+
 	private func loadBubbleTextColorOption() -> BubbleTextColorOption {
 		guard let saved = UserDefaults.standard.string(forKey: "wordBopBubbleTextColorOption") else {
 			return .dark
@@ -607,6 +623,10 @@ final class GameViewModel {
 
 	private func saveSpeakLetterPhonetics() {
 		UserDefaults.standard.set(speakLetterPhonetics, forKey: "wordBopSpeakLetterPhonetics")
+	}
+
+	private func saveBopAway() {
+		UserDefaults.standard.set(bopAway, forKey: "wordBopBopAway")
 	}
 
 	private func saveBubbleTextColorOption() {
