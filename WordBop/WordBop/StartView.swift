@@ -415,6 +415,7 @@ private struct AboutWordBopperSheet: View {
 
 	@AccessibilityFocusState private var isFeedbackButtonFocused: Bool
 	@State private var isShowingMailComposer = false
+	@State private var isAcknowledgementsExpanded = false
 
 	var body: some View {
 		NavigationStack {
@@ -445,6 +446,32 @@ private struct AboutWordBopperSheet: View {
 						.accessibilityAddTraits(.isLink)
 						.accessibilityRemoveTraits(.isButton)
 						.accessibilityHint("Opens in external browser")
+
+					Button {
+						isAcknowledgementsExpanded.toggle()
+					} label: {
+						HStack {
+							Text("Acknowledgements")
+							Image(systemName: isAcknowledgementsExpanded ? "chevron.down" : "chevron.right")
+								.accessibilityHidden(true)
+						}
+						.frame(maxWidth: .infinity)
+						.frame(minHeight: 44)
+						.contentShape(Rectangle())
+					}
+					.buttonStyle(.plain)
+					.accessibilityAddTraits(.isHeader)
+					.accessibilityValue(isAcknowledgementsExpanded ? "Expanded" : "Collapsed")
+
+					if isAcknowledgementsExpanded {
+						Text(acknowledgementsText)
+							.font(.caption)
+							.foregroundStyle(Color.wbMuted)
+							.multilineTextAlignment(.leading)
+							.frame(maxWidth: .infinity, alignment: .leading)
+							.padding(.horizontal, 4)
+							.accessibilityElement(children: .combine)
+					}
 
 					Text("© 2026, \(versionText)")
 				}
@@ -488,6 +515,20 @@ private struct AboutWordBopperSheet: View {
 
 		openURL(mailURL)
 		refocusFeedbackButton()
+	}
+
+	private var acknowledgementsText: String {
+		"""
+		Word list copyright 2000-2026 by Kevin Atkinson.
+
+		Permission to use, copy, modify, distribute, and sell any part of the English Speller Database (ESDB, previously known as SCOWLv2), or word lists created from it, is hereby granted without fee, provided that the above copyright notice appears in all copies and that both the above copyright notice and this notice appear in supporting documentation. Kevin Atkinson makes no representations about the suitability of this database for any purpose. It is provided "as is" without express or implied warranty.
+
+		ESDB is derived from many sources, most of which are in the Public Domain. Data from the Corpus of Contemporary American English (COCA) was also used.
+
+		More information about COCA is available at https://www.english-corpora.org/coca/.
+
+		The primary source of words for ESDB comes from 12dicts and ENABLE2K. Both are in the Public Domain, but Alan Beale deserves special credit as the author of 12dicts and a major contributor to ENABLE2K.
+		"""
 	}
 
 	private func refocusFeedbackButton() {
