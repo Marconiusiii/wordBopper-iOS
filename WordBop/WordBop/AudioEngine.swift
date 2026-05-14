@@ -75,11 +75,11 @@ final class AudioEngine {
 	func playDeselectSound() {
 		let duration = 0.28
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
-		ctx.addOscWithFreqSlide(freq: 523.25, endFreq: 392.0, start: 0, duration: 0.18, peakAmp: 0.11)
+		ctx.addOscWithFreqSlide(freq: 523.25, endFreq: 392.0, start: 0, duration: 0.18, peakAmp: 0.17)
 		ctx.addOsc(type: .sine, freq: 261.63, start: 0.035, attackTime: 0.01,
-				   peakAmp: 0.07, releaseTime: 0.22, settleRatio: 0.35, settleTime: 0.06)
+				   peakAmp: 0.1, releaseTime: 0.22, settleRatio: 0.35, settleTime: 0.06)
 		ctx.addOsc(type: .triangle, freq: 784.0, start: 0.01, attackTime: 0.004,
-				   peakAmp: 0.025, releaseTime: 0.12, filter: FilterSpec(kind: .lowpass, frequency: 1800, q: 0.7))
+				   peakAmp: 0.04, releaseTime: 0.12, filter: FilterSpec(kind: .lowpass, frequency: 1800, q: 0.7))
 		play(ctx.toBuffer(), priority: .transient)
 	}
 
