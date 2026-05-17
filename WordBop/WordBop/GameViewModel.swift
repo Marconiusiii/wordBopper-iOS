@@ -124,11 +124,7 @@ final class GameViewModel {
 	static let timedGameDuration = 120
 	static let boppleGameDuration = 180
 	static let totalBubbles = 25
-	static let letterPool: [String] = Array(
-		"aaaaaaaaaabbccddddeeeeeeeeeefffggghhhhiiiiiiijkllll" +
-		"mmnnnnnnoooooooppqrrrrrsssssstttttttuuuuvvwwxyyz"
-	).map { String($0) }
-	static let colorCount = 8
+		static let colorCount = 8
 	static let gameplayHeadingPhrases = [
 		"Start bopping!",
 		"Bop to it!",
@@ -169,10 +165,13 @@ final class GameViewModel {
 	var bubbleTextColorOption: BubbleTextColorOption = .dark {
 		didSet { saveBubbleTextColorOption() }
 	}
-	var gameAnnouncementVerbosity: GameAnnouncementVerbosity = .normal {
-		didSet { saveGameAnnouncementVerbosity() }
-	}
-	var bubbles: [Bubble] = []
+		var gameAnnouncementVerbosity: GameAnnouncementVerbosity = .normal {
+			didSet { saveGameAnnouncementVerbosity() }
+		}
+		var dictionaryLanguage: DictionaryLanguage = .english {
+			didSet { saveDictionaryLanguage() }
+		}
+		var bubbles: [Bubble] = []
 	var selected: [SelectedLetter] = []
 	var score = 0
 	var wordCount = 0
@@ -198,7 +197,11 @@ final class GameViewModel {
 	private var announcementWorkItem: DispatchWorkItem?
 
 	// MARK: - Computed
-	var currentWord: String { selected.map(\.letter).joined() }
+		var currentWord: String { selected.map(\.letter).joined() }
+
+		var gameplayLocale: Locale {
+			dictionaryLanguage.locale
+		}
 
 	var wordTrayLabel: String {
 		if selected.isEmpty { return "Word tray, empty" }
@@ -254,9 +257,10 @@ final class GameViewModel {
 		gameMode = loadGameMode()
 		speakLetterPositions = loadSpeakLetterPositions()
 		speakLetterPhonetics = loadSpeakLetterPhonetics()
-		bopAway = loadBopAway()
-		bubbleTextColorOption = loadBubbleTextColorOption()
-		gameAnnouncementVerbosity = loadGameAnnouncementVerbosity()
+			bopAway = loadBopAway()
+			bubbleTextColorOption = loadBubbleTextColorOption()
+			gameAnnouncementVerbosity = loadGameAnnouncementVerbosity()
+			dictionaryLanguage = loadDictionaryLanguage()
 	}
 
 	// MARK: - Game lifecycle
@@ -381,7 +385,7 @@ final class GameViewModel {
 			return
 		}
 
-		guard dictionary.contains(word) else {
+		guard dictionary.contains(word, language: dictionaryLanguage) else {
 			audio.playInvalidSound()
 			resetChainStreak()
 			selected.removeAll()
@@ -555,7 +559,8 @@ final class GameViewModel {
 	}
 
 	private func randomLetter() -> String {
-		GameViewModel.letterPool[Int.random(in: 0..<GameViewModel.letterPool.count)]
+		let pool = dictionaryLanguage.letterPool
+		return pool[Int.random(in: 0..<pool.count)]
 	}
 
 	private func randomColor() -> Int {
@@ -650,12 +655,19 @@ final class GameViewModel {
 		return BubbleTextColorOption(rawValue: saved) ?? .dark
 	}
 
-	private func loadGameAnnouncementVerbosity() -> GameAnnouncementVerbosity {
-		guard let saved = UserDefaults.standard.string(forKey: "wordBopGameAnnouncementVerbosity") else {
-			return .normal
+		private func loadGameAnnouncementVerbosity() -> GameAnnouncementVerbosity {
+			guard let saved = UserDefaults.standard.string(forKey: "wordBopGameAnnouncementVerbosity") else {
+				return .normal
+			}
+			return GameAnnouncementVerbosity(rawValue: saved) ?? .normal
 		}
-		return GameAnnouncementVerbosity(rawValue: saved) ?? .normal
-	}
+
+		private func loadDictionaryLanguage() -> DictionaryLanguage {
+			guard let saved = UserDefaults.standard.string(forKey: "wordBopDictionaryLanguage") else {
+				return .english
+			}
+			return DictionaryLanguage(rawValue: saved) ?? .english
+		}
 
 	private func saveGameMode() {
 		UserDefaults.standard.set(gameMode.rawValue, forKey: "wordBopGameMode")
@@ -678,9 +690,13 @@ final class GameViewModel {
 		UserDefaults.standard.set(bubbleTextColorOption.rawValue, forKey: "wordBopBubbleTextColorOption")
 	}
 
-	private func saveGameAnnouncementVerbosity() {
-		UserDefaults.standard.set(gameAnnouncementVerbosity.rawValue, forKey: "wordBopGameAnnouncementVerbosity")
-	}
+		private func saveGameAnnouncementVerbosity() {
+			UserDefaults.standard.set(gameAnnouncementVerbosity.rawValue, forKey: "wordBopGameAnnouncementVerbosity")
+		}
+
+		private func saveDictionaryLanguage() {
+			UserDefaults.standard.set(dictionaryLanguage.rawValue, forKey: "wordBopDictionaryLanguage")
+		}
 
 	private func saveBestGame() {
 		guard let data = try? JSONEncoder().encode(bestGame) else { return }

@@ -28,10 +28,11 @@ struct GameView: View {
 				}
 				WordTrayBar()
 
-				BubbleGridView(cellSize: cellSize)
-					.frame(maxWidth: .infinity)
-					.padding(.horizontal, 4)
-					.padding(.vertical, 6)
+					BubbleGridView(cellSize: cellSize)
+						.frame(maxWidth: .infinity)
+						.padding(.horizontal, 4)
+						.padding(.vertical, 6)
+						.environment(\.locale, vm.gameplayLocale)
 
 				ActionBar(bottomInset: geo.safeAreaInsets.bottom)
 					.frame(maxHeight: .infinity)
@@ -225,9 +226,10 @@ private struct WordTrayBar: View {
 				}
 				.animation(reduceMotion ? nil : .spring(response: 0.2), value: vm.selected.map(\.bubbleId))
 				.padding(.horizontal, 1)
+				}
+				.frame(height: 40)
+				.environment(\.locale, vm.gameplayLocale)
 			}
-			.frame(height: 40)
-		}
 		.padding(.horizontal, 16)
 		.padding(.top, 6)
 		.padding(.bottom, 8)

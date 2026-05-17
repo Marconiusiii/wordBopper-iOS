@@ -209,11 +209,12 @@ private struct InstructionRow: View {
 }
 
 private struct GameSettingsSheet: View {
-	@Environment(GameViewModel.self) private var vm
-	@Environment(\.dismiss) private var dismiss
-	@Namespace private var gameModeNamespace
-	@Namespace private var bubbleTextColorNamespace
-	@Namespace private var gameAnnouncementsNamespace
+		@Environment(GameViewModel.self) private var vm
+		@Environment(\.dismiss) private var dismiss
+		@Namespace private var gameModeNamespace
+		@Namespace private var dictionaryLanguageNamespace
+		@Namespace private var bubbleTextColorNamespace
+		@Namespace private var gameAnnouncementsNamespace
 	@State private var showingAbout = false
 
 	var body: some View {
@@ -240,7 +241,21 @@ private struct GameSettingsSheet: View {
 							.pickerStyle(.segmented)
 						}
 
-						SettingsDescriptionRow(vm.gameMode.settingsBlurb)
+							SettingsDescriptionRow(vm.gameMode.settingsBlurb)
+
+							SettingsPickerBlock(title: "Dictionary Language", namespace: dictionaryLanguageNamespace, pairID: "dictionaryLanguage") {
+								Picker("Dictionary Language", selection: Binding(
+									get: { vm.dictionaryLanguage },
+									set: { vm.dictionaryLanguage = $0 }
+								)) {
+									ForEach(DictionaryLanguage.allCases) { language in
+										Text(language.label).tag(language)
+									}
+								}
+								.pickerStyle(.segmented)
+							}
+
+							SettingsDescriptionRow("Choose the word list and letter set used during gameplay. The rest of the app stays in English for now.")
 
 						SettingsToggleRow(title: "Speak Letter Positions", isOn: Binding(
 							get: { vm.speakLetterPositions },
@@ -563,6 +578,8 @@ private struct AboutWordBopperSheet: View {
 		More information about COCA is available at https://www.english-corpora.org/coca/.
 
 		The primary source of words for ESDB comes from 12dicts and ENABLE2K. Both are in the Public Domain, but Alan Beale deserves special credit as the author of 12dicts and a major contributor to ENABLE2K.
+
+		The Spanish word list is derived from Letterpress word lists made available under the Creative Commons CC0 1.0 Universal public domain dedication.
 		"""
 	}
 

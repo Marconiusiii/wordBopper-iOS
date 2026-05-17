@@ -53,22 +53,24 @@ struct ResultsView: View {
 									.font(.callout)
 									.foregroundStyle(Color.wbMuted)
 							} else {
-								VStack(spacing: 8) {
-									ForEach(Array(vm.madeWords.enumerated()), id: \.offset) { _, word in
-										Text(word)
-											.font(.system(.callout, design: .monospaced).weight(.bold))
-											.foregroundStyle(Color.wbText)
-											.padding(.vertical, 5)
+									VStack(spacing: 8) {
+										ForEach(Array(vm.madeWords.enumerated()), id: \.offset) { _, word in
+											Text(word)
+												.font(.system(.callout, design: .monospaced).weight(.bold))
+												.foregroundStyle(Color.wbText)
+												.environment(\.locale, vm.gameplayLocale)
+												.padding(.vertical, 5)
 											.padding(.horizontal, 10)
 											.frame(maxWidth: .infinity)
 											.background(Color.wbPanel)
 											.clipShape(RoundedRectangle(cornerRadius: 12))
 											.overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.08)))
-											.accessibilityElement(children: .ignore)
-											.accessibilityLabel(word)
+												.accessibilityElement(children: .ignore)
+												.accessibilityLabel(word)
+										}
 									}
+									.environment(\.locale, vm.gameplayLocale)
 								}
-							}
 						}
 						.padding(16)
 						.background(Color.wbSurface)
