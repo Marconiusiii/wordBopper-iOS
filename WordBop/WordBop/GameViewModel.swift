@@ -230,8 +230,21 @@ final class GameViewModel {
 
 	var showsTimer: Bool { gameMode != .nonStop }
 
+	var bopAwayIsActive: Bool {
+		bopAway && gameMode != .bopple
+	}
+
+	var clearActionTitle: String {
+		bopAwayIsActive ? "Clear Word" : "Clear Letters"
+	}
+
+	var clearActionAccessibilityLabel: String {
+		bopAwayIsActive ? "Clear word" : "Clear selected letters"
+	}
+
 	func isSelected(_ bubble: Bubble) -> Bool {
-		selected.contains(where: { $0.bubbleId == bubble.id })
+		if bopAwayIsActive { return false }
+		return selected.contains(where: { $0.bubbleId == bubble.id })
 	}
 
 	// MARK: - Init
@@ -299,6 +312,11 @@ final class GameViewModel {
 
 	func tapBubble(_ bubble: Bubble) {
 		guard gameActive else { return }
+		if bopAwayIsActive {
+			selectBubble(bubble)
+			replaceBubble(id: bubble.id)
+			return
+		}
 		if selected.contains(where: { $0.bubbleId == bubble.id }) {
 			deselectBubble(bubble)
 		} else {
@@ -329,14 +347,16 @@ final class GameViewModel {
 		guard !selected.isEmpty else {
 			return
 		}
-		let clearedIds = selected.map(\.bubbleId)
+		let clearedIds = bopAwayIsActive ? [] : selected.map(\.bubbleId)
 		selected.removeAll()
 		for id in clearedIds { replaceBubbleIfBopAway(id: id) }
 		audio.resetSelectSound()
 		audio.playBonusSound()
-		if gameMode == .timed {
+		if gameMode == .timed && !bopAwayIsActive {
 			secondsLeft = min(secondsLeft + 15, gameDuration)
 			announce(GameplayAnnouncements.clearedWithTimeBonus, includeInLowVerbosity: true)
+		} else if bopAwayIsActive {
+			announce(GameplayAnnouncements.wordCleared, includeInLowVerbosity: true)
 		} else {
 			announce(GameplayAnnouncements.cleared, includeInLowVerbosity: true)
 		}
@@ -348,7 +368,7 @@ final class GameViewModel {
 		guard gameActive, selected.count >= 3 else { return }
 		let word = currentWord.lowercased()
 
-		if gameMode == .bopple, calcChainBonus() == 0 {
+		if gameMode == .bopple, !isFullyConnectedWord() {
 			audio.playInvalidSound()
 			resetChainStreak()
 			selected.removeAll()
@@ -384,7 +404,7 @@ final class GameViewModel {
 		selected.removeAll()
 		audio.resetSelectSound()
 
-		if gameMode != .bopple {
+		if gameMode != .bopple && !bopAwayIsActive {
 			for id in scoredIds { replaceBubble(id: id) }
 		}
 
@@ -440,8 +460,29 @@ final class GameViewModel {
 
 	private func calcChainBonus() -> Int {
 		guard selected.count >= 3 else { return 0 }
-		let connected = zip(selected, selected.dropFirst()).allSatisfy { areTouching($0, $1) }
-		return connected ? selected.count : 0
+		let longestRun = longestConnectedRunLength()
+		return longestRun >= 3 ? longestRun : 0
+	}
+
+	private func isFullyConnectedWord() -> Bool {
+		guard selected.count >= 3 else { return false }
+		return zip(selected, selected.dropFirst()).allSatisfy { areTouching($0, $1) }
+	}
+
+	private func longestConnectedRunLength() -> Int {
+		var longest = 1
+		var current = 1
+
+		for (previous, next) in zip(selected, selected.dropFirst()) {
+			if areTouching(previous, next) {
+				current += 1
+				longest = max(longest, current)
+			} else {
+				current = 1
+			}
+		}
+
+		return longest
 	}
 
 	private func areTouching(_ a: SelectedLetter, _ b: SelectedLetter) -> Bool {

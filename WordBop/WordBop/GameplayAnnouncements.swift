@@ -1,5 +1,6 @@
 enum GameplayAnnouncements {
 	static let cleared = "Cleared."
+	static let wordCleared = "Word cleared."
 	static let clearedWithTimeBonus = "Cleared. 15 seconds added."
 
 	static func invalidWord(_ word: String) -> String {
@@ -10,7 +11,7 @@ enum GameplayAnnouncements {
 		"\(word), already found."
 	}
 
-	static let disconnectedBoppleWord = "Bopple words must use connected letters."
+	static let disconnectedBoppleWord = "Bopple words must use letters that are next to each other."
 
 	static func scoredWord(
 		word: String,

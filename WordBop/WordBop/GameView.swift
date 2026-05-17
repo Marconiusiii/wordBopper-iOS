@@ -268,7 +268,7 @@ private struct ActionBar: View {
 	private func clearButton(width: CGFloat) -> some View {
 		Button { vm.clearSelection() } label: {
 			ButtonZone(bottomInset: bottomInset) {
-				secondaryButtonVisual("Clear Letters")
+				secondaryButtonVisual(vm.clearActionTitle)
 			}
 		}
 		.buttonStyle(.plain)
@@ -276,7 +276,7 @@ private struct ActionBar: View {
 		.frame(width: width)
 		.frame(maxHeight: .infinity)
 		.contentShape(Rectangle())
-		.accessibilityLabel("Clear selected letters")
+		.accessibilityLabel(vm.clearActionAccessibilityLabel)
 	}
 
 	private var makeWordButton: some View {

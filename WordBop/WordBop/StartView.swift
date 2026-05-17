@@ -10,9 +10,16 @@ struct StartView: View {
 	var body: some View {
 		GeometryReader { geo in
 			VStack(spacing: 0) {
-				Text("WordBopper")
-					.font(.largeTitle.weight(.black))
-					.foregroundStyle(Color.wbText)
+				VStack(spacing: 2) {
+					Text("WordBopper")
+						.font(.largeTitle.weight(.black))
+						.foregroundStyle(Color.wbText)
+
+					Text("By Chancey Fleet and Marco Salsiccia")
+						.font(.footnote.weight(.semibold))
+						.foregroundStyle(Color.wbMuted)
+				}
+				.accessibilityElement(children: .combine)
 					.accessibilityAddTraits(.isHeader)
 					.accessibilitySortPriority(100)
 					.frame(maxWidth: .infinity, minHeight: 72)
@@ -111,8 +118,9 @@ private struct InstructionsSheet: View {
 
 	private let instructions = [
 		"Tap letter bubbles anywhere on the 5 by 5 grid to build words.",
-		"Build words from letters that are next to each other to earn a bonus. Do this three times in a row to activate a timed 3x score multiplier.",
+		"Build words with at least 3 letters in a row that are next to each other in the grid to earn a chain bonus. Do this three times in a row to activate a timed 3x score multiplier.",
 		"Hit Make Word to score. Hit Clear Letters to deselect all selected letters and get 15 seconds added to the timer in Timed mode.",
+		"When BopAway is on, each letter you tap moves into the word tray and gets replaced right away. Hit Clear Word to erase the current word from the tray.",
 		"Timed mode has 2 minutes on the clock, and letters change as you use them. Non-Stop mode turns off the timer and lets you Bop til you drop!",
 		"For VoiceOver users, use Vertical Navigation in your rotor or explore by touch to quickly navigate the grid."
 	]
@@ -253,7 +261,7 @@ private struct GameSettingsSheet: View {
 							set: { vm.bopAway = $0 }
 						))
 
-						SettingsDescriptionRow("For an extra challenge, BopAway will instantly replace a deselected letter with a new letter. If you clear selected letters, all of those letters will be replaced. Bop wisely!")
+						SettingsDescriptionRow("For an extra challenge, BopAway instantly moves each tapped letter into the word tray and replaces it with a new letter. If you clear the word, those letters are lost. Bop wisely!")
 
 						SettingsPickerBlock(title: "Bubble Text Color", namespace: bubbleTextColorNamespace, pairID: "bubbleTextColor") {
 							Picker("Bubble Text Color", selection: Binding(
