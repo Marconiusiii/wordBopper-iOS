@@ -3,6 +3,8 @@ import Foundation
 enum DictionaryLanguage: String, CaseIterable, Identifiable {
 	case english
 	case spanish
+	case french
+	case german
 
 	var id: String { rawValue }
 
@@ -12,6 +14,10 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"English"
 		case .spanish:
 			"Spanish"
+		case .french:
+			"French"
+		case .german:
+			"German"
 		}
 	}
 
@@ -21,6 +27,23 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			Locale(identifier: "en")
 		case .spanish:
 			Locale(identifier: "es")
+		case .french:
+			Locale(identifier: "fr")
+		case .german:
+			Locale(identifier: "de")
+		}
+	}
+
+	var speechLanguage: String {
+		switch self {
+		case .english:
+			"en"
+		case .spanish:
+			"es"
+		case .french:
+			"fr"
+		case .german:
+			"de"
 		}
 	}
 
@@ -30,6 +53,10 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"words"
 		case .spanish:
 			"words-es"
+		case .french:
+			"words-fr"
+		case .german:
+			"words-de"
 		}
 	}
 
@@ -44,6 +71,16 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			Array(
 				"aaaaaaaaaaaabbccddddeeeeeeeeeeffggghhiiiiiiijkllll" +
 				"mmmmnnnnnñoooooooppqrrrrrrssssssttttttuuuuvxyyz"
+			).map { String($0) }
+		case .french:
+			Array(
+				"aaaaaaaaabbccçddddeeeeeeeeeeeeéèêffgghhiiiiiiîjkl" +
+				"llllmmnnnnnooooooôppqrrrrrrssssssttttttuuuuùûvxyyz"
+			).map { String($0) }
+		case .german:
+			Array(
+				"aaaaaaaääbbcccddddeeeeeeeeeeffffgggghhhhiiiiijkllll" +
+				"mmmnnnnnnoooooööppqrrrrrrssssssßttttttuuuuüüvwxyz"
 			).map { String($0) }
 		}
 	}

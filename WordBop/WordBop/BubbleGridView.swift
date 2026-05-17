@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 let phonetics = [
@@ -46,6 +47,7 @@ struct BubbleGridView: View {
 							size: cellSize,
 							speakLetterPositions: vm.speakLetterPositions,
 							speakLetterPhonetics: vm.speakLetterPhonetics,
+							speechLanguage: vm.dictionaryLanguage.speechLanguage,
 							textColorOption: vm.bubbleTextColorOption
 						) {
 							vm.tapBubble(bubble)
@@ -66,6 +68,7 @@ struct BubbleButton: View {
 	let size: CGFloat
 	let speakLetterPositions: Bool
 	let speakLetterPhonetics: Bool
+	let speechLanguage: String
 	let textColorOption: BubbleTextColorOption
 	let action: () -> Void
 	@State private var bopAwayPulse = false
@@ -99,6 +102,18 @@ struct BubbleButton: View {
 		let index = Int(scalar.value) - Int(UnicodeScalar("a").value)
 		guard phonetics.indices.contains(index) else { return letter }
 		return "\(letter), \(phonetics[index])"
+	}
+
+	private var accessibilityPositionValue: String {
+		guard speakLetterPositions else { return "" }
+		return "\(localizedNumber(bubble.col + 1)) \(localizedNumber(bubble.row + 1))"
+	}
+
+	private func localizedNumber(_ number: Int) -> String {
+		let formatter = NumberFormatter()
+		formatter.locale = Locale(identifier: speechLanguage)
+		formatter.numberStyle = .spellOut
+		return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
 	}
 
 	var body: some View {
@@ -135,7 +150,7 @@ struct BubbleButton: View {
 		}
 		.buttonStyle(.plain)
 		.accessibilityLabel(accessibilityLetterLabel)
-		.accessibilityValue(speakLetterPositions ? "\(bubble.col + 1) \(bubble.row + 1)" : "")
+		.accessibilityValue(accessibilityPositionValue)
 		.accessibilityAddTraits(isSelected ? [.isSelected] : [])
 		.id(accessibilityStableId)
 		.transition(bopAwayIsActive || reduceMotion ? .identity : .scale(scale: 0.0).combined(with: .opacity))

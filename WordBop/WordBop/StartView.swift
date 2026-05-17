@@ -255,7 +255,7 @@ private struct GameSettingsSheet: View {
 								.pickerStyle(.segmented)
 							}
 
-							SettingsDescriptionRow("Choose the word list and letter set used during gameplay. The rest of the app stays in English for now.")
+							SettingsDescriptionRow("Choose the language you want to Bop in. The rest of the app stays in English for now.")
 
 						SettingsToggleRow(title: "Speak Letter Positions", isOn: Binding(
 							get: { vm.speakLetterPositions },
@@ -579,7 +579,7 @@ private struct AboutWordBopperSheet: View {
 
 		The primary source of words for ESDB comes from 12dicts and ENABLE2K. Both are in the Public Domain, but Alan Beale deserves special credit as the author of 12dicts and a major contributor to ENABLE2K.
 
-		The Spanish word list is derived from Letterpress word lists made available under the Creative Commons CC0 1.0 Universal public domain dedication.
+		The Spanish, French, and German word lists are derived from Letterpress word lists made available under the Creative Commons CC0 1.0 Universal public domain dedication.
 		"""
 	}
 
