@@ -1,34 +1,5 @@
-import Foundation
 import SwiftUI
 
-let phonetics = [
-	"Alpha",
-	"Bravo",
-	"Charlie",
-	"Delta",
-	"Echo",
-	"Foxtrot",
-	"Golf",
-	"Hotel",
-	"India",
-	"Juliet",
-	"Kilo",
-	"Lima",
-	"Mike",
-	"November",
-	"Oscar",
-	"Papa",
-	"Quebec",
-	"Romeo",
-	"Sierra",
-	"Tango",
-	"Uniform",
-	"Victor",
-	"Whiskey",
-	"XRay",
-	"Yankee",
-	"Zulu"
-]
 struct BubbleGridView: View {
 	@Environment(GameViewModel.self) private var vm
 	let cellSize: CGFloat
@@ -47,6 +18,7 @@ struct BubbleGridView: View {
 							size: cellSize,
 							speakLetterPositions: vm.speakLetterPositions,
 							speakLetterPhonetics: vm.speakLetterPhonetics,
+							dictionaryLanguage: vm.dictionaryLanguage,
 							speechLanguage: vm.dictionaryLanguage.speechLanguage,
 							textColorOption: vm.bubbleTextColorOption
 						) {
@@ -68,6 +40,7 @@ struct BubbleButton: View {
 	let size: CGFloat
 	let speakLetterPositions: Bool
 	let speakLetterPhonetics: Bool
+	let dictionaryLanguage: DictionaryLanguage
 	let speechLanguage: String
 	let textColorOption: BubbleTextColorOption
 	let action: () -> Void
@@ -98,10 +71,8 @@ struct BubbleButton: View {
 	private var accessibilityLetterLabel: String {
 		let letter = bubble.letter.lowercased()
 		guard speakLetterPhonetics else { return letter }
-		guard let scalar = letter.unicodeScalars.first else { return letter }
-		let index = Int(scalar.value) - Int(UnicodeScalar("a").value)
-		guard phonetics.indices.contains(index) else { return letter }
-		return "\(letter), \(phonetics[index])"
+		guard let phoneticName = dictionaryLanguage.phoneticName(for: letter) else { return letter }
+		return "\(letter), \(phoneticName)"
 	}
 
 	private var accessibilityPositionValue: String {
