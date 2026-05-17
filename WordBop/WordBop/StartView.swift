@@ -433,10 +433,37 @@ private struct AboutWordBopperSheet: View {
 					.foregroundStyle(Color.wbText)
 					.accessibilityAddTraits(.isHeader)
 
-				Text("By Chancey Fleet and Marco Salsiccia")
-					.font(.body)
-					.foregroundStyle(Color.wbText)
-					.multilineTextAlignment(.center)
+				VStack(alignment: .leading, spacing: 12) {
+					Text("Chancey wanted this game to exist and vibe coded the initial version, then passed it to Marco to refine it into the original web game. Marco then decided to rewrite the whole game for iOS, and now here you are bopping away. Thanks for playing!")
+						.foregroundStyle(Color.wbText)
+
+					Text("If you enjoy this game, try out our other game on the App Store:")
+						.foregroundStyle(Color.wbText)
+
+					Link(destination: URL(string: "https://apps.apple.com/us/app/whack-a-braille/id6760976367")!) {
+						HStack(spacing: 12) {
+							Image("WhackABrailleIcon")
+								.resizable()
+								.scaledToFit()
+								.frame(width: 44, height: 44)
+								.clipShape(RoundedRectangle(cornerRadius: 10))
+								.accessibilityHidden(true)
+
+							Text("Whack A Braille!")
+								.font(.headline.weight(.black))
+								.underline()
+						}
+						.frame(maxWidth: .infinity)
+						.frame(minHeight: 56)
+						.contentShape(Rectangle())
+					}
+					.foregroundStyle(Color.wbAccent5)
+					.accessibilityAddTraits(.isLink)
+					.accessibilityRemoveTraits(.isButton)
+					.accessibilityHint("Opens in the App Store")
+				}
+				.font(.body)
+				.multilineTextAlignment(.leading)
 
 				Button("Send Game Feedback") {
 					if MFMailComposeViewController.canSendMail() {
