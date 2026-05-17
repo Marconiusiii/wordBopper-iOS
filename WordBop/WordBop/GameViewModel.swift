@@ -185,6 +185,7 @@ final class GameViewModel {
 	var chainPowerUpSecondsLeft = 0
 	var largestLetterChain = 0
 	var gameplayHeading = GameViewModel.gameplayHeadingPhrases[0]
+	private var consumedBopAwayBubbleIds = Set<UUID>()
 
 	// MARK: - Best game
 	var bestGame = BestGame()
@@ -269,6 +270,7 @@ final class GameViewModel {
 		madeWords = []
 		secondsLeft = gameDuration
 		gameActive = true
+		consumedBopAwayBubbleIds.removeAll()
 		connectedWordStreak = 0
 		chainPowerUpActive = false
 		chainPowerUpSecondsLeft = 0
@@ -313,6 +315,8 @@ final class GameViewModel {
 	func tapBubble(_ bubble: Bubble) {
 		guard gameActive else { return }
 		if bopAwayIsActive {
+			guard !consumedBopAwayBubbleIds.contains(bubble.id) else { return }
+			consumedBopAwayBubbleIds.insert(bubble.id)
 			selectBubble(bubble)
 			replaceBubble(id: bubble.id)
 			return

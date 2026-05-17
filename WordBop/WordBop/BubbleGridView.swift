@@ -42,6 +42,7 @@ struct BubbleGridView: View {
 						BubbleButton(
 							bubble: bubble,
 							isSelected: selected,
+							bopAwayIsActive: vm.bopAwayIsActive,
 							size: cellSize,
 							speakLetterPositions: vm.speakLetterPositions,
 							speakLetterPhonetics: vm.speakLetterPhonetics,
@@ -61,11 +62,13 @@ struct BubbleButton: View {
 	@Environment(\.legibilityWeight) private var legibilityWeight
 	let bubble: Bubble
 	let isSelected: Bool
+	let bopAwayIsActive: Bool
 	let size: CGFloat
 	let speakLetterPositions: Bool
 	let speakLetterPhonetics: Bool
 	let textColorOption: BubbleTextColorOption
 	let action: () -> Void
+	@State private var bopAwayPulse = false
 
 	private var fillColor: Color {
 		let palette = Color.bubbleFill(for: textColorOption)
@@ -99,7 +102,15 @@ struct BubbleButton: View {
 	}
 
 	var body: some View {
-		Button(action: action) {
+		Button {
+			action()
+			if bopAwayIsActive {
+				bopAwayPulse = true
+				DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+					bopAwayPulse = false
+				}
+			}
+		} label: {
 			ZStack {
 				Circle()
 					.fill(isSelected ? selectedFillColor : fillColor)
@@ -109,7 +120,7 @@ struct BubbleButton: View {
 					}
 					.frame(width: bubbleSize, height: bubbleSize)
 					.shadow(color: .black.opacity(isSelected ? 0 : 0.3), radius: 4, y: 3)
-					.scaleEffect(reduceMotion ? 1.0 : (isSelected ? 0.88 : 1.0))
+					.scaleEffect(circleScale)
 
 				Text(bubble.letter.uppercased())
 					.font(.system(size: bubbleLetterSize, weight: letterWeight, design: .monospaced))
@@ -120,14 +131,26 @@ struct BubbleButton: View {
 			.frame(width: size, height: size)
 			.contentShape(Rectangle())
 			.animation(reduceMotion ? nil : .spring(response: 0.2, dampingFraction: 0.6), value: isSelected)
+			.animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: bopAwayPulse)
 		}
 		.buttonStyle(.plain)
 		.accessibilityLabel(accessibilityLetterLabel)
 		.accessibilityValue(speakLetterPositions ? "\(bubble.col + 1) \(bubble.row + 1)" : "")
 		.accessibilityAddTraits(isSelected ? [.isSelected] : [])
-		.id(bubble.id)
-		.transition(reduceMotion ? .identity : .scale(scale: 0.0).combined(with: .opacity))
-		.animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.6), value: bubble.id)
+		.id(accessibilityStableId)
+		.transition(bopAwayIsActive || reduceMotion ? .identity : .scale(scale: 0.0).combined(with: .opacity))
+		.animation(bopAwayIsActive || reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.6), value: bubble.id)
+	}
+
+	private var accessibilityStableId: String {
+		bopAwayIsActive ? "\(bubble.row)-\(bubble.col)" : bubble.id.uuidString
+	}
+
+	private var circleScale: CGFloat {
+		if reduceMotion { return 1.0 }
+		if bopAwayPulse { return 0.82 }
+		if isSelected { return 0.88 }
+		return 1.0
 	}
 
 	private var bubbleSize: CGFloat {
