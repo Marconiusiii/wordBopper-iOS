@@ -5,6 +5,7 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 	case spanish
 	case french
 	case german
+	case italian
 
 	var id: String { rawValue }
 
@@ -18,6 +19,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"French"
 		case .german:
 			"German"
+		case .italian:
+			"Italian"
 		}
 	}
 
@@ -31,6 +34,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			Locale(identifier: "fr")
 		case .german:
 			Locale(identifier: "de")
+		case .italian:
+			Locale(identifier: "it")
 		}
 	}
 
@@ -44,6 +49,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"fr"
 		case .german:
 			"de"
+		case .italian:
+			"it"
 		}
 	}
 
@@ -57,6 +64,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"words-fr"
 		case .german:
 			"words-de"
+		case .italian:
+			"words-it"
 		}
 	}
 
@@ -81,6 +90,11 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			Array(
 				"aaaaaaaääbbcccddddeeeeeeeeeeffffgggghhhhiiiiijkllll" +
 				"mmmnnnnnnoooooööppqrrrrrrssssssßttttttuuuuüüvwxyz"
+			).map { String($0) }
+		case .italian:
+			Array(
+				"aaaaaaaaaaaàbbcccddddeeeeeeeeèéffgghhiiiiiiiìlll" +
+				"mmmnnnnnnooooooooòppqrrrrrrssssssttttttuuuuùvvz"
 			).map { String($0) }
 		}
 	}
@@ -207,6 +221,35 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 				"x": "Xanthippe",
 				"y": "Ypsilon",
 				"z": "Zacharias"
+			]
+		case .italian:
+			[
+				"a": "Ancona",
+				"b": "Bologna",
+				"c": "Como",
+				"d": "Domodossola",
+				"e": "Empoli",
+				"f": "Firenze",
+				"g": "Genova",
+				"h": "Hotel",
+				"i": "Imola",
+				"j": "Jolly",
+				"k": "Kappa",
+				"l": "Livorno",
+				"m": "Milano",
+				"n": "Napoli",
+				"o": "Otranto",
+				"p": "Palermo",
+				"q": "Quarto",
+				"r": "Roma",
+				"s": "Savona",
+				"t": "Torino",
+				"u": "Udine",
+				"v": "Venezia",
+				"w": "Washington",
+				"x": "Xilofono",
+				"y": "Yacht",
+				"z": "Zara"
 			]
 		}
 	}
