@@ -58597,6 +58597,10 @@ farsighted
 farsightedly
 farsightedness
 farsightednesses
+fart
+farted
+farting
+farts
 farther
 farthermost
 farthest
@@ -67227,6 +67231,8 @@ gied
 gieing
 gien
 gies
+gif
+gifs
 gift
 giftable
 giftables

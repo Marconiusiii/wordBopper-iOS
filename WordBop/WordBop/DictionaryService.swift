@@ -50,7 +50,7 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 	var resourceName: String {
 		switch self {
 		case .english:
-			"words"
+			"words-en"
 		case .spanish:
 			"words-es"
 		case .french:

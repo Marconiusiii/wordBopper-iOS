@@ -360,7 +360,7 @@ final class GameViewModel {
 		for id in clearedIds { replaceBubbleIfBopAway(id: id) }
 		audio.resetSelectSound()
 		audio.playBonusSound()
-		if gameMode == .timed && !bopAwayIsActive {
+		if gameMode == .timed {
 			secondsLeft = min(secondsLeft + 15, gameDuration)
 			announce(GameplayAnnouncements.clearedWithTimeBonus, includeInLowVerbosity: true)
 		} else if bopAwayIsActive {
