@@ -4,6 +4,7 @@ import UIKit
 
 struct StartView: View {
 	@Environment(GameViewModel.self) private var vm
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 	@State private var showingInstructions = false
 	@State private var showingGameSettings = false
 
@@ -14,15 +15,20 @@ struct StartView: View {
 					Text("WordBopper")
 						.font(.largeTitle.weight(.black))
 						.foregroundStyle(Color.wbText)
+						.multilineTextAlignment(.center)
+						.lineLimit(2)
+						.minimumScaleFactor(0.8)
 
 					Text("By Chancey Fleet and Marco Salsiccia")
 						.font(.footnote.weight(.semibold))
 						.foregroundStyle(Color.wbMuted)
+						.multilineTextAlignment(.center)
+						.fixedSize(horizontal: false, vertical: true)
 				}
 				.accessibilityElement(children: .combine)
 					.accessibilityAddTraits(.isHeader)
 					.accessibilitySortPriority(100)
-					.frame(maxWidth: .infinity, minHeight: 72)
+					.frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 96 : 72)
 					.contentShape(Rectangle())
 
 				startScreenTopRow
@@ -53,12 +59,21 @@ struct StartView: View {
 	}
 
 	private var startScreenTopRow: some View {
-		HStack(spacing: 0) {
-			howToPlayButton
-			gameSettingsButton
+		Group {
+			if dynamicTypeSize.isAccessibilitySize {
+				VStack(spacing: 0) {
+					howToPlayButton
+					gameSettingsButton
+				}
+			} else {
+				HStack(spacing: 0) {
+					howToPlayButton
+					gameSettingsButton
+				}
+			}
 		}
 		.frame(maxWidth: .infinity)
-		.frame(minHeight: 58)
+		.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 116 : 58)
 	}
 
 	private var startGameButton: some View {
@@ -71,10 +86,13 @@ struct StartView: View {
 				Text("Start Game")
 					.font(.title.weight(.black))
 					.foregroundStyle(Color.black)
+					.multilineTextAlignment(.center)
+					.lineLimit(2)
+					.minimumScaleFactor(0.8)
 					.frame(maxWidth: .infinity)
 			}
 			.frame(maxWidth: .infinity)
-			.frame(minHeight: 132)
+			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 150 : 132)
 			.clipShape(RoundedRectangle(cornerRadius: 28))
 			.contentShape(Rectangle())
 		}
@@ -89,6 +107,8 @@ struct StartView: View {
 				.font(.footnote.weight(.semibold))
 				.foregroundStyle(Color.wbAccent5)
 				.underline()
+				.multilineTextAlignment(.center)
+				.lineLimit(2)
 				.frame(maxWidth: .infinity)
 				.frame(minHeight: 58)
 				.contentShape(Rectangle())
@@ -104,6 +124,8 @@ struct StartView: View {
 				.font(.footnote.weight(.semibold))
 				.foregroundStyle(Color.wbAccent5)
 				.underline()
+				.multilineTextAlignment(.center)
+				.lineLimit(2)
 				.frame(maxWidth: .infinity)
 				.frame(minHeight: 58)
 				.contentShape(Rectangle())
@@ -215,6 +237,7 @@ private struct GameSettingsSheet: View {
 		@Namespace private var dictionaryLanguageNamespace
 		@Namespace private var bubbleTextColorNamespace
 		@Namespace private var gameAnnouncementsNamespace
+	@AccessibilityFocusState private var isDictionaryLanguageFocused: Bool
 	@State private var showingAbout = false
 
 	var body: some View {
@@ -243,19 +266,25 @@ private struct GameSettingsSheet: View {
 
 							SettingsDescriptionRow(vm.gameMode.settingsBlurb)
 
-							SettingsPickerBlock(title: "Dictionary Language", namespace: dictionaryLanguageNamespace, pairID: "dictionaryLanguage") {
-								Picker("Dictionary Language", selection: Binding(
+							SettingsPickerBlock(title: "Bubble Language", namespace: dictionaryLanguageNamespace, pairID: "dictionaryLanguage") {
+								Picker("Bubble Language", selection: Binding(
 									get: { vm.dictionaryLanguage },
-									set: { vm.dictionaryLanguage = $0 }
+									set: { language in
+										vm.dictionaryLanguage = language
+										refocusDictionaryLanguagePicker()
+									}
 								)) {
 									ForEach(DictionaryLanguage.allCases) { language in
 										Text(language.label).tag(language)
 									}
 								}
-								.pickerStyle(.segmented)
+								.pickerStyle(.menu)
+								.accessibilityFocused($isDictionaryLanguageFocused)
 							}
 
 							SettingsDescriptionRow("Choose the language you want to Bop in. The rest of the app stays in English for now.")
+
+						SettingsSectionHeading("Letter Positions")
 
 						SettingsToggleRow(title: "Speak Letter Positions", isOn: Binding(
 							get: { vm.speakLetterPositions },
@@ -264,12 +293,16 @@ private struct GameSettingsSheet: View {
 
 						SettingsDescriptionRow("Adds Column and Row locations to the letters, like \"B, 2 5\" for Column 2, Row 5.")
 
+						SettingsSectionHeading("Letter Phonetics")
+
 						SettingsToggleRow(title: "Speak Letter Phonetics", isOn: Binding(
 							get: { vm.speakLetterPhonetics },
 							set: { vm.speakLetterPhonetics = $0 }
 						))
 
 						SettingsDescriptionRow("Adds the phonetic version of the bubble letters to the announcement, such as \"a, Alpha.\"")
+
+						SettingsSectionHeading("BopAway")
 
 						SettingsToggleRow(title: "BopAway", isOn: Binding(
 							get: { vm.bopAway },
@@ -330,6 +363,13 @@ private struct GameSettingsSheet: View {
 		}
 		.preferredColorScheme(.dark)
 	}
+
+	private func refocusDictionaryLanguagePicker() {
+		isDictionaryLanguageFocused = false
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+			isDictionaryLanguageFocused = true
+		}
+	}
 }
 
 private struct SettingsLinkButtonRow: View {
@@ -342,6 +382,8 @@ private struct SettingsLinkButtonRow: View {
 				.font(.body.weight(.semibold))
 				.foregroundStyle(Color.wbAccent5)
 				.underline()
+				.multilineTextAlignment(.center)
+				.lineLimit(2)
 				.frame(maxWidth: .infinity, minHeight: 64)
 				.contentShape(Rectangle())
 		}
@@ -358,10 +400,31 @@ private struct SettingsToggleRow: View {
 		Toggle(title, isOn: $isOn)
 			.font(.body)
 			.foregroundStyle(Color.wbText)
+			.tint(Color.wbAccent5)
 			.padding(.horizontal, 24)
+			.padding(.vertical, 8)
 			.frame(maxWidth: .infinity, minHeight: 64)
 			.contentShape(Rectangle())
 			.background(Color.wbBackground)
+	}
+}
+
+private struct SettingsSectionHeading: View {
+	let title: String
+
+	init(_ title: String) {
+		self.title = title
+	}
+
+	var body: some View {
+		Text(title)
+			.font(.body.weight(.semibold))
+			.foregroundStyle(Color.wbText)
+			.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+			.padding(.horizontal, 24)
+			.contentShape(Rectangle())
+			.background(Color.wbBackground)
+			.accessibilityAddTraits(.isHeader)
 	}
 }
 
@@ -404,10 +467,11 @@ private struct SettingsPickerBlock<Content: View>: View {
 	var body: some View {
 		VStack(alignment: .leading, spacing: 0) {
 			Text(title)
-				.font(.body)
+				.font(.body.weight(.semibold))
 				.foregroundStyle(Color.wbText)
 				.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
 				.contentShape(Rectangle())
+				.accessibilityAddTraits(.isHeader)
 				.accessibilityLabeledPair(
 					role: .label,
 					id: pairID,
@@ -417,6 +481,8 @@ private struct SettingsPickerBlock<Content: View>: View {
 			content
 				.frame(maxWidth: .infinity)
 				.frame(minHeight: 44)
+				.tint(Color.wbAccent5)
+				.foregroundStyle(Color.wbAccent5)
 				.contentShape(Rectangle())
 				.accessibilityLabeledPair(
 					role: .content,
@@ -442,99 +508,107 @@ private struct AboutWordBopperSheet: View {
 
 	var body: some View {
 		NavigationStack {
-			VStack(spacing: 18) {
-				Text("About WordBopper")
-					.font(.title2.weight(.black))
-					.foregroundStyle(Color.wbText)
-					.accessibilityAddTraits(.isHeader)
-
-				VStack(alignment: .leading, spacing: 12) {
-					Text("Chancey wanted this game to exist and vibe coded the initial version, then passed it to Marco to refine it into the original web game. Marco then decided to rewrite the whole game for iOS, and now here you are bopping away. Thanks for playing!")
+			ScrollView {
+				VStack(spacing: 18) {
+					Text("About WordBopper")
+						.font(.title2.weight(.black))
 						.foregroundStyle(Color.wbText)
+						.multilineTextAlignment(.center)
+						.fixedSize(horizontal: false, vertical: true)
+						.accessibilityAddTraits(.isHeader)
 
-					Text("If you enjoy this game, try out our other game on the App Store:")
-						.foregroundStyle(Color.wbText)
+					VStack(alignment: .leading, spacing: 12) {
+						Text("Chancey wanted this game to exist and vibe coded the initial version, then passed it to Marco to refine it into the original web game. Marco then decided to rewrite the whole game for iOS, and now here you are bopping away. Thanks for playing!")
+							.foregroundStyle(Color.wbText)
 
-					Link(destination: URL(string: "https://apps.apple.com/us/app/whack-a-braille/id6760976367")!) {
-						HStack(spacing: 12) {
-							Image("WhackABrailleIcon")
-								.resizable()
-								.scaledToFit()
-								.frame(width: 44, height: 44)
-								.clipShape(RoundedRectangle(cornerRadius: 10))
-								.accessibilityHidden(true)
+						Text("If you enjoy this game, try out our other game on the App Store:")
+							.foregroundStyle(Color.wbText)
 
-							Text("Whack A Braille!")
-								.font(.headline.weight(.black))
-								.underline()
+						Link(destination: URL(string: "https://apps.apple.com/us/app/whack-a-braille/id6760976367")!) {
+							HStack(spacing: 12) {
+								Image("WhackABrailleIcon")
+									.resizable()
+									.scaledToFit()
+									.frame(width: 44, height: 44)
+									.clipShape(RoundedRectangle(cornerRadius: 10))
+									.accessibilityHidden(true)
+
+								Text("Whack A Braille!")
+									.font(.headline.weight(.black))
+									.underline()
+									.multilineTextAlignment(.leading)
+									.fixedSize(horizontal: false, vertical: true)
+							}
+							.frame(maxWidth: .infinity)
+							.frame(minHeight: 56)
+							.contentShape(Rectangle())
 						}
-						.frame(maxWidth: .infinity)
-						.frame(minHeight: 56)
-						.contentShape(Rectangle())
-					}
-					.foregroundStyle(Color.wbAccent5)
-					.accessibilityAddTraits(.isLink)
-					.accessibilityRemoveTraits(.isButton)
-					.accessibilityHint("Opens in the App Store")
-				}
-				.font(.body)
-				.multilineTextAlignment(.leading)
-
-				Button("Send Game Feedback") {
-					if MFMailComposeViewController.canSendMail() {
-						isShowingMailComposer = true
-					} else {
-						openMailFallback()
-					}
-				}
-				.accessibilityHint("Opens Mail so you can send feedback about the game.")
-				.accessibilityFocused($isFeedbackButtonFocused)
-
-				VStack(spacing: 8) {
-					Link("Privacy Policy", destination: URL(string: "https://marconius.com/wbPrivacy/")!)
-						.underline()
+						.foregroundStyle(Color.wbAccent5)
 						.accessibilityAddTraits(.isLink)
 						.accessibilityRemoveTraits(.isButton)
-						.accessibilityHint("Opens in external browser")
+						.accessibilityHint("Opens in the App Store")
+					}
+					.font(.body)
+					.multilineTextAlignment(.leading)
 
-					Button {
-						isAcknowledgementsExpanded.toggle()
-					} label: {
-						HStack {
-							Text("Acknowledgements")
-							Image(systemName: isAcknowledgementsExpanded ? "chevron.down" : "chevron.right")
-								.accessibilityHidden(true)
+					Button("Send Game Feedback") {
+						if MFMailComposeViewController.canSendMail() {
+							isShowingMailComposer = true
+						} else {
+							openMailFallback()
 						}
-						.frame(maxWidth: .infinity)
-						.frame(minHeight: 44)
-						.contentShape(Rectangle())
 					}
-					.buttonStyle(.plain)
-					.accessibilityAddTraits(.isHeader)
-					.accessibilityValue(isAcknowledgementsExpanded ? "Expanded" : "Collapsed")
+					.accessibilityHint("Opens Mail so you can send feedback about the game.")
+					.accessibilityFocused($isFeedbackButtonFocused)
 
-					if isAcknowledgementsExpanded {
-						Text(acknowledgementsText)
-							.font(.caption)
-							.foregroundStyle(Color.wbMuted)
-							.multilineTextAlignment(.leading)
-							.frame(maxWidth: .infinity, alignment: .leading)
-							.padding(.horizontal, 4)
-							.accessibilityElement(children: .combine)
+					VStack(spacing: 8) {
+						Link("Privacy Policy", destination: URL(string: "https://marconius.com/wbPrivacy/")!)
+							.underline()
+							.accessibilityAddTraits(.isLink)
+							.accessibilityRemoveTraits(.isButton)
+							.accessibilityHint("Opens in external browser")
+
+						Button {
+							isAcknowledgementsExpanded.toggle()
+						} label: {
+							HStack {
+								Text("Acknowledgements")
+								Image(systemName: isAcknowledgementsExpanded ? "chevron.down" : "chevron.right")
+									.accessibilityHidden(true)
+							}
+							.frame(maxWidth: .infinity)
+							.frame(minHeight: 44)
+							.contentShape(Rectangle())
+						}
+						.buttonStyle(.plain)
+						.accessibilityAddTraits(.isHeader)
+						.accessibilityValue(isAcknowledgementsExpanded ? "Expanded" : "Collapsed")
+
+						if isAcknowledgementsExpanded {
+							VStack(alignment: .leading, spacing: 8) {
+								ForEach(acknowledgementParagraphs, id: \.self) { paragraph in
+									Text(paragraph)
+										.font(.caption)
+										.foregroundStyle(Color.wbMuted)
+										.multilineTextAlignment(.leading)
+										.frame(maxWidth: .infinity, alignment: .leading)
+								}
+							}
+								.frame(maxWidth: .infinity, alignment: .leading)
+								.padding(.horizontal, 4)
+						}
+
+						Text("© 2026, \(versionText)")
 					}
-
-					Text("© 2026, \(versionText)")
+					.font(.footnote.weight(.semibold))
+					.foregroundStyle(Color.wbMuted)
+					.multilineTextAlignment(.center)
 				}
-				.font(.footnote.weight(.semibold))
-				.foregroundStyle(Color.wbMuted)
-				.multilineTextAlignment(.center)
-
-				Spacer(minLength: 0)
+				.frame(maxWidth: .infinity, alignment: .top)
+				.padding(.horizontal, 24)
+				.padding(.top, 36)
+				.padding(.bottom, 24)
 			}
-			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-			.padding(.horizontal, 24)
-			.padding(.top, 36)
-			.padding(.bottom, 24)
 			.background(Color.wbBackground)
 			.toolbar {
 				ToolbarItem(placement: .topBarTrailing) {
@@ -583,6 +657,12 @@ private struct AboutWordBopperSheet: View {
 		"""
 	}
 
+	private var acknowledgementParagraphs: [String] {
+		acknowledgementsText.components(separatedBy: "\n\n").map {
+			$0.trimmingCharacters(in: .whitespacesAndNewlines)
+		}.filter { !$0.isEmpty }
+	}
+
 	private func refocusFeedbackButton() {
 		DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
 			isFeedbackButtonFocused = true
@@ -597,6 +677,7 @@ private struct AboutWordBopperSheet: View {
 }
 
 private struct BestGameCard: View {
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 	let bestGame: BestGame
 	@State private var isExpanded = true
 
@@ -633,15 +714,15 @@ private struct BestGameCard: View {
 						.accessibilityAddTraits(.isHeader)
 						.accessibilityElement(children: .combine)
 
-					HStack(spacing: 0) {
-						BestStat(label: "Highest score", value: "\(bestGame.highestScore)")
+					statPair(
+						BestStat(label: "Highest score", value: "\(bestGame.highestScore)"),
 						BestStat(label: "Longest word", value: bestGame.longestWord.isEmpty ? "None yet" : bestGame.longestWord)
-					}
+					)
 
-					HStack(spacing: 0) {
-						BestStat(label: "Most words", value: "\(bestGame.mostWords)")
+					statPair(
+						BestStat(label: "Most words", value: "\(bestGame.mostWords)"),
 						BestStat(label: "Largest chain", value: "\(bestGame.largestLetterChain)")
-					}
+					)
 
 					Text("Bopple Mode")
 						.font(.caption.weight(.bold))
@@ -651,10 +732,10 @@ private struct BestGameCard: View {
 						.accessibilityAddTraits(.isHeader)
 						.accessibilityElement(children: .combine)
 
-					HStack(spacing: 0) {
-						BestStat(label: "Best score", value: "\(bestGame.highestBoppleScore)")
+					statPair(
+						BestStat(label: "Best score", value: "\(bestGame.highestBoppleScore)"),
 						BestStat(label: "Longest word", value: bestGame.longestBoppleWord.isEmpty ? "None yet" : bestGame.longestBoppleWord)
-					}
+					)
 
 					BestStat(label: "Most words", value: "\(bestGame.mostBoppleWords)")
 
@@ -666,15 +747,15 @@ private struct BestGameCard: View {
 						.accessibilityAddTraits(.isHeader)
 						.accessibilityElement(children: .combine)
 
-					HStack(spacing: 0) {
-						BestStat(label: "Best score", value: "\(bestGame.highestNonStopScore)")
+					statPair(
+						BestStat(label: "Best score", value: "\(bestGame.highestNonStopScore)"),
 						BestStat(label: "Longest word", value: bestGame.longestNonStopWord.isEmpty ? "None yet" : bestGame.longestNonStopWord)
-					}
+					)
 
-					HStack(spacing: 0) {
-						BestStat(label: "Most words", value: "\(bestGame.mostNonStopWords)")
+					statPair(
+						BestStat(label: "Most words", value: "\(bestGame.mostNonStopWords)"),
 						BestStat(label: "Largest chain", value: "\(bestGame.largestNonStopLetterChain)")
-					}
+					)
 				}
 				.frame(maxWidth: .infinity, alignment: .leading)
 				.transition(.opacity)
@@ -684,6 +765,21 @@ private struct BestGameCard: View {
 		.clipShape(RoundedRectangle(cornerRadius: 16))
 		.overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.07)))
 		.frame(maxWidth: .infinity)
+	}
+
+	@ViewBuilder
+	private func statPair<First: View, Second: View>(_ first: First, _ second: Second) -> some View {
+		if dynamicTypeSize.isAccessibilitySize {
+			VStack(spacing: 0) {
+				first
+				second
+			}
+		} else {
+			HStack(spacing: 0) {
+				first
+				second
+			}
+		}
 	}
 }
 
@@ -699,6 +795,7 @@ private struct BestStat: View {
 			Text(value)
 				.font(.system(.body, design: .monospaced).weight(.bold))
 				.foregroundStyle(Color.wbText)
+				.fixedSize(horizontal: false, vertical: true)
 		}
 		.padding(.horizontal, 14)
 		.padding(.vertical, 8)

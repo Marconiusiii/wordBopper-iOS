@@ -14,6 +14,8 @@ struct GameView: View {
 				Text(vm.gameplayHeading)
 					.font(.headline.weight(.black))
 					.foregroundStyle(Color.wbText)
+					.lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
+					.fixedSize(horizontal: false, vertical: true)
 					.frame(maxWidth: .infinity, alignment: .leading)
 					.padding(.horizontal, 16)
 					.padding(.top, 8)
@@ -46,8 +48,10 @@ struct GameView: View {
 	}
 
 	private func cellSize(in width: CGFloat, height: CGFloat) -> CGFloat {
-		let actionBarHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 246 : 112
-		let reservedHeight: CGFloat = 47 + 56 + 36 + 56 + actionBarHeight + 16
+		let actionBarHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 230 : 112
+		let headerHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 128 : 56
+		let trayHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 70 : 56
+		let reservedHeight: CGFloat = 47 + headerHeight + 36 + trayHeight + actionBarHeight + 16
 		let availableHeight = height - reservedHeight
 		let fromHeight = availableHeight / 5
 		let fromWidth  = (width - 8) / 5
@@ -77,6 +81,7 @@ private struct GameHeaderBar: View {
 					.foregroundStyle(Color.wbAccent2)
 					.multilineTextAlignment(.center)
 					.minimumScaleFactor(0.8)
+					.lineLimit(2)
 					.frame(width: endGameButtonWidth)
 					.frame(maxHeight: .infinity)
 					.background(Color.wbAccent2.opacity(0.15))
@@ -97,20 +102,40 @@ private struct GameHeaderBar: View {
 	}
 
 	private var statsContent: some View {
-		HStack {
-			if vm.showsTimer {
-				statBlock(
-					label: "Time",
-					value: vm.formattedTime,
-					color: vm.timerIsWarning ? .wbAccent2 : .wbTimerGreen,
-					alignment: .leading
-				)
-				Spacer(minLength: 8)
-			}
+		Group {
+			if dynamicTypeSize.isAccessibilitySize {
+				VStack(alignment: .leading, spacing: 8) {
+					if vm.showsTimer {
+						statBlock(
+							label: "Time",
+							value: vm.formattedTime,
+							color: vm.timerIsWarning ? .wbAccent2 : .wbTimerGreen,
+							alignment: .leading
+						)
+					}
 
-			statBlock(label: "Score", value: "\(vm.score)", color: .wbAccent1)
-			Spacer(minLength: 8)
-			statBlock(label: "Words", value: "\(vm.wordCount)", color: .wbAccent4, alignment: .trailing)
+					HStack(spacing: 16) {
+						statBlock(label: "Score", value: "\(vm.score)", color: .wbAccent1, alignment: .leading)
+						statBlock(label: "Words", value: "\(vm.wordCount)", color: .wbAccent4, alignment: .leading)
+					}
+				}
+			} else {
+				HStack {
+					if vm.showsTimer {
+						statBlock(
+							label: "Time",
+							value: vm.formattedTime,
+							color: vm.timerIsWarning ? .wbAccent2 : .wbTimerGreen,
+							alignment: .leading
+						)
+						Spacer(minLength: 8)
+					}
+
+					statBlock(label: "Score", value: "\(vm.score)", color: .wbAccent1)
+					Spacer(minLength: 8)
+					statBlock(label: "Words", value: "\(vm.wordCount)", color: .wbAccent4, alignment: .trailing)
+				}
+			}
 		}
 	}
 
@@ -123,11 +148,13 @@ private struct GameHeaderBar: View {
 				.font(.system(.title2, design: .monospaced).weight(.bold))
 				.foregroundStyle(color)
 				.contentTransition(.numericText())
+				.minimumScaleFactor(0.75)
+				.lineLimit(1)
 		}
 	}
 
 	private var endGameButtonWidth: CGFloat {
-		dynamicTypeSize.isAccessibilitySize ? 132 : 104
+		dynamicTypeSize.isAccessibilitySize ? 144 : 104
 	}
 
 	private var headerAccessibilityLabel: String {
@@ -196,6 +223,7 @@ private struct ChainMeterBar: View {
 private struct WordTrayBar: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.accessibilityReduceMotion) private var reduceMotion
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 	@Environment(\.legibilityWeight) private var legibilityWeight
 
 	var body: some View {
@@ -210,6 +238,7 @@ private struct WordTrayBar: View {
 						Text("Your word appears here as you bop letters.")
 							.font(.callout)
 							.foregroundStyle(Color.wbMuted)
+							.fixedSize(horizontal: false, vertical: true)
 					} else {
 						ForEach(vm.selected, id: \.bubbleId) { sel in
 							Text(sel.letter.uppercased())
@@ -217,7 +246,7 @@ private struct WordTrayBar: View {
 								.foregroundStyle(Color.black)
 								.minimumScaleFactor(0.55)
 								.lineLimit(1)
-								.frame(width: 36, height: 36)
+								.frame(width: tileSize, height: tileSize)
 								.background(Color.wbAccent4)
 								.clipShape(RoundedRectangle(cornerRadius: 10))
 								.transition(reduceMotion ? .identity : .scale(scale: 0.0).combined(with: .opacity))
@@ -227,7 +256,7 @@ private struct WordTrayBar: View {
 				.animation(reduceMotion ? nil : .spring(response: 0.2), value: vm.selected.map(\.bubbleId))
 				.padding(.horizontal, 1)
 				}
-				.frame(height: 40)
+				.frame(height: tileSize + 4)
 				.environment(\.locale, vm.gameplayLocale)
 			}
 		.padding(.horizontal, 16)
@@ -244,6 +273,10 @@ private struct WordTrayBar: View {
 	private var letterWeight: Font.Weight {
 		legibilityWeight == .bold ? .black : .bold
 	}
+
+	private var tileSize: CGFloat {
+		dynamicTypeSize.isAccessibilitySize ? 44 : 36
+	}
 }
 
 // MARK: - Action bar
@@ -256,7 +289,7 @@ private struct ActionBar: View {
 	var body: some View {
 		GeometryReader { geo in
 			HStack(spacing: 0) {
-				clearButton(width: geo.size.width * 0.34)
+				clearButton(width: geo.size.width * (dynamicTypeSize.isAccessibilitySize ? 0.42 : 0.34))
 				makeWordButton
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -298,6 +331,9 @@ private struct ActionBar: View {
 		Text(title)
 			.font(.headline.weight(.black))
 			.foregroundStyle(enabled ? Color.black : Color.wbMuted)
+			.multilineTextAlignment(.center)
+			.lineLimit(2)
+			.minimumScaleFactor(0.8)
 			.frame(maxWidth: .infinity)
 			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 72 : 64)
 			.background(
@@ -312,6 +348,9 @@ private struct ActionBar: View {
 		Text(title)
 			.font(.subheadline.weight(.bold))
 			.foregroundStyle(Color.wbMuted)
+			.multilineTextAlignment(.center)
+			.lineLimit(2)
+			.minimumScaleFactor(0.8)
 			.frame(maxWidth: .infinity)
 			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 66 : 60)
 			.padding(.horizontal, 12)

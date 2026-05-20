@@ -3,6 +3,7 @@ import UIKit
 
 struct ResultsView: View {
 	@Environment(GameViewModel.self) private var vm
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
 	var body: some View {
 		GeometryReader { geo in
@@ -30,14 +31,21 @@ struct ResultsView: View {
 						.accessibilityLabel("\(vm.score) points")
 
 						VStack(spacing: 10) {
-							HStack(spacing: 16) {
+							if dynamicTypeSize.isAccessibilitySize {
 								ResultStat(value: "\(vm.wordCount)", label: "Words made", color: .wbAccent4)
 								ResultStat(value: "\(vm.totalLettersUsed)", label: "Letters used", color: .wbAccent5)
-							}
-
-							HStack(spacing: 16) {
 								ResultStat(value: averageLength, label: "Average length", color: .wbAccent1)
 								ResultStat(value: longestWord, label: "Longest word", color: .wbAccent3)
+							} else {
+								HStack(spacing: 16) {
+									ResultStat(value: "\(vm.wordCount)", label: "Words made", color: .wbAccent4)
+									ResultStat(value: "\(vm.totalLettersUsed)", label: "Letters used", color: .wbAccent5)
+								}
+
+								HStack(spacing: 16) {
+									ResultStat(value: averageLength, label: "Average length", color: .wbAccent1)
+									ResultStat(value: longestWord, label: "Longest word", color: .wbAccent3)
+								}
 							}
 						}
 						.frame(maxWidth: .infinity)
@@ -102,6 +110,7 @@ struct ResultsView: View {
 
 private struct ResultsActionBar: View {
 	@Environment(GameViewModel.self) private var vm
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 	let bottomInset: CGFloat
 
 	var body: some View {
@@ -113,6 +122,9 @@ private struct ResultsActionBar: View {
 					Text("Play Again")
 						.font(.title3.weight(.black))
 						.foregroundStyle(Color.black)
+						.multilineTextAlignment(.center)
+						.lineLimit(2)
+						.minimumScaleFactor(0.8)
 						.frame(maxWidth: .infinity)
 						.frame(minHeight: 52)
 						.padding(.horizontal, 6)
@@ -132,6 +144,9 @@ private struct ResultsActionBar: View {
 					Text("Return Home")
 						.font(.title3.weight(.bold))
 						.foregroundStyle(Color.wbMuted)
+						.multilineTextAlignment(.center)
+						.lineLimit(2)
+						.minimumScaleFactor(0.8)
 						.frame(maxWidth: .infinity)
 						.frame(minHeight: 52)
 						.padding(.horizontal, 6)
@@ -142,7 +157,7 @@ private struct ResultsActionBar: View {
 			}
 			.keyboardShortcut(.cancelAction)
 		}
-		.frame(height: 68 + bottomInset)
+		.frame(height: (dynamicTypeSize.isAccessibilitySize ? 96 : 68) + bottomInset)
 		.background(Color.wbBackground)
 	}
 }
@@ -178,6 +193,8 @@ private struct ResultStat: View {
 			Text(value)
 				.font(.system(.title, design: .monospaced).weight(.bold))
 				.foregroundStyle(color)
+				.minimumScaleFactor(0.75)
+				.lineLimit(1)
 			Text(label)
 				.font(.caption.weight(.bold))
 				.foregroundStyle(Color.wbMuted)

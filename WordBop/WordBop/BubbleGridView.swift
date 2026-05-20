@@ -33,6 +33,7 @@ struct BubbleGridView: View {
 
 struct BubbleButton: View {
 	@Environment(\.accessibilityReduceMotion) private var reduceMotion
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 	@Environment(\.legibilityWeight) private var legibilityWeight
 	let bubble: Bubble
 	let isSelected: Bool
@@ -144,7 +145,9 @@ struct BubbleButton: View {
 	}
 
 	private var bubbleLetterSize: CGFloat {
-		min(size * 0.58, 40)
+		let scale = dynamicTypeSize.isAccessibilitySize ? 0.66 : 0.58
+		let cap: CGFloat = dynamicTypeSize.isAccessibilitySize ? 46 : 40
+		return min(size * scale, cap)
 	}
 
 	private var letterWeight: Font.Weight {
