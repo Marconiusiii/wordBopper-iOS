@@ -636194,7 +636194,6 @@ zuñis
 zuñiste
 zuño
 zuños
-ña
 ñacara
 ñacaras
 ñacurutu
@@ -636439,7 +636438,6 @@ zuños
 ñisñiles
 ñizca
 ñizcas
-ño
 ñoca
 ñocas
 ñocha
@@ -636479,7 +636477,6 @@ zuños
 ñoñez
 ñoño
 ñoños
-ñu
 ñublado
 ñublar
 ñublense

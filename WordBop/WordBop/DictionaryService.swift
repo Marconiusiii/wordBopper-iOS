@@ -83,18 +83,18 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			).map { String($0) }
 		case .french:
 			Array(
-				"aaaaaaaaabbccçddddeeeeeeeeeeeeéèêffgghhiiiiiiîjkl" +
-				"llllmmnnnnnooooooôppqrrrrrrssssssttttttuuuuùûvxyyz"
+				"aaaaaaaaabbccçddddeeeeeeeeeeeeeeeffgghhiiiiiiijkll" +
+				"llmmnnnnnoooooooppqrrrrrrssssssttttttuuuuuuvxyyz"
 			).map { String($0) }
 		case .german:
 			Array(
-				"aaaaaaaääbbcccddddeeeeeeeeeeffffgggghhhhiiiiijkllll" +
-				"mmmnnnnnnoooooööppqrrrrrrssssssßttttttuuuuüüvwxyz"
+				"aaaaaaaaabbcccddddeeeeeeeeeeffffgggghhhhiiiiijkllll" +
+				"mmmnnnnnnooooooooppqrrrrrrssssssßttttttuuuuuuvwxyz"
 			).map { String($0) }
 		case .italian:
 			Array(
-				"aaaaaaaaaaaàbbcccddddeeeeeeeeèéffgghhiiiiiiiìlll" +
-				"mmmnnnnnnooooooooòppqrrrrrrssssssttttttuuuuùvvz"
+				"aaaaaaaaaaaabbcccddddeeeeeeeeeeefgghhiiiiiiiilll" +
+				"mmmnnnnnnoooooooooopqrrrrrrssssssttttttuuuuuvvz"
 			).map { String($0) }
 		}
 	}
@@ -262,7 +262,7 @@ final class DictionaryService {
 	private init() {}
 
 	func contains(_ word: String, language: DictionaryLanguage) -> Bool {
-		words(for: language).contains(word.lowercased())
+		words(for: language).contains(normalized(word, for: language))
 	}
 
 	private func words(for language: DictionaryLanguage) -> Set<String> {
@@ -272,8 +272,35 @@ final class DictionaryService {
 			cachedWords[language] = []
 			return []
 		}
-		let words = Set(content.components(separatedBy: .newlines).filter { !$0.isEmpty })
+		let words = Set(content.components(separatedBy: .newlines).map { normalized($0, for: language) }.filter { !$0.isEmpty })
 		cachedWords[language] = words
 		return words
+	}
+
+	private func normalized(_ word: String, for language: DictionaryLanguage) -> String {
+		let protectedCharacters: [Character: String]
+		switch language {
+		case .english, .italian:
+			protectedCharacters = [:]
+		case .spanish:
+			protectedCharacters = ["ñ": "__WB_NTILDE__"]
+		case .french:
+			protectedCharacters = ["ç": "__WB_CCEDILLA__"]
+		case .german:
+			protectedCharacters = ["ß": "__WB_ESZETT__"]
+		}
+
+		var normalizedWord = word.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+		for (character, token) in protectedCharacters {
+			normalizedWord = normalizedWord.replacingOccurrences(of: String(character), with: token)
+		}
+		normalizedWord = normalizedWord.folding(options: [.diacriticInsensitive], locale: language.locale)
+		normalizedWord = normalizedWord.replacingOccurrences(of: "æ", with: "ae")
+		normalizedWord = normalizedWord.replacingOccurrences(of: "œ", with: "oe")
+		for (character, token) in protectedCharacters {
+			normalizedWord = normalizedWord.replacingOccurrences(of: token.lowercased(), with: String(character))
+			normalizedWord = normalizedWord.replacingOccurrences(of: token, with: String(character))
+		}
+		return normalizedWord
 	}
 }

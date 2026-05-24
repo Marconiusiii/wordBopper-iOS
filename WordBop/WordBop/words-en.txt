@@ -58599,8 +58599,6 @@ farsightedness
 farsightednesses
 fart
 farted
-farting
-farts
 farther
 farthermost
 farthest
@@ -58608,8 +58606,10 @@ farthing
 farthingale
 farthingales
 farthings
+farting
 fartlek
 fartleks
+farts
 fas
 fasces
 fascia
