@@ -20,7 +20,8 @@ struct BubbleGridView: View {
 							speakLetterPhonetics: vm.speakLetterPhonetics,
 							dictionaryLanguage: vm.dictionaryLanguage,
 							speechLanguage: vm.dictionaryLanguage.speechLanguage,
-							textColorOption: vm.bubbleTextColorOption
+							textColorOption: vm.bubbleTextColorOption,
+							letterStyle: vm.bubbleLetterStyle
 						) {
 							vm.tapBubble(bubble)
 						}
@@ -44,6 +45,7 @@ struct BubbleButton: View {
 	let dictionaryLanguage: DictionaryLanguage
 	let speechLanguage: String
 	let textColorOption: BubbleTextColorOption
+	let letterStyle: BubbleLetterStyle
 	let action: () -> Void
 	@State private var bopAwayPulse = false
 
@@ -110,7 +112,7 @@ struct BubbleButton: View {
 					.scaleEffect(circleScale)
 
 				Text(bubble.letter.uppercased())
-					.font(.system(size: bubbleLetterSize, weight: letterWeight, design: .monospaced))
+					.font(.system(size: bubbleLetterSize, weight: letterWeight, design: letterStyle.fontDesign))
 					.foregroundStyle(isSelected ? selectedTextColor : textColor)
 					.minimumScaleFactor(0.55)
 					.lineLimit(1)

@@ -231,12 +231,13 @@ private struct InstructionRow: View {
 }
 
 private struct GameSettingsSheet: View {
-		@Environment(GameViewModel.self) private var vm
-		@Environment(\.dismiss) private var dismiss
-		@Namespace private var gameModeNamespace
-		@Namespace private var dictionaryLanguageNamespace
-		@Namespace private var bubbleTextColorNamespace
-		@Namespace private var gameAnnouncementsNamespace
+	@Environment(GameViewModel.self) private var vm
+	@Environment(\.dismiss) private var dismiss
+	@Namespace private var gameModeNamespace
+	@Namespace private var dictionaryLanguageNamespace
+	@Namespace private var bubbleLetterStyleNamespace
+	@Namespace private var bubbleTextColorNamespace
+	@Namespace private var gameAnnouncementsNamespace
 	@AccessibilityFocusState private var isDictionaryLanguageFocused: Bool
 	@State private var showingAbout = false
 
@@ -252,17 +253,17 @@ private struct GameSettingsSheet: View {
 							.frame(maxWidth: .infinity, minHeight: 72)
 							.contentShape(Rectangle())
 
-						SettingsPickerBlock(title: "Game Mode", namespace: gameModeNamespace, pairID: "gameMode") {
-							Picker("Game Mode", selection: Binding(
-								get: { vm.gameMode },
-								set: { vm.gameMode = $0 }
-							)) {
-								ForEach(GameMode.allCases) { mode in
-									Text(mode.label).tag(mode)
+							SettingsPickerBlock(title: "Game Mode", namespace: gameModeNamespace, pairID: "gameMode") {
+								Picker("Game Mode", selection: Binding(
+									get: { vm.gameMode },
+									set: { vm.gameMode = $0 }
+								)) {
+									ForEach(GameMode.allCases) { mode in
+										Text(mode.label).tag(mode)
+									}
 								}
+								.pickerStyle(.segmented)
 							}
-							.pickerStyle(.segmented)
-						}
 
 							SettingsDescriptionRow(vm.gameMode.settingsBlurb)
 
@@ -302,26 +303,40 @@ private struct GameSettingsSheet: View {
 
 						SettingsDescriptionRow("Adds the phonetic version of the bubble letters to the announcement, such as \"a, Alpha.\"")
 
-						SettingsSectionHeading("BopAway")
+							SettingsSectionHeading("BopAway")
 
-						SettingsToggleRow(title: "BopAway", isOn: Binding(
-							get: { vm.bopAway },
-							set: { vm.bopAway = $0 }
-						))
+							SettingsToggleRow(title: "BopAway", isOn: Binding(
+								get: { vm.bopAway },
+								set: { vm.bopAway = $0 }
+							))
 
-						SettingsDescriptionRow("For an extra challenge, BopAway instantly moves each tapped letter into the word tray and replaces it with a new letter. If you clear the word, those letters are lost. Bop wisely!")
+							SettingsDescriptionRow("For an extra challenge, BopAway instantly moves each tapped letter into the word tray and replaces it with a new letter. If you clear the word, those letters are lost. Bop wisely!")
 
-						SettingsPickerBlock(title: "Bubble Text Color", namespace: bubbleTextColorNamespace, pairID: "bubbleTextColor") {
-							Picker("Bubble Text Color", selection: Binding(
-								get: { vm.bubbleTextColorOption },
-								set: { vm.bubbleTextColorOption = $0 }
-							)) {
-								ForEach(BubbleTextColorOption.allCases) { option in
-									Text(option.label).tag(option)
+							SettingsPickerBlock(title: "Bubble Letter Style", namespace: bubbleLetterStyleNamespace, pairID: "bubbleLetterStyle") {
+								Picker("Bubble Letter Style", selection: Binding(
+									get: { vm.bubbleLetterStyle },
+									set: { vm.bubbleLetterStyle = $0 }
+								)) {
+									ForEach(BubbleLetterStyle.allCases) { option in
+										Text(option.label).tag(option)
+									}
 								}
+								.pickerStyle(.segmented)
 							}
-							.pickerStyle(.segmented)
-						}
+
+							SettingsDescriptionRow("Choose the letter shape that is easiest for you to read in the bubbles and word tray.")
+
+							SettingsPickerBlock(title: "Bubble Text Color", namespace: bubbleTextColorNamespace, pairID: "bubbleTextColor") {
+								Picker("Bubble Text Color", selection: Binding(
+									get: { vm.bubbleTextColorOption },
+									set: { vm.bubbleTextColorOption = $0 }
+								)) {
+									ForEach(BubbleTextColorOption.allCases) { option in
+										Text(option.label).tag(option)
+									}
+								}
+								.pickerStyle(.segmented)
+							}
 
 						SettingsDescriptionRow("Pick your preference of light or dark text for the bubbles. Either option will still have colorful bubbles to bop!")
 
