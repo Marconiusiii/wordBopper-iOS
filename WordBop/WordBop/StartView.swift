@@ -316,11 +316,13 @@ private struct GameSettingsSheet: View {
 								Picker("Bubble Letter Style", selection: Binding(
 									get: { vm.bubbleLetterStyle },
 									set: { vm.bubbleLetterStyle = $0 }
-								)) {
-									ForEach(BubbleLetterStyle.allCases) { option in
-										Text(option.label).tag(option)
+									)) {
+										ForEach(BubbleLetterStyle.allCases) { option in
+											Text(option.label)
+												.font(.system(.body, design: option.fontDesign).weight(.bold))
+												.tag(option)
+										}
 									}
-								}
 								.pickerStyle(.segmented)
 							}
 
