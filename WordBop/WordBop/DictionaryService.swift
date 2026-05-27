@@ -6,6 +6,7 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 	case french
 	case german
 	case italian
+	case brazilianPortuguese
 
 	var id: String { rawValue }
 
@@ -21,6 +22,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"German"
 		case .italian:
 			"Italian"
+		case .brazilianPortuguese:
+			"Brazilian Portuguese"
 		}
 	}
 
@@ -36,6 +39,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			Locale(identifier: "de")
 		case .italian:
 			Locale(identifier: "it")
+		case .brazilianPortuguese:
+			Locale(identifier: "pt-BR")
 		}
 	}
 
@@ -51,6 +56,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"de"
 		case .italian:
 			"it"
+		case .brazilianPortuguese:
+			"pt-BR"
 		}
 	}
 
@@ -66,6 +73,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"words-de"
 		case .italian:
 			"words-it"
+		case .brazilianPortuguese:
+			"words-pt-BR"
 		}
 	}
 
@@ -95,6 +104,11 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			Array(
 				"aaaaaaaaaaaabbcccddddeeeeeeeeeeefgghhiiiiiiiilll" +
 				"mmmnnnnnnoooooooooopqrrrrrrssssssttttttuuuuuvvz"
+			).map { String($0) }
+		case .brazilianPortuguese:
+			Array(
+				"aaaaaaaaaaaabbcccçddddeeeeeeeeeeffgghhiiiiiiillll" +
+				"mmmnnnnnnooooooooppqrrrrrrssssssttttttuuuuuvvxz"
 			).map { String($0) }
 		}
 	}
@@ -251,6 +265,36 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 				"y": "Yacht",
 				"z": "Zara"
 			]
+		case .brazilianPortuguese:
+			[
+				"a": "Amor",
+				"b": "Bola",
+				"c": "Casa",
+				"ç": "Cedilha",
+				"d": "Dado",
+				"e": "Escola",
+				"f": "Faca",
+				"g": "Gato",
+				"h": "Hotel",
+				"i": "Ilha",
+				"j": "Janela",
+				"k": "Kilo",
+				"l": "Lua",
+				"m": "Mesa",
+				"n": "Navio",
+				"o": "Olho",
+				"p": "Pato",
+				"q": "Queijo",
+				"r": "Rua",
+				"s": "Sapo",
+				"t": "Tatu",
+				"u": "Uva",
+				"v": "Vaca",
+				"w": "Washington",
+				"x": "Xadrez",
+				"y": "Yoga",
+				"z": "Zebra"
+			]
 		}
 	}
 }
@@ -284,7 +328,7 @@ final class DictionaryService {
 			protectedCharacters = [:]
 		case .spanish:
 			protectedCharacters = ["ñ": "__WB_NTILDE__"]
-		case .french:
+		case .french, .brazilianPortuguese:
 			protectedCharacters = ["ç": "__WB_CCEDILLA__"]
 		case .german:
 			protectedCharacters = ["ß": "__WB_ESZETT__"]
