@@ -479,7 +479,7 @@ final class GameViewModel {
 			haptics.powerUpScored()
 		} else {
 			audio.playWordSound(wordLength: word.count)
-			haptics.wordScored()
+			haptics.wordScored(wordLength: word.count)
 		}
 
 		let powerUpActivated = gameMode == .bopple ? false : updateChainStreak(chainBonus: chainBonus)
