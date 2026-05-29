@@ -515,12 +515,44 @@ private struct SettingsPickerBlock<Content: View>: View {
 	}
 }
 
+private enum AboutMailDraft {
+	case feedback
+	case missingWord(language: DictionaryLanguage, mode: GameMode)
+
+	var subject: String {
+		switch self {
+		case .feedback:
+			"WordBopper iOS Feedback"
+		case .missingWord:
+			"WordBopper Missing Word"
+		}
+	}
+
+	var body: String? {
+		switch self {
+		case .feedback:
+			nil
+		case let .missingWord(language, mode):
+			"""
+			Missing word:
+
+			Bubble Language: \(language.label)
+			Game Mode: \(mode.label)
+
+			Please include the missing word above. If you know the language or regional spelling details, feel free to add those too.
+			"""
+		}
+	}
+}
+
 private struct AboutWordBopperSheet: View {
+	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dismiss) private var dismiss
 	@Environment(\.openURL) private var openURL
 
 	@AccessibilityFocusState private var isFeedbackButtonFocused: Bool
 	@State private var isShowingMailComposer = false
+	@State private var activeMailDraft = AboutMailDraft.feedback
 	@State private var isAcknowledgementsExpanded = false
 
 	var body: some View {
@@ -568,15 +600,31 @@ private struct AboutWordBopperSheet: View {
 					.font(.body)
 					.multilineTextAlignment(.leading)
 
-					Button("Send Game Feedback") {
-						if MFMailComposeViewController.canSendMail() {
-							isShowingMailComposer = true
-						} else {
-							openMailFallback()
+					VStack(spacing: 0) {
+						Button {
+							sendMail(.feedback)
+						} label: {
+							Text("Send Game Feedback")
+								.frame(maxWidth: .infinity)
+								.frame(minHeight: 48)
+								.contentShape(Rectangle())
 						}
+						.accessibilityHint("Opens Mail so you can send feedback about the game.")
+						.accessibilityFocused($isFeedbackButtonFocused)
+
+						Button {
+							sendMail(.missingWord(language: vm.dictionaryLanguage, mode: vm.gameMode))
+						} label: {
+							Text("Report Missing Word")
+								.frame(maxWidth: .infinity)
+								.frame(minHeight: 48)
+								.contentShape(Rectangle())
+						}
+						.accessibilityHint("Opens Mail with the current language and game mode included.")
 					}
-					.accessibilityHint("Opens Mail so you can send feedback about the game.")
-					.accessibilityFocused($isFeedbackButtonFocused)
+					.buttonStyle(.borderedProminent)
+					.tint(Color.wbAccent5)
+					.foregroundStyle(Color.black)
 
 					VStack(spacing: 8) {
 						Link("Privacy Policy", destination: URL(string: "https://marconius.com/wbPrivacy/")!)
@@ -638,23 +686,36 @@ private struct AboutWordBopperSheet: View {
 		.sheet(isPresented: $isShowingMailComposer, onDismiss: refocusFeedbackButton) {
 			MailComposerView(
 				recipient: "marco@marconius.com",
-				subject: "WordBoppper iOS Feedback",
-				body: nil,
+				subject: activeMailDraft.subject,
+				body: activeMailDraft.body,
 				onFinish: { _ in }
 			)
 		}
 		.preferredColorScheme(.dark)
 	}
 
-	private func openMailFallback() {
-		let subject =
-			"WordBoppper iOS Feedback"
-			.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+	private func sendMail(_ draft: AboutMailDraft) {
+		activeMailDraft = draft
+		if MFMailComposeViewController.canSendMail() {
+			isShowingMailComposer = true
+		} else {
+			openMailFallback(for: draft)
+		}
+	}
 
-		let mailURL =
-			URL(string: "mailto:marco@marconius.com?subject=\(subject)")!
+	private func openMailFallback(for draft: AboutMailDraft) {
+		var components = URLComponents()
+		components.scheme = "mailto"
+		components.path = "marco@marconius.com"
+		var queryItems = [URLQueryItem(name: "subject", value: draft.subject)]
+		if let body = draft.body {
+			queryItems.append(URLQueryItem(name: "body", value: body))
+		}
+		components.queryItems = queryItems
 
-		openURL(mailURL)
+		if let mailURL = components.url {
+			openURL(mailURL)
+		}
 		refocusFeedbackButton()
 	}
 

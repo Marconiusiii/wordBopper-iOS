@@ -79,37 +79,23 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 	}
 
 	var letterPool: [String] {
+		Array(tunedLetterDistribution).map { String($0) }
+	}
+
+	private var tunedLetterDistribution: String {
 		switch self {
 		case .english:
-			Array(
-				"aaaaaaaaaabbccddddeeeeeeeeeefffggghhhhiiiiiiijkllll" +
-				"mmnnnnnnoooooooppqrrrrrsssssstttttttuuuuvvwwxyyz"
-			).map { String($0) }
+			"aaaaaaabccccdddeeeeeeeeeeefgghhiiiiiiiiiiiijklllllmmnnnnnnoooooopppppqrrrrrrrsssssssssttttttuuuvwxyz"
 		case .spanish:
-			Array(
-				"aaaaaaaaaaaabbccddddeeeeeeeeeeffggghhiiiiiiijkllll" +
-				"mmmmnnnnnñoooooooppqrrrrrrssssssttttttuuuuvxyyz"
-			).map { String($0) }
+			"aaaaaaaaaaaaaaaabbccccdddeeeeeeeeeeefghiiiiiiijklllmmmnnnnnnnnñooooooppqrrrrrrrrsssssssssttttuuvwxyz"
 		case .french:
-			Array(
-				"aaaaaaaaabbccçddddeeeeeeeeeeeeeeeffgghhiiiiiiijkll" +
-				"llmmnnnnnoooooooppqrrrrrrssssssttttttuuuuuuvxyyz"
-			).map { String($0) }
+			"aaaaaaaaabcccddeeeeeeeeeeeeeefghiiiiiiiiijklllllllmmnnnnnnnoooooppqrrrrrrrrssssssssssttttttuuuvwxyzç"
 		case .german:
-			Array(
-				"aaaaaaaaabbcccddddeeeeeeeeeeffffgggghhhhiiiiijkllll" +
-				"mmmnnnnnnooooooooppqrrrrrrssssssßttttttuuuuuuvwxyz"
-			).map { String($0) }
+			"aaaaaabbccddeeeeeeeeeeeeeeeffggghhhhiiiiiiiiiijkkllllmmnnnnnnnnnooopqrrrrrrrssssssstttttttuuuuvwxyzß"
 		case .italian:
-			Array(
-				"aaaaaaaaaaaabbcccddddeeeeeeeeeeefgghhiiiiiiiilll" +
-				"mmmnnnnnnoooooooooopqrrrrrrssssssttttttuuuuuvvz"
-			).map { String($0) }
+			"aaaaaaaaaaabccccddeeeeeeeeeefgghiiiiiiiiiiiijklllmmmmmmnnnnnnooooooooppqrrrrrrrrsssssssttttttuvvwxyz"
 		case .brazilianPortuguese:
-			Array(
-				"aaaaaaaaaaaabbcccçddddeeeeeeeeeeffgghhiiiiiiillll" +
-				"mmmnnnnnnooooooooppqrrrrrrssssssttttttuuuuuvvxz"
-			).map { String($0) }
+			"aaaaaaaaaaaaaaaabcccccddeeeeeeeeefghiiiiiiiiiiijkllllmmmnnnnnoooooooooooppqrrrrrrrsssstttttuuuvwxyzç"
 		}
 	}
 
