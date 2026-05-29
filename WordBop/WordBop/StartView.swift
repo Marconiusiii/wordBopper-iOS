@@ -356,6 +356,15 @@ private struct GameSettingsSheet: View {
 
 						SettingsDescriptionRow("Controls spoken game announcements for scoring, invalid words, and cleared letters.")
 
+						SettingsSectionHeading("Game Haptics")
+
+						SettingsToggleRow(title: "Game Haptics", isOn: Binding(
+							get: { vm.gameHapticsEnabled },
+							set: { vm.gameHapticsEnabled = $0 }
+						))
+
+						SettingsDescriptionRow("Feel the Bop more with subtle game event vibrations.")
+
 						SettingsLinkButtonRow(title: "About WordBopper") {
 							showingAbout = true
 						}

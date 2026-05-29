@@ -201,6 +201,12 @@ final class GameViewModel {
 	var gameAnnouncementVerbosity: GameAnnouncementVerbosity = .normal {
 		didSet { saveGameAnnouncementVerbosity() }
 	}
+	var gameHapticsEnabled = true {
+		didSet {
+			haptics.isEnabled = gameHapticsEnabled
+			saveGameHapticsEnabled()
+		}
+	}
 	var dictionaryLanguage: DictionaryLanguage = .english {
 		didSet { saveDictionaryLanguage() }
 	}
@@ -224,6 +230,7 @@ final class GameViewModel {
 
 	// MARK: - Services
 	let audio = AudioEngine()
+	private let haptics = HapticsEngine()
 	private let dictionary = DictionaryService.shared
 	private var gameTimer: Timer?
 	private var powerUpTimer: Timer?
@@ -294,6 +301,8 @@ final class GameViewModel {
 		bubbleTextColorOption = loadBubbleTextColorOption()
 		bubbleLetterStyle = loadBubbleLetterStyle()
 		gameAnnouncementVerbosity = loadGameAnnouncementVerbosity()
+		gameHapticsEnabled = loadGameHapticsEnabled()
+		haptics.isEnabled = gameHapticsEnabled
 		dictionaryLanguage = loadDictionaryLanguage()
 	}
 
@@ -314,10 +323,11 @@ final class GameViewModel {
 		chainPowerUpSecondsLeft = 0
 		largestLetterChain = 0
 		gameplayHeading = randomGameplayHeading()
+		haptics.roundStarted()
 
 		for row in 0..<5 {
 			for col in 0..<5 {
-				bubbles.append(Bubble(letter: randomLetter(), colorIndex: randomColor(), row: row, col: col))
+				bubbles.append(Bubble(letter: randomLetter(forRow: row, col: col), colorIndex: randomColor(), row: row, col: col))
 			}
 		}
 
@@ -332,6 +342,7 @@ final class GameViewModel {
 		stopTimer()
 		stopPowerUp()
 		audio.playRoundEndSound()
+		haptics.roundEnded()
 		DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) { [weak self] in
 			self?.showResults()
 		}
@@ -375,6 +386,7 @@ final class GameViewModel {
 			col: bubble.col
 		))
 		audio.playSelectSound()
+		haptics.selectLetter()
 	}
 
 	private func deselectBubble(_ bubble: Bubble) {
@@ -382,6 +394,7 @@ final class GameViewModel {
 		selected.removeAll { $0.bubbleId == bubble.id }
 		audio.stepSelectSoundBack()
 		audio.playDeselectSound()
+		haptics.deselectLetter()
 		if selected.isEmpty { audio.resetSelectSound() }
 	}
 
@@ -394,6 +407,7 @@ final class GameViewModel {
 		for id in clearedIds { replaceBubbleIfBopAway(id: id) }
 		audio.resetSelectSound()
 		audio.playBonusSound()
+		haptics.clearLetters()
 		if gameMode == .timed {
 			secondsLeft = min(secondsLeft + 15, gameDuration)
 			announce(GameplayAnnouncements.clearedWithTimeBonus, includeInLowVerbosity: true)
@@ -412,6 +426,7 @@ final class GameViewModel {
 
 		if gameMode == .bopple, !isFullyConnectedWord() {
 			audio.playInvalidSound()
+			haptics.invalidWord()
 			resetChainStreak()
 			selected.removeAll()
 			audio.resetSelectSound()
@@ -421,6 +436,7 @@ final class GameViewModel {
 
 		guard dictionary.contains(word, language: dictionaryLanguage) else {
 			audio.playInvalidSound()
+			haptics.invalidWord()
 			resetChainStreak()
 			selected.removeAll()
 			audio.resetSelectSound()
@@ -430,6 +446,7 @@ final class GameViewModel {
 
 		if gameMode == .bopple, madeWords.contains(word) {
 			audio.playInvalidSound()
+			haptics.invalidWord()
 			resetChainStreak()
 			selected.removeAll()
 			audio.resetSelectSound()
@@ -459,8 +476,10 @@ final class GameViewModel {
 		if multiplier > 1 {
 			stopPowerUp()
 			audio.playChainMultiplierScoreSound(wordLength: word.count)
+			haptics.powerUpScored()
 		} else {
 			audio.playWordSound(wordLength: word.count)
+			haptics.wordScored()
 		}
 
 		let powerUpActivated = gameMode == .bopple ? false : updateChainStreak(chainBonus: chainBonus)
@@ -543,6 +562,7 @@ final class GameViewModel {
 		connectedWordStreak += 1
 		audio.playConnectedWordSound(wordLength: chainBonus)
 		audio.playChainStreakSound(streak: connectedWordStreak)
+		haptics.chainWord()
 
 		if connectedWordStreak >= 3 {
 			activatePowerUp()
@@ -561,6 +581,7 @@ final class GameViewModel {
 		chainPowerUpActive = true
 		chainPowerUpSecondsLeft = 15
 		audio.startPowerUpChimes(duration: 15)
+		haptics.powerUpActivated()
 
 		powerUpTimer?.invalidate()
 		powerUpTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -584,7 +605,7 @@ final class GameViewModel {
 	private func replaceBubble(id: UUID) {
 		guard let idx = bubbles.firstIndex(where: { $0.id == id }) else { return }
 		let old = bubbles[idx]
-		bubbles[idx] = Bubble(letter: randomLetter(), colorIndex: randomColor(), row: old.row, col: old.col)
+		bubbles[idx] = Bubble(letter: randomLetter(forRow: old.row, col: old.col, replacingIndex: idx), colorIndex: randomColor(), row: old.row, col: old.col)
 	}
 
 	private func replaceBubbleIfBopAway(id: UUID) {
@@ -592,9 +613,80 @@ final class GameViewModel {
 		replaceBubble(id: id)
 	}
 
-	private func randomLetter() -> String {
+	private func randomLetter(forRow row: Int, col: Int, replacingIndex: Int? = nil) -> String {
 		let pool = dictionaryLanguage.letterPool
-		return pool[Int.random(in: 0..<pool.count)]
+		var bestCandidate = pool[Int.random(in: 0..<pool.count)]
+		var bestPenalty = letterPlacementPenalty(for: bestCandidate, row: row, col: col, replacingIndex: replacingIndex)
+
+		for _ in 0..<24 {
+			let candidate = pool[Int.random(in: 0..<pool.count)]
+			let penalty = letterPlacementPenalty(for: candidate, row: row, col: col, replacingIndex: replacingIndex)
+			if penalty == 0 { return candidate }
+			if penalty < bestPenalty {
+				bestCandidate = candidate
+				bestPenalty = penalty
+			}
+		}
+		return bestCandidate
+	}
+
+	private func letterPlacementPenalty(for letter: String, row: Int, col: Int, replacingIndex: Int?) -> Int {
+		var penalty = 0
+		let matchingNeighbors = neighborPositions(forRow: row, col: col).filter { position in
+			bubbleLetter(atRow: position.row, col: position.col, replacingIndex: replacingIndex) == letter
+		}
+
+		if matchingNeighbors.count >= 2 { penalty += 100 }
+		penalty += matchingNeighbors.count * 8
+
+		if createsLineRun(letter: letter, row: row, col: col, replacingIndex: replacingIndex, rowStep: 0, colStep: 1) {
+			penalty += 100
+		}
+		if createsLineRun(letter: letter, row: row, col: col, replacingIndex: replacingIndex, rowStep: 1, colStep: 0) {
+			penalty += 100
+		}
+
+		return penalty
+	}
+
+	private func createsLineRun(letter: String, row: Int, col: Int, replacingIndex: Int?, rowStep: Int, colStep: Int) -> Bool {
+		for offset in -2...0 {
+			var runCount = 0
+			for step in 0..<3 {
+				let checkRow = row + (offset + step) * rowStep
+				let checkCol = col + (offset + step) * colStep
+				if checkRow == row, checkCol == col {
+					runCount += 1
+				} else if bubbleLetter(atRow: checkRow, col: checkCol, replacingIndex: replacingIndex) == letter {
+					runCount += 1
+				}
+			}
+			if runCount >= 3 { return true }
+		}
+		return false
+	}
+
+	private func bubbleLetter(atRow row: Int, col: Int, replacingIndex: Int?) -> String? {
+		guard row >= 0, row < 5, col >= 0, col < 5 else { return nil }
+		let index = row * 5 + col
+		if index == replacingIndex { return nil }
+		guard index >= 0, index < bubbles.count else { return nil }
+		return bubbles[index].letter
+	}
+
+	private func neighborPositions(forRow row: Int, col: Int) -> [(row: Int, col: Int)] {
+		var positions: [(row: Int, col: Int)] = []
+		for rowOffset in -1...1 {
+			for colOffset in -1...1 {
+				guard rowOffset != 0 || colOffset != 0 else { continue }
+				let nextRow = row + rowOffset
+				let nextCol = col + colOffset
+				if nextRow >= 0, nextRow < 5, nextCol >= 0, nextCol < 5 {
+					positions.append((nextRow, nextCol))
+				}
+			}
+		}
+		return positions
 	}
 
 	private func randomColor() -> Int {
@@ -703,6 +795,13 @@ final class GameViewModel {
 		return GameAnnouncementVerbosity(rawValue: saved) ?? .normal
 	}
 
+	private func loadGameHapticsEnabled() -> Bool {
+		if UserDefaults.standard.object(forKey: "wordBopGameHapticsEnabled") == nil {
+			return true
+		}
+		return UserDefaults.standard.bool(forKey: "wordBopGameHapticsEnabled")
+	}
+
 	private func loadDictionaryLanguage() -> DictionaryLanguage {
 		guard let saved = UserDefaults.standard.string(forKey: "wordBopDictionaryLanguage") else {
 			return .english
@@ -737,6 +836,10 @@ final class GameViewModel {
 
 	private func saveGameAnnouncementVerbosity() {
 		UserDefaults.standard.set(gameAnnouncementVerbosity.rawValue, forKey: "wordBopGameAnnouncementVerbosity")
+	}
+
+	private func saveGameHapticsEnabled() {
+		UserDefaults.standard.set(gameHapticsEnabled, forKey: "wordBopGameHapticsEnabled")
 	}
 
 	private func saveDictionaryLanguage() {
