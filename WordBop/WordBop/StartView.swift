@@ -236,11 +236,13 @@ private struct GameSettingsSheet: View {
 	@Namespace private var gameModeNamespace
 	@Namespace private var boppleTimerNamespace
 	@Namespace private var dictionaryLanguageNamespace
+	@Namespace private var letterPositionNamespace
 	@Namespace private var bubbleLetterStyleNamespace
 	@Namespace private var bubbleTextColorNamespace
 	@Namespace private var gameAnnouncementsNamespace
 	@AccessibilityFocusState private var isBoppleTimerFocused: Bool
 	@AccessibilityFocusState private var isDictionaryLanguageFocused: Bool
+	@AccessibilityFocusState private var isLetterPositionFocused: Bool
 	@State private var showingAbout = false
 
 	var body: some View {
@@ -307,14 +309,23 @@ private struct GameSettingsSheet: View {
 
 							SettingsDescriptionRow("Choose the language you want to Bop in. The rest of the app stays in English for now.")
 
-						SettingsSectionHeading("Letter Positions")
+						SettingsPickerBlock(title: "Letter Positions", namespace: letterPositionNamespace, pairID: "letterPositions") {
+							Picker("Letter Positions", selection: Binding(
+								get: { vm.letterPositionMode },
+								set: { mode in
+									vm.letterPositionMode = mode
+									refocusLetterPositionPicker()
+								}
+							)) {
+								ForEach(LetterPositionMode.allCases) { mode in
+									Text(mode.label).tag(mode)
+								}
+							}
+							.pickerStyle(.menu)
+							.accessibilityFocused($isLetterPositionFocused)
+						}
 
-						SettingsToggleRow(title: "Speak Letter Positions", isOn: Binding(
-							get: { vm.speakLetterPositions },
-							set: { vm.speakLetterPositions = $0 }
-						))
-
-						SettingsDescriptionRow("Adds Column and Row locations to the letters, like \"B, 2 5\" for Column 2, Row 5.")
+						SettingsDescriptionRow(vm.letterPositionMode.settingsBlurb)
 
 						SettingsSectionHeading("Letter Phonetics")
 
@@ -423,6 +434,13 @@ private struct GameSettingsSheet: View {
 		isBoppleTimerFocused = false
 		DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
 			isBoppleTimerFocused = true
+		}
+	}
+
+	private func refocusLetterPositionPicker() {
+		isLetterPositionFocused = false
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+			isLetterPositionFocused = true
 		}
 	}
 }

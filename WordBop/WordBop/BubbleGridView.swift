@@ -16,7 +16,7 @@ struct BubbleGridView: View {
 							isSelected: selected,
 							bopAwayIsActive: vm.bopAwayIsActive,
 							size: cellSize,
-							speakLetterPositions: vm.speakLetterPositions,
+							letterPositionMode: vm.letterPositionMode,
 							speakLetterPhonetics: vm.speakLetterPhonetics,
 							dictionaryLanguage: vm.dictionaryLanguage,
 							speechLanguage: vm.dictionaryLanguage.speechLanguage,
@@ -40,7 +40,7 @@ struct BubbleButton: View {
 	let isSelected: Bool
 	let bopAwayIsActive: Bool
 	let size: CGFloat
-	let speakLetterPositions: Bool
+	let letterPositionMode: LetterPositionMode
 	let speakLetterPhonetics: Bool
 	let dictionaryLanguage: DictionaryLanguage
 	let speechLanguage: String
@@ -79,8 +79,16 @@ struct BubbleButton: View {
 	}
 
 	private var accessibilityPositionValue: String {
-		guard speakLetterPositions else { return "" }
-		return "\(localizedNumber(bubble.col + 1)) \(localizedNumber(bubble.row + 1))"
+		switch letterPositionMode {
+		case .off:
+			return ""
+		case .columnNumberRowNumber:
+			return "\(localizedNumber(bubble.col + 1)) \(localizedNumber(bubble.row + 1))"
+		case .columnLetterRowNumber:
+			return "\(gridLetter(for: bubble.col))\(bubble.row + 1)"
+		case .columnNumberRowLetter:
+			return "\(bubble.col + 1)\(gridLetter(for: bubble.row))"
+		}
 	}
 
 	private func localizedNumber(_ number: Int) -> String {
@@ -88,6 +96,10 @@ struct BubbleButton: View {
 		formatter.locale = Locale(identifier: speechLanguage)
 		formatter.numberStyle = .spellOut
 		return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
+	}
+
+	private func gridLetter(for index: Int) -> String {
+		UnicodeScalar(65 + index).map(String.init) ?? "A"
 	}
 
 	var body: some View {

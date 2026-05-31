@@ -152,6 +152,41 @@ enum BoppleTimerOption: String, CaseIterable, Identifiable {
 	}
 }
 
+enum LetterPositionMode: String, CaseIterable, Identifiable {
+	case off
+	case columnNumberRowNumber
+	case columnLetterRowNumber
+	case columnNumberRowLetter
+
+	var id: String { rawValue }
+
+	var label: String {
+		switch self {
+		case .off:
+			"Off"
+		case .columnNumberRowNumber:
+			"Column Number, Row Number"
+		case .columnLetterRowNumber:
+			"Column Letter, Row Number"
+		case .columnNumberRowLetter:
+			"Column Number, Row Letter"
+		}
+	}
+
+	var settingsBlurb: String {
+		switch self {
+		case .off:
+			"Column and Row positions will not be spoken."
+		case .columnNumberRowNumber:
+			"Speaks the column number followed by the row number after the letter, like \"W, 2 3\" or \"A, 1 5.\""
+		case .columnLetterRowNumber:
+			"Speaks columns as A through E and rows as 1 through 5, like \"G, B3\" for column B, row 3."
+		case .columnNumberRowLetter:
+			"Speaks columns as 1 through 5 and rows as A through E, like \"W, 3A\" for column 3, row A."
+		}
+	}
+}
+
 struct BestGame: Codable {
 	var highestScore: Int = 0
 	var highestBoppleScore: Int = 0
@@ -226,8 +261,8 @@ final class GameViewModel {
 	var boppleTimerOption: BoppleTimerOption = .threeMinutes {
 		didSet { saveBoppleTimerOption() }
 	}
-	var speakLetterPositions = false {
-		didSet { saveSpeakLetterPositions() }
+	var letterPositionMode: LetterPositionMode = .off {
+		didSet { saveLetterPositionMode() }
 	}
 	var speakLetterPhonetics = false {
 		didSet { saveSpeakLetterPhonetics() }
@@ -351,7 +386,7 @@ final class GameViewModel {
 		bestGame = loadBestGame()
 		gameMode = loadGameMode()
 		boppleTimerOption = loadBoppleTimerOption()
-		speakLetterPositions = loadSpeakLetterPositions()
+		letterPositionMode = loadLetterPositionMode()
 		speakLetterPhonetics = loadSpeakLetterPhonetics()
 		bopAway = loadBopAway()
 		bubbleTextColorOption = loadBubbleTextColorOption()
@@ -820,15 +855,19 @@ final class GameViewModel {
 		return UserDefaults.standard.bool(forKey: "wordBopNonStopMode") ? .nonStop : .timed
 	}
 
-	private func loadSpeakLetterPositions() -> Bool {
-		UserDefaults.standard.bool(forKey: "wordBopSpeakLetterPositions")
-	}
-
 	private func loadBoppleTimerOption() -> BoppleTimerOption {
 		guard let saved = UserDefaults.standard.string(forKey: "wordBopBoppleTimerOption") else {
 			return .threeMinutes
 		}
 		return BoppleTimerOption(rawValue: saved) ?? .threeMinutes
+	}
+
+	private func loadLetterPositionMode() -> LetterPositionMode {
+		if let saved = UserDefaults.standard.string(forKey: "wordBopLetterPositionMode"),
+		   let mode = LetterPositionMode(rawValue: saved) {
+			return mode
+		}
+		return UserDefaults.standard.bool(forKey: "wordBopSpeakLetterPositions") ? .columnNumberRowNumber : .off
 	}
 
 	private func loadSpeakLetterPhonetics() -> Bool {
@@ -879,12 +918,13 @@ final class GameViewModel {
 		UserDefaults.standard.set(gameMode == .nonStop, forKey: "wordBopNonStopMode")
 	}
 
-	private func saveSpeakLetterPositions() {
-		UserDefaults.standard.set(speakLetterPositions, forKey: "wordBopSpeakLetterPositions")
-	}
-
 	private func saveBoppleTimerOption() {
 		UserDefaults.standard.set(boppleTimerOption.rawValue, forKey: "wordBopBoppleTimerOption")
+	}
+
+	private func saveLetterPositionMode() {
+		UserDefaults.standard.set(letterPositionMode.rawValue, forKey: "wordBopLetterPositionMode")
+		UserDefaults.standard.set(letterPositionMode != .off, forKey: "wordBopSpeakLetterPositions")
 	}
 
 	private func saveSpeakLetterPhonetics() {
