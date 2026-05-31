@@ -112,6 +112,46 @@ enum GameMode: String, CaseIterable, Identifiable {
 	}
 }
 
+enum BoppleTimerOption: String, CaseIterable, Identifiable {
+	case threeMinutes
+	case fourMinutes
+	case fiveMinutes
+	case sixMinutes
+	case nonStop
+
+	var id: String { rawValue }
+
+	var label: String {
+		switch self {
+		case .threeMinutes:
+			"3 Minutes"
+		case .fourMinutes:
+			"4 Minutes"
+		case .fiveMinutes:
+			"5 Minutes"
+		case .sixMinutes:
+			"6 Minutes"
+		case .nonStop:
+			"Non-Stop Boppling!"
+		}
+	}
+
+	var duration: Int? {
+		switch self {
+		case .threeMinutes:
+			180
+		case .fourMinutes:
+			240
+		case .fiveMinutes:
+			300
+		case .sixMinutes:
+			360
+		case .nonStop:
+			nil
+		}
+	}
+}
+
 struct BestGame: Codable {
 	var highestScore: Int = 0
 	var highestBoppleScore: Int = 0
@@ -182,6 +222,9 @@ final class GameViewModel {
 	// MARK: - Game state
 	var gameMode: GameMode = .timed {
 		didSet { saveGameMode() }
+	}
+	var boppleTimerOption: BoppleTimerOption = .threeMinutes {
+		didSet { saveBoppleTimerOption() }
 	}
 	var speakLetterPositions = false {
 		didSet { saveSpeakLetterPositions() }
@@ -275,7 +318,16 @@ final class GameViewModel {
 
 	var makeWordEnabled: Bool { selected.count >= 3 }
 
-	var showsTimer: Bool { gameMode != .nonStop }
+	var showsTimer: Bool {
+		switch gameMode {
+		case .timed:
+			true
+		case .bopple:
+			boppleTimerOption.duration != nil
+		case .nonStop:
+			false
+		}
+	}
 
 	var bopAwayIsActive: Bool {
 		bopAway && gameMode != .bopple
@@ -298,6 +350,7 @@ final class GameViewModel {
 	init() {
 		bestGame = loadBestGame()
 		gameMode = loadGameMode()
+		boppleTimerOption = loadBoppleTimerOption()
 		speakLetterPositions = loadSpeakLetterPositions()
 		speakLetterPhonetics = loadSpeakLetterPhonetics()
 		bopAway = loadBopAway()
@@ -710,7 +763,7 @@ final class GameViewModel {
 		case .timed:
 			GameViewModel.timedGameDuration
 		case .bopple:
-			GameViewModel.boppleGameDuration
+			boppleTimerOption.duration ?? GameViewModel.boppleGameDuration
 		case .nonStop:
 			GameViewModel.timedGameDuration
 		}
@@ -771,6 +824,13 @@ final class GameViewModel {
 		UserDefaults.standard.bool(forKey: "wordBopSpeakLetterPositions")
 	}
 
+	private func loadBoppleTimerOption() -> BoppleTimerOption {
+		guard let saved = UserDefaults.standard.string(forKey: "wordBopBoppleTimerOption") else {
+			return .threeMinutes
+		}
+		return BoppleTimerOption(rawValue: saved) ?? .threeMinutes
+	}
+
 	private func loadSpeakLetterPhonetics() -> Bool {
 		UserDefaults.standard.bool(forKey: "wordBopSpeakLetterPhonetics")
 	}
@@ -821,6 +881,10 @@ final class GameViewModel {
 
 	private func saveSpeakLetterPositions() {
 		UserDefaults.standard.set(speakLetterPositions, forKey: "wordBopSpeakLetterPositions")
+	}
+
+	private func saveBoppleTimerOption() {
+		UserDefaults.standard.set(boppleTimerOption.rawValue, forKey: "wordBopBoppleTimerOption")
 	}
 
 	private func saveSpeakLetterPhonetics() {

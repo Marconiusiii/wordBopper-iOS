@@ -234,6 +234,7 @@ private struct GameSettingsSheet: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dismiss) private var dismiss
 	@Namespace private var gameModeNamespace
+	@Namespace private var boppleTimerNamespace
 	@Namespace private var dictionaryLanguageNamespace
 	@Namespace private var bubbleLetterStyleNamespace
 	@Namespace private var bubbleTextColorNamespace
@@ -266,6 +267,22 @@ private struct GameSettingsSheet: View {
 							}
 
 							SettingsDescriptionRow(vm.gameMode.settingsBlurb)
+
+							if vm.gameMode == .bopple {
+								SettingsPickerBlock(title: "Bopple Timer", namespace: boppleTimerNamespace, pairID: "boppleTimer") {
+									Picker("Bopple Timer", selection: Binding(
+										get: { vm.boppleTimerOption },
+										set: { vm.boppleTimerOption = $0 }
+									)) {
+										ForEach(BoppleTimerOption.allCases) { option in
+											Text(option.label).tag(option)
+										}
+									}
+									.pickerStyle(.menu)
+								}
+
+								SettingsDescriptionRow("Choose how long you'd like to Bopple for. 3 Minutes is the default.")
+							}
 
 							SettingsPickerBlock(title: "Bubble Language", namespace: dictionaryLanguageNamespace, pairID: "dictionaryLanguage") {
 								Picker("Bubble Language", selection: Binding(
