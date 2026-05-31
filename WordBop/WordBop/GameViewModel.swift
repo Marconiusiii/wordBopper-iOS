@@ -208,7 +208,10 @@ final class GameViewModel {
 		}
 	}
 	var dictionaryLanguage: DictionaryLanguage = .english {
-		didSet { saveDictionaryLanguage() }
+		didSet {
+			saveDictionaryLanguage()
+			dictionary.preload(dictionaryLanguage)
+		}
 	}
 	var bubbles: [Bubble] = []
 	var selected: [SelectedLetter] = []
@@ -304,6 +307,7 @@ final class GameViewModel {
 		gameHapticsEnabled = loadGameHapticsEnabled()
 		haptics.isEnabled = gameHapticsEnabled
 		dictionaryLanguage = loadDictionaryLanguage()
+		dictionary.preload(dictionaryLanguage)
 	}
 
 	// MARK: - Game lifecycle
@@ -323,6 +327,7 @@ final class GameViewModel {
 		chainPowerUpSecondsLeft = 0
 		largestLetterChain = 0
 		gameplayHeading = randomGameplayHeading()
+		dictionary.ensureLoaded(dictionaryLanguage)
 		haptics.roundStarted()
 
 		for row in 0..<5 {

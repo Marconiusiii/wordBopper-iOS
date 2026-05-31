@@ -288,14 +288,30 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 final class DictionaryService {
 	static let shared = DictionaryService()
 	private var cachedWords: [DictionaryLanguage: Set<String>] = [:]
+	private let queue = DispatchQueue(label: "com.marconius.WordBop.DictionaryService", qos: .userInitiated)
 
 	private init() {}
 
 	func contains(_ word: String, language: DictionaryLanguage) -> Bool {
-		words(for: language).contains(normalized(word, for: language))
+		let normalizedWord = normalized(word, for: language)
+		return queue.sync {
+			wordsOnQueue(for: language).contains(normalizedWord)
+		}
 	}
 
-	private func words(for language: DictionaryLanguage) -> Set<String> {
+	func preload(_ language: DictionaryLanguage) {
+		queue.async {
+			_ = self.wordsOnQueue(for: language)
+		}
+	}
+
+	func ensureLoaded(_ language: DictionaryLanguage) {
+		queue.sync {
+			_ = wordsOnQueue(for: language)
+		}
+	}
+
+	private func wordsOnQueue(for language: DictionaryLanguage) -> Set<String> {
 		if let words = cachedWords[language] { return words }
 		guard let url = Bundle.main.url(forResource: language.resourceName, withExtension: "txt"),
 			  let content = try? String(contentsOf: url, encoding: .utf8) else {
