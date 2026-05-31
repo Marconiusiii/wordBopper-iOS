@@ -239,6 +239,7 @@ private struct GameSettingsSheet: View {
 	@Namespace private var bubbleLetterStyleNamespace
 	@Namespace private var bubbleTextColorNamespace
 	@Namespace private var gameAnnouncementsNamespace
+	@AccessibilityFocusState private var isBoppleTimerFocused: Bool
 	@AccessibilityFocusState private var isDictionaryLanguageFocused: Bool
 	@State private var showingAbout = false
 
@@ -272,13 +273,17 @@ private struct GameSettingsSheet: View {
 								SettingsPickerBlock(title: "Bopple Timer", namespace: boppleTimerNamespace, pairID: "boppleTimer") {
 									Picker("Bopple Timer", selection: Binding(
 										get: { vm.boppleTimerOption },
-										set: { vm.boppleTimerOption = $0 }
+										set: { option in
+											vm.boppleTimerOption = option
+											refocusBoppleTimerPicker()
+										}
 									)) {
 										ForEach(BoppleTimerOption.allCases) { option in
 											Text(option.label).tag(option)
 										}
 									}
 									.pickerStyle(.menu)
+									.accessibilityFocused($isBoppleTimerFocused)
 								}
 
 								SettingsDescriptionRow("Choose how long you'd like to Bopple for. 3 Minutes is the default.")
@@ -411,6 +416,13 @@ private struct GameSettingsSheet: View {
 		isDictionaryLanguageFocused = false
 		DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
 			isDictionaryLanguageFocused = true
+		}
+	}
+
+	private func refocusBoppleTimerPicker() {
+		isBoppleTimerFocused = false
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+			isBoppleTimerFocused = true
 		}
 	}
 }
