@@ -533,7 +533,7 @@ final class GameViewModel {
 			resetChainStreak()
 			selected.removeAll()
 			audio.resetSelectSound()
-			announce(GameplayAnnouncements.invalidWord(word), includeInLowVerbosity: true)
+			announce(GameplayAnnouncements.invalidWord(word, language: dictionaryLanguage), includeInLowVerbosity: true)
 			return
 		}
 
@@ -543,7 +543,7 @@ final class GameViewModel {
 			resetChainStreak()
 			selected.removeAll()
 			audio.resetSelectSound()
-			announce(GameplayAnnouncements.duplicateWord(word), includeInLowVerbosity: true)
+			announce(GameplayAnnouncements.duplicateWord(word, language: dictionaryLanguage), includeInLowVerbosity: true)
 			return
 		}
 
@@ -579,6 +579,7 @@ final class GameViewModel {
 
 		announce(GameplayAnnouncements.scoredWord(
 			word: word,
+			language: dictionaryLanguage,
 			points: points,
 			chainBonus: chainBonus,
 			multiplier: multiplier,
@@ -826,11 +827,15 @@ final class GameViewModel {
 	// MARK: - Announcements
 
 	func announce(_ message: String, includeInLowVerbosity: Bool = false) {
+		announce(AttributedString(message), includeInLowVerbosity: includeInLowVerbosity)
+	}
+
+	func announce(_ message: AttributedString, includeInLowVerbosity: Bool = false) {
 		if gameAnnouncementVerbosity == .off { return }
 		if gameAnnouncementVerbosity == .low, !includeInLowVerbosity { return }
 		DispatchQueue.main.async {
 			self.announcementWorkItem?.cancel()
-			var announcement = AttributedString(message)
+			var announcement = message
 			announcement.accessibilitySpeechAnnouncementPriority = .high
 			AccessibilityNotification.Announcement(announcement).post()
 			self.announcementWorkItem = nil
