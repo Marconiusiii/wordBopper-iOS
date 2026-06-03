@@ -83,12 +83,14 @@ struct GameView: View {
 
 	private func landscapeLayout(in geo: GeometryProxy, safeHeight: CGFloat) -> some View {
 		let safeWidth = geo.size.width - geo.safeAreaInsets.leading - geo.safeAreaInsets.trailing
-		let gridPanelWidth = landscapeGridPanelWidth(safeWidth: safeWidth, safeHeight: safeHeight)
+		let controlsWidth = landscapeControlsWidth(safeWidth: safeWidth)
+		let gridPanelWidth = max(0, safeWidth - controlsWidth)
 
 		return HStack(spacing: 0) {
 			if vm.leftHandedMode {
 				landscapeControlsPanel(bottomInset: geo.safeAreaInsets.bottom)
-					.frame(maxWidth: .infinity, maxHeight: .infinity)
+					.frame(width: controlsWidth)
+					.frame(maxHeight: .infinity)
 
 				landscapeGridPanel(endGamePlacement: .trailing)
 					.frame(width: gridPanelWidth)
@@ -99,7 +101,8 @@ struct GameView: View {
 					.frame(maxHeight: .infinity)
 
 				landscapeControlsPanel(bottomInset: geo.safeAreaInsets.bottom)
-					.frame(maxWidth: .infinity, maxHeight: .infinity)
+					.frame(width: controlsWidth)
+					.frame(maxHeight: .infinity)
 			}
 		}
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -169,13 +172,13 @@ struct GameView: View {
 		return base + bottomInset
 	}
 
-	private func landscapeGridPanelWidth(safeWidth: CGFloat, safeHeight: CGFloat) -> CGFloat {
-		let controlsMinimum: CGFloat = dynamicTypeSize.isAccessibilitySize ? 320 : 260
-		let gridVerticalPadding: CGFloat = 12
-		let usableGridHeight = max(180, safeHeight - landscapeTitleHeight - wordTrayHeight - gridVerticalPadding)
-		let preferredWidth = usableGridHeight + 8
-		let maximumWidth = max(220, safeWidth - controlsMinimum)
-		return min(preferredWidth, maximumWidth)
+	private func landscapeControlsWidth(safeWidth: CGFloat) -> CGFloat {
+		let preferredShare: CGFloat = dynamicTypeSize.isAccessibilitySize ? 0.36 : 0.30
+		let minimumWidth: CGFloat = dynamicTypeSize.isAccessibilitySize ? 300 : 236
+		let maximumShare: CGFloat = dynamicTypeSize.isAccessibilitySize ? 0.42 : 0.36
+		let preferredWidth = safeWidth * preferredShare
+		let maximumWidth = safeWidth * maximumShare
+		return min(max(preferredWidth, minimumWidth), maximumWidth)
 	}
 
 	private var landscapeTitleHeight: CGFloat {
