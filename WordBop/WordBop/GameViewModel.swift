@@ -152,6 +152,20 @@ enum BoppleTimerOption: String, CaseIterable, Identifiable {
 	}
 }
 
+enum GridSizeOption: Int, CaseIterable, Identifiable {
+	case three = 3
+	case four = 4
+	case five = 5
+	case six = 6
+
+	var id: Int { rawValue }
+	var dimension: Int { rawValue }
+
+	var label: String {
+		"\(rawValue) by \(rawValue)"
+	}
+}
+
 enum LetterPositionMode: String, CaseIterable, Identifiable {
 	case off
 	case columnNumberRowNumber
@@ -228,8 +242,7 @@ final class GameViewModel {
 	// MARK: - Config
 	static let timedGameDuration = 120
 	static let boppleGameDuration = 180
-	static let totalBubbles = 25
-		static let colorCount = 8
+	static let colorCount = 8
 	static let gameplayHeadingPhrases = [
 		"Start bopping!",
 		"Bop to it!",
@@ -260,6 +273,9 @@ final class GameViewModel {
 	}
 	var boppleTimerOption: BoppleTimerOption = .threeMinutes {
 		didSet { saveBoppleTimerOption() }
+	}
+	var gridSizeOption: GridSizeOption = .five {
+		didSet { saveGridSizeOption() }
 	}
 	var letterPositionMode: LetterPositionMode = .off {
 		didSet { saveLetterPositionMode() }
@@ -318,11 +334,11 @@ final class GameViewModel {
 	private var announcementWorkItem: DispatchWorkItem?
 
 	// MARK: - Computed
-		var currentWord: String { selected.map(\.letter).joined() }
+	var currentWord: String { selected.map(\.letter).joined() }
 
-		var gameplayLocale: Locale {
-			dictionaryLanguage.locale
-		}
+	var gameplayLocale: Locale {
+		dictionaryLanguage.locale
+	}
 
 	var wordTrayLabel: String {
 		if selected.isEmpty { return "Word tray, empty" }
@@ -352,6 +368,8 @@ final class GameViewModel {
 	var timerIsWarning: Bool { secondsLeft <= 20 }
 
 	var makeWordEnabled: Bool { selected.count >= 3 }
+
+	var gridSize: Int { gridSizeOption.dimension }
 
 	var showsTimer: Bool {
 		switch gameMode {
@@ -386,6 +404,7 @@ final class GameViewModel {
 		bestGame = loadBestGame()
 		gameMode = loadGameMode()
 		boppleTimerOption = loadBoppleTimerOption()
+		gridSizeOption = loadGridSizeOption()
 		letterPositionMode = loadLetterPositionMode()
 		speakLetterPhonetics = loadSpeakLetterPhonetics()
 		bopAway = loadBopAway()
@@ -418,8 +437,8 @@ final class GameViewModel {
 		dictionary.ensureLoaded(dictionaryLanguage)
 		haptics.roundStarted()
 
-		for row in 0..<5 {
-			for col in 0..<5 {
+		for row in 0..<gridSize {
+			for col in 0..<gridSize {
 				bubbles.append(Bubble(letter: randomLetter(forRow: row, col: col), colorIndex: randomColor(), row: row, col: col))
 			}
 		}
@@ -761,8 +780,8 @@ final class GameViewModel {
 	}
 
 	private func bubbleLetter(atRow row: Int, col: Int, replacingIndex: Int?) -> String? {
-		guard row >= 0, row < 5, col >= 0, col < 5 else { return nil }
-		let index = row * 5 + col
+		guard row >= 0, row < gridSize, col >= 0, col < gridSize else { return nil }
+		let index = row * gridSize + col
 		if index == replacingIndex { return nil }
 		guard index >= 0, index < bubbles.count else { return nil }
 		return bubbles[index].letter
@@ -775,7 +794,7 @@ final class GameViewModel {
 				guard rowOffset != 0 || colOffset != 0 else { continue }
 				let nextRow = row + rowOffset
 				let nextCol = col + colOffset
-				if nextRow >= 0, nextRow < 5, nextCol >= 0, nextCol < 5 {
+				if nextRow >= 0, nextRow < gridSize, nextCol >= 0, nextCol < gridSize {
 					positions.append((nextRow, nextCol))
 				}
 			}
@@ -867,6 +886,11 @@ final class GameViewModel {
 		return BoppleTimerOption(rawValue: saved) ?? .threeMinutes
 	}
 
+	private func loadGridSizeOption() -> GridSizeOption {
+		let saved = UserDefaults.standard.integer(forKey: "wordBopGridSize")
+		return GridSizeOption(rawValue: saved) ?? .five
+	}
+
 	private func loadLetterPositionMode() -> LetterPositionMode {
 		if let saved = UserDefaults.standard.string(forKey: "wordBopLetterPositionMode"),
 		   let mode = LetterPositionMode(rawValue: saved) {
@@ -925,6 +949,10 @@ final class GameViewModel {
 
 	private func saveBoppleTimerOption() {
 		UserDefaults.standard.set(boppleTimerOption.rawValue, forKey: "wordBopBoppleTimerOption")
+	}
+
+	private func saveGridSizeOption() {
+		UserDefaults.standard.set(gridSizeOption.rawValue, forKey: "wordBopGridSize")
 	}
 
 	private func saveLetterPositionMode() {

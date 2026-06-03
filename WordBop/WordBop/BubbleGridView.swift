@@ -6,24 +6,27 @@ struct BubbleGridView: View {
 
 	var body: some View {
 		VStack(spacing: 0) {
-			ForEach(0..<5, id: \.self) { row in
+			ForEach(0..<vm.gridSize, id: \.self) { row in
 				HStack(spacing: 0) {
-					ForEach(0..<5, id: \.self) { col in
-						let bubble = vm.bubbles[row * 5 + col]
-						let selected = vm.isSelected(bubble)
-						BubbleButton(
-							bubble: bubble,
-							isSelected: selected,
-							bopAwayIsActive: vm.bopAwayIsActive,
-							size: cellSize,
-							letterPositionMode: vm.letterPositionMode,
-							speakLetterPhonetics: vm.speakLetterPhonetics,
-							dictionaryLanguage: vm.dictionaryLanguage,
-							speechLanguage: vm.dictionaryLanguage.speechLanguage,
-							textColorOption: vm.bubbleTextColorOption,
-							letterStyle: vm.bubbleLetterStyle
-						) {
-							vm.tapBubble(bubble)
+					ForEach(0..<vm.gridSize, id: \.self) { col in
+						let index = row * vm.gridSize + col
+						if index < vm.bubbles.count {
+							let bubble = vm.bubbles[index]
+							let selected = vm.isSelected(bubble)
+							BubbleButton(
+								bubble: bubble,
+								isSelected: selected,
+								bopAwayIsActive: vm.bopAwayIsActive,
+								size: cellSize,
+								letterPositionMode: vm.letterPositionMode,
+								speakLetterPhonetics: vm.speakLetterPhonetics,
+								dictionaryLanguage: vm.dictionaryLanguage,
+								speechLanguage: vm.dictionaryLanguage.speechLanguage,
+								textColorOption: vm.bubbleTextColorOption,
+								letterStyle: vm.bubbleLetterStyle
+							) {
+								vm.tapBubble(bubble)
+							}
 						}
 					}
 				}

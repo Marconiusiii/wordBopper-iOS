@@ -139,7 +139,7 @@ private struct InstructionsSheet: View {
 	@Environment(\.dismiss) private var dismiss
 
 	private let instructions = [
-		"Tap letter bubbles anywhere on the 5 by 5 grid to build words.",
+		"Tap letter bubbles anywhere on the grid to build words.",
 		"Build words with at least 3 letters in a row that are next to each other in the grid to earn a chain bonus. Do this three times in a row to activate a timed 3x score multiplier.",
 		"Hit Make Word to score. Hit Clear Letters to deselect all selected letters and get 15 seconds added to the timer in Timed mode.",
 		"When BopAway is on, each letter you tap moves into the word tray and gets replaced right away. Hit Clear Word to erase the current word from the tray.",
@@ -235,12 +235,14 @@ private struct GameSettingsSheet: View {
 	@Environment(\.dismiss) private var dismiss
 	@Namespace private var gameModeNamespace
 	@Namespace private var boppleTimerNamespace
+	@Namespace private var gridSizeNamespace
 	@Namespace private var dictionaryLanguageNamespace
 	@Namespace private var letterPositionNamespace
 	@Namespace private var bubbleLetterStyleNamespace
 	@Namespace private var bubbleTextColorNamespace
 	@Namespace private var gameAnnouncementsNamespace
 	@AccessibilityFocusState private var isBoppleTimerFocused: Bool
+	@AccessibilityFocusState private var isGridSizeFocused: Bool
 	@AccessibilityFocusState private var isDictionaryLanguageFocused: Bool
 	@AccessibilityFocusState private var isLetterPositionFocused: Bool
 	@State private var showingAbout = false
@@ -270,6 +272,24 @@ private struct GameSettingsSheet: View {
 							}
 
 							SettingsDescriptionRow(vm.gameMode.settingsBlurb)
+
+							SettingsPickerBlock(title: "Grid Size", namespace: gridSizeNamespace, pairID: "gridSize") {
+								Picker("Grid Size", selection: Binding(
+									get: { vm.gridSizeOption },
+									set: { option in
+										vm.gridSizeOption = option
+										refocusGridSizePicker()
+									}
+								)) {
+									ForEach(GridSizeOption.allCases) { option in
+										Text(option.label).tag(option)
+									}
+								}
+								.pickerStyle(.menu)
+								.accessibilityFocused($isGridSizeFocused)
+							}
+
+							SettingsDescriptionRow("Choose a smaller grid for a quicker, easier bop, or a larger grid for a bigger challenge. 5 by 5 is the classic size.")
 
 							if vm.gameMode == .bopple {
 								SettingsPickerBlock(title: "Bopple Timer", namespace: boppleTimerNamespace, pairID: "boppleTimer") {
@@ -434,6 +454,13 @@ private struct GameSettingsSheet: View {
 		isBoppleTimerFocused = false
 		DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
 			isBoppleTimerFocused = true
+		}
+	}
+
+	private func refocusGridSizePicker() {
+		isGridSizeFocused = false
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+			isGridSizeFocused = true
 		}
 	}
 

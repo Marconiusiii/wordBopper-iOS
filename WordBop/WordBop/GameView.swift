@@ -8,55 +8,129 @@ struct GameView: View {
 	var body: some View {
 		GeometryReader { geo in
 			let safeHeight = geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom
-			let cellSize = cellSize(in: geo.size.width, height: safeHeight)
+			let isLandscape = geo.size.width > geo.size.height
 
-			VStack(spacing: 0) {
-				Text(vm.gameplayHeading)
-					.font(.headline.weight(.black))
-					.foregroundStyle(Color.wbText)
-					.lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
-					.fixedSize(horizontal: false, vertical: true)
-					.frame(maxWidth: .infinity, alignment: .leading)
-					.padding(.horizontal, 16)
-					.padding(.top, 8)
-					.padding(.bottom, 6)
-					.background(Color.wbSurface)
-					.accessibilityAddTraits(.isHeader)
-					.accessibilitySortPriority(100)
-
-				GameHeaderBar()
-				if vm.gameMode != .bopple {
-					ChainMeterBar()
-				}
-				WordTrayBar()
-
-					BubbleGridView(cellSize: cellSize)
-						.frame(maxWidth: .infinity)
-						.padding(.horizontal, 4)
-						.padding(.vertical, 6)
-						.environment(\.locale, vm.gameplayLocale)
-
-				ActionBar(bottomInset: geo.safeAreaInsets.bottom)
-					.frame(maxHeight: .infinity)
+			if isLandscape {
+				landscapeLayout(in: geo, safeHeight: safeHeight)
+			} else {
+				portraitLayout(in: geo, safeHeight: safeHeight)
 			}
-			.frame(maxWidth: .infinity, maxHeight: .infinity)
-			.ignoresSafeArea(edges: .bottom)
 		}
 		.onAppear {
 			UIAccessibility.post(notification: .screenChanged, argument: vm.gameplayHeading)
 		}
 	}
 
-	private func cellSize(in width: CGFloat, height: CGFloat) -> CGFloat {
+	private func portraitLayout(in geo: GeometryProxy, safeHeight: CGFloat) -> some View {
+		let cellSize = cellSize(in: geo.size.width, height: safeHeight, reservedHeight: portraitReservedHeight)
+
+		return VStack(spacing: 0) {
+			headingText
+
+			GameHeaderBar()
+			if vm.gameMode != .bopple {
+				ChainMeterBar()
+			}
+			WordTrayBar()
+
+			BubbleGridView(cellSize: cellSize)
+				.frame(maxWidth: .infinity)
+				.padding(.horizontal, 4)
+				.padding(.vertical, 6)
+				.environment(\.locale, vm.gameplayLocale)
+
+			ActionBar(bottomInset: geo.safeAreaInsets.bottom)
+				.frame(maxHeight: .infinity)
+		}
+		.frame(maxWidth: .infinity, maxHeight: .infinity)
+		.ignoresSafeArea(edges: .bottom)
+	}
+
+	private func landscapeLayout(in geo: GeometryProxy, safeHeight: CGFloat) -> some View {
+		let safeWidth = geo.size.width - geo.safeAreaInsets.leading - geo.safeAreaInsets.trailing
+		let rightMinimum: CGFloat = dynamicTypeSize.isAccessibilitySize ? 300 : 250
+		let leftWidth = max(280, min(safeWidth * 0.62, safeWidth - rightMinimum))
+		let cellSize = cellSize(in: leftWidth, height: safeHeight, reservedHeight: landscapeGridReservedHeight)
+
+		return HStack(spacing: 0) {
+			ScrollView(.vertical, showsIndicators: false) {
+				VStack(spacing: 0) {
+					HStack(spacing: 0) {
+						EndGameButton(width: dynamicTypeSize.isAccessibilitySize ? 132 : 112)
+
+						headingText
+					}
+					.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 64 : 50)
+
+					WordTrayBar()
+
+					BubbleGridView(cellSize: cellSize)
+						.frame(maxWidth: .infinity)
+						.padding(.horizontal, 4)
+						.padding(.vertical, 6)
+						.environment(\.locale, vm.gameplayLocale)
+				}
+				.frame(maxWidth: .infinity, alignment: .top)
+			}
+			.frame(width: leftWidth)
+			.frame(maxHeight: .infinity)
+			.background(Color.wbBackground)
+
+			VStack(spacing: 0) {
+				VStack(spacing: 0) {
+					LandscapeStatsPanel()
+					if vm.gameMode != .bopple {
+						ChainMeterBar()
+					}
+				}
+				.frame(maxWidth: .infinity, maxHeight: .infinity)
+				.background(Color.wbSurface)
+
+				LandscapeActionPanel(bottomInset: geo.safeAreaInsets.bottom)
+					.frame(maxWidth: .infinity, maxHeight: .infinity)
+			}
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
+			.overlay(alignment: .leading) {
+				Divider().background(Color.white.opacity(0.07))
+			}
+		}
+		.frame(maxWidth: .infinity, maxHeight: .infinity)
+		.ignoresSafeArea(edges: .bottom)
+	}
+
+	private var headingText: some View {
+		Text(vm.gameplayHeading)
+			.font(.headline.weight(.black))
+			.foregroundStyle(Color.wbText)
+			.lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
+			.fixedSize(horizontal: false, vertical: true)
+			.frame(maxWidth: .infinity, alignment: .leading)
+			.padding(.horizontal, 16)
+			.padding(.top, 8)
+			.padding(.bottom, 6)
+			.background(Color.wbSurface)
+			.accessibilityAddTraits(.isHeader)
+	}
+
+	private func cellSize(in width: CGFloat, height: CGFloat, reservedHeight: CGFloat) -> CGFloat {
 		let actionBarHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 230 : 112
-		let headerHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 128 : 56
-		let trayHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 70 : 56
-		let reservedHeight: CGFloat = 47 + headerHeight + 36 + trayHeight + actionBarHeight + 16
-		let availableHeight = height - reservedHeight
-		let fromHeight = availableHeight / 5
-		let fromWidth  = (width - 8) / 5
+		let availableHeight = height - reservedHeight - (reservedHeight == portraitReservedHeight ? actionBarHeight : 0)
+		let fromHeight = availableHeight / CGFloat(vm.gridSize)
+		let fromWidth  = (width - 8) / CGFloat(vm.gridSize)
 		let minimumSize: CGFloat = dynamicTypeSize.isAccessibilitySize ? 48 : 44
 		return max(minimumSize, min(fromHeight, fromWidth, 72))
+	}
+
+	private var portraitReservedHeight: CGFloat {
+		let headerHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 128 : 56
+		let trayHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 70 : 56
+		return 47 + headerHeight + 36 + trayHeight + 16
+	}
+
+	private var landscapeGridReservedHeight: CGFloat {
+		let headingHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 64 : 50
+		let trayHeight: CGFloat = dynamicTypeSize.isAccessibilitySize ? 70 : 56
+		return headingHeight + trayHeight + 16
 	}
 }
 
@@ -155,6 +229,80 @@ private struct GameHeaderBar: View {
 
 	private var endGameButtonWidth: CGFloat {
 		dynamicTypeSize.isAccessibilitySize ? 144 : 104
+	}
+
+	private var headerAccessibilityLabel: String {
+		if !vm.showsTimer { return "Score: \(vm.score), Words: \(vm.wordCount)" }
+		return "Time: \(vm.formattedTime), Score: \(vm.score), Words: \(vm.wordCount)"
+	}
+}
+
+private struct EndGameButton: View {
+	@Environment(GameViewModel.self) private var vm
+	let width: CGFloat
+
+	var body: some View {
+		Button { vm.endGame() } label: {
+			Text("End Game")
+				.font(.subheadline.weight(.bold))
+				.foregroundStyle(Color.wbAccent2)
+				.multilineTextAlignment(.center)
+				.minimumScaleFactor(0.75)
+				.lineLimit(3)
+				.frame(width: width)
+				.frame(maxHeight: .infinity)
+				.background(Color.wbAccent2.opacity(0.15))
+				.overlay(alignment: .trailing) {
+					Divider().background(Color.wbAccent2.opacity(0.25))
+				}
+		}
+		.buttonStyle(.plain)
+		.keyboardShortcut(".", modifiers: .command)
+		.contentShape(Rectangle())
+		.accessibilityLabel("End game")
+	}
+}
+
+private struct LandscapeStatsPanel: View {
+	@Environment(GameViewModel.self) private var vm
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+	var body: some View {
+		VStack(alignment: .leading, spacing: dynamicTypeSize.isAccessibilitySize ? 12 : 8) {
+			if vm.showsTimer {
+				statBlock(
+					label: "Time",
+					value: vm.formattedTime,
+					color: vm.timerIsWarning ? .wbAccent2 : .wbTimerGreen
+				)
+			}
+
+			HStack(spacing: 12) {
+				statBlock(label: "Score", value: "\(vm.score)", color: .wbAccent1)
+				statBlock(label: "Words", value: "\(vm.wordCount)", color: .wbAccent4)
+			}
+		}
+		.padding(.horizontal, 14)
+		.padding(.vertical, 12)
+		.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+		.background(Color.wbSurface)
+		.accessibilityElement(children: .ignore)
+		.accessibilityLabel(headerAccessibilityLabel)
+	}
+
+	private func statBlock(label: String, value: String, color: Color) -> some View {
+		VStack(alignment: .leading, spacing: 2) {
+			Text(label)
+				.font(.caption.weight(.bold))
+				.foregroundStyle(Color.wbMuted)
+			Text(value)
+				.font(.system(.title2, design: .monospaced).weight(.bold))
+				.foregroundStyle(color)
+				.contentTransition(.numericText())
+				.minimumScaleFactor(0.7)
+				.lineLimit(1)
+		}
+		.frame(maxWidth: .infinity, alignment: .leading)
 	}
 
 	private var headerAccessibilityLabel: String {
@@ -364,6 +512,63 @@ private struct ActionBar: View {
 			.overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08)))
 	}
 
+}
+
+private struct LandscapeActionPanel: View {
+	@Environment(GameViewModel.self) private var vm
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
+	let bottomInset: CGFloat
+
+	var body: some View {
+		VStack(spacing: 0) {
+			Button { vm.clearSelection() } label: {
+				landscapeButtonVisual(vm.clearActionTitle, isPrimary: false, enabled: true)
+			}
+			.buttonStyle(.plain)
+			.keyboardShortcut(.cancelAction)
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
+			.contentShape(Rectangle())
+			.accessibilityLabel(vm.clearActionAccessibilityLabel)
+
+			Button { vm.makeWord() } label: {
+				landscapeButtonVisual("Make Word", isPrimary: true, enabled: vm.makeWordEnabled)
+			}
+			.buttonStyle(.plain)
+			.disabled(!vm.makeWordEnabled)
+			.keyboardShortcut(.defaultAction)
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
+			.contentShape(Rectangle())
+		}
+		.padding(.bottom, bottomInset)
+		.background(Color.wbSurface)
+		.overlay(alignment: .top) {
+			Divider().background(Color.white.opacity(0.07))
+		}
+	}
+
+	private func landscapeButtonVisual(_ title: String, isPrimary: Bool, enabled: Bool) -> some View {
+		Text(title)
+			.font((isPrimary ? Font.headline : Font.subheadline).weight(isPrimary ? .black : .bold))
+			.foregroundStyle(isPrimary && enabled ? Color.black : Color.wbMuted)
+			.multilineTextAlignment(.center)
+			.lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 2)
+			.minimumScaleFactor(0.6)
+			.fixedSize(horizontal: false, vertical: true)
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
+			.padding(.horizontal, 12)
+			.padding(.vertical, dynamicTypeSize.isAccessibilitySize ? 14 : 10)
+			.background(buttonBackground(isPrimary: isPrimary, enabled: enabled))
+			.overlay(alignment: .top) {
+				Divider().background(Color.white.opacity(0.08))
+			}
+	}
+
+	private func buttonBackground(isPrimary: Bool, enabled: Bool) -> some ShapeStyle {
+		if isPrimary && enabled {
+			return LinearGradient(colors: [.wbAccent5, .wbAccent4], startPoint: .topLeading, endPoint: .bottomTrailing)
+		}
+		return LinearGradient(colors: [.wbPanel, .wbPanel], startPoint: .topLeading, endPoint: .bottomTrailing)
+	}
 }
 
 private struct ButtonZone<Content: View>: View {
