@@ -8,17 +8,50 @@ struct GameView: View {
 	var body: some View {
 		GeometryReader { geo in
 			let safeHeight = geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom
-			let isLandscape = geo.size.width > geo.size.height
+			let orientation = orientation(for: geo.size)
 
-			if isLandscape {
-				landscapeLayout(in: geo, safeHeight: safeHeight)
-			} else {
-				portraitLayout(in: geo, safeHeight: safeHeight)
+			Group {
+				if orientation == .landscape {
+					landscapeLayout(in: geo, safeHeight: safeHeight)
+				} else {
+					portraitLayout(in: geo, safeHeight: safeHeight)
+				}
 			}
+			.id(layoutIdentity(for: orientation, size: geo.size))
 		}
 		.onAppear {
 			UIAccessibility.post(notification: .screenChanged, argument: vm.gameplayHeading)
 		}
+	}
+
+	private enum GameplayOrientation: String {
+		case portrait
+		case landscape
+	}
+
+	private func orientation(for size: CGSize) -> GameplayOrientation {
+		size.width > size.height ? .landscape : .portrait
+	}
+
+	private func layoutIdentity(for orientation: GameplayOrientation, size: CGSize) -> String {
+		let widthBucket = Int(size.width.rounded(.down))
+		let heightBucket = Int(size.height.rounded(.down))
+		return [
+			orientation.rawValue,
+			"\(widthBucket)x\(heightBucket)",
+			"grid\(vm.gridSize)",
+			vm.leftHandedMode ? "left" : "right",
+			vm.gameMode.rawValue
+		].joined(separator: "-")
+	}
+
+	private func gridIdentity(for orientation: GameplayOrientation) -> String {
+		[
+			orientation.rawValue,
+			"grid\(vm.gridSize)",
+			vm.leftHandedMode ? "left" : "right",
+			vm.gameMode.rawValue
+		].joined(separator: "-")
 	}
 
 	private func portraitLayout(in geo: GeometryProxy, safeHeight: CGFloat) -> some View {
@@ -30,6 +63,7 @@ struct GameView: View {
 				ChainMeterBar()
 			}
 			WordTrayBar()
+				.frame(height: wordTrayHeight)
 
 			BubbleGridView()
 				.frame(maxWidth: .infinity)
@@ -38,6 +72,7 @@ struct GameView: View {
 				.padding(.horizontal, 4)
 				.padding(.vertical, 6)
 				.environment(\.locale, vm.gameplayLocale)
+				.id(gridIdentity(for: .portrait))
 
 			ActionBar(bottomInset: geo.safeAreaInsets.bottom)
 				.frame(height: actionBarHeight(bottomInset: geo.safeAreaInsets.bottom))
@@ -48,8 +83,7 @@ struct GameView: View {
 
 	private func landscapeLayout(in geo: GeometryProxy, safeHeight: CGFloat) -> some View {
 		let safeWidth = geo.size.width - geo.safeAreaInsets.leading - geo.safeAreaInsets.trailing
-		let rightMinimum: CGFloat = dynamicTypeSize.isAccessibilitySize ? 300 : 250
-		let leftWidth = max(280, min(safeWidth * 0.62, safeWidth - rightMinimum))
+		let gridPanelWidth = landscapeGridPanelWidth(safeWidth: safeWidth, safeHeight: safeHeight)
 
 		return HStack(spacing: 0) {
 			if vm.leftHandedMode {
@@ -57,11 +91,11 @@ struct GameView: View {
 					.frame(maxWidth: .infinity, maxHeight: .infinity)
 
 				landscapeGridPanel(endGamePlacement: .trailing)
-					.frame(width: leftWidth)
+					.frame(width: gridPanelWidth)
 					.frame(maxHeight: .infinity)
 			} else {
 				landscapeGridPanel(endGamePlacement: .leading)
-					.frame(width: leftWidth)
+					.frame(width: gridPanelWidth)
 					.frame(maxHeight: .infinity)
 
 				landscapeControlsPanel(bottomInset: geo.safeAreaInsets.bottom)
@@ -77,9 +111,10 @@ struct GameView: View {
 			LandscapeTitleRow(placement: endGamePlacement) {
 				headingText
 			}
-			.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 64 : 50)
+			.frame(height: landscapeTitleHeight)
 
 			WordTrayBar()
+				.frame(height: wordTrayHeight)
 
 			BubbleGridView()
 				.frame(maxWidth: .infinity)
@@ -88,6 +123,7 @@ struct GameView: View {
 				.padding(.horizontal, 4)
 				.padding(.vertical, 6)
 				.environment(\.locale, vm.gameplayLocale)
+				.id(gridIdentity(for: .landscape))
 		}
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 		.background(Color.wbBackground)
@@ -131,6 +167,23 @@ struct GameView: View {
 	private func actionBarHeight(bottomInset: CGFloat) -> CGFloat {
 		let base: CGFloat = dynamicTypeSize.isAccessibilitySize ? 142 : 104
 		return base + bottomInset
+	}
+
+	private func landscapeGridPanelWidth(safeWidth: CGFloat, safeHeight: CGFloat) -> CGFloat {
+		let controlsMinimum: CGFloat = dynamicTypeSize.isAccessibilitySize ? 320 : 260
+		let gridVerticalPadding: CGFloat = 12
+		let usableGridHeight = max(180, safeHeight - landscapeTitleHeight - wordTrayHeight - gridVerticalPadding)
+		let preferredWidth = usableGridHeight + 8
+		let maximumWidth = max(220, safeWidth - controlsMinimum)
+		return min(preferredWidth, maximumWidth)
+	}
+
+	private var landscapeTitleHeight: CGFloat {
+		dynamicTypeSize.isAccessibilitySize ? 58 : 44
+	}
+
+	private var wordTrayHeight: CGFloat {
+		dynamicTypeSize.isAccessibilitySize ? 60 : 50
 	}
 
 }
