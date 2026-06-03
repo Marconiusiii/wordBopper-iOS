@@ -82,9 +82,9 @@ struct GameView: View {
 	}
 
 	private func landscapeLayout(in geo: GeometryProxy, safeHeight: CGFloat) -> some View {
-		let safeWidth = geo.size.width - geo.safeAreaInsets.leading - geo.safeAreaInsets.trailing
-		let controlsWidth = landscapeControlsWidth(safeWidth: safeWidth)
-		let gridPanelWidth = max(0, safeWidth - controlsWidth)
+		let layoutWidth = geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
+		let controlsWidth = landscapeControlsWidth(layoutWidth: layoutWidth)
+		let gridPanelWidth = max(0, layoutWidth - controlsWidth)
 
 		return HStack(spacing: 0) {
 			if vm.leftHandedMode {
@@ -105,8 +105,8 @@ struct GameView: View {
 					.frame(maxHeight: .infinity)
 			}
 		}
-		.frame(maxWidth: .infinity, maxHeight: .infinity)
-		.ignoresSafeArea(edges: .bottom)
+		.frame(width: layoutWidth, height: geo.size.height)
+		.ignoresSafeArea(edges: [.horizontal, .bottom])
 	}
 
 	private func landscapeGridPanel(endGamePlacement: EndGamePlacement) -> some View {
@@ -172,12 +172,12 @@ struct GameView: View {
 		return base + bottomInset
 	}
 
-	private func landscapeControlsWidth(safeWidth: CGFloat) -> CGFloat {
+	private func landscapeControlsWidth(layoutWidth: CGFloat) -> CGFloat {
 		let preferredShare: CGFloat = dynamicTypeSize.isAccessibilitySize ? 0.36 : 0.30
 		let minimumWidth: CGFloat = dynamicTypeSize.isAccessibilitySize ? 300 : 236
 		let maximumShare: CGFloat = dynamicTypeSize.isAccessibilitySize ? 0.42 : 0.36
-		let preferredWidth = safeWidth * preferredShare
-		let maximumWidth = safeWidth * maximumShare
+		let preferredWidth = layoutWidth * preferredShare
+		let maximumWidth = layoutWidth * maximumShare
 		return min(max(preferredWidth, minimumWidth), maximumWidth)
 	}
 

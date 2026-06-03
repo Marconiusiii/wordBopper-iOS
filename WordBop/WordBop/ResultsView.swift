@@ -7,6 +7,7 @@ struct ResultsView: View {
 
 	var body: some View {
 		GeometryReader { geo in
+			let contentWidth = edgeToEdgeWidth(in: geo)
 			VStack(spacing: 0) {
 				ScrollView {
 					VStack(spacing: 16) {
@@ -47,8 +48,9 @@ struct ResultsView: View {
 									ResultStat(value: longestWord, label: "Longest word", color: .wbAccent3)
 								}
 							}
-						}
-						.frame(maxWidth: .infinity)
+							}
+							.frame(maxWidth: .infinity)
+							.contentShape(Rectangle())
 
 						VStack(alignment: .leading, spacing: 10) {
 							Text("Your words")
@@ -86,12 +88,15 @@ struct ResultsView: View {
 						.overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.07)))
 						.frame(maxWidth: .infinity)
 					}
-					.padding(.horizontal, 20)
 					.padding(.vertical, 24)
+					.frame(width: contentWidth)
 				}
+				.frame(width: contentWidth)
 
 				ResultsActionBar(bottomInset: geo.safeAreaInsets.bottom)
 			}
+			.frame(width: contentWidth, height: geo.size.height)
+			.ignoresSafeArea(edges: horizontalSafeAreaEdges(in: geo))
 		}
 		.onAppear {
 			UIAccessibility.post(notification: .screenChanged, argument: "Round Complete")
@@ -105,6 +110,18 @@ struct ResultsView: View {
 
 	private var longestWord: String {
 		vm.madeWords.max { $0.count < $1.count } ?? "—"
+	}
+
+	private func edgeToEdgeWidth(in geo: GeometryProxy) -> CGFloat {
+		isLandscape(in: geo) ? geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing : geo.size.width
+	}
+
+	private func horizontalSafeAreaEdges(in geo: GeometryProxy) -> Edge.Set {
+		isLandscape(in: geo) ? .horizontal : []
+	}
+
+	private func isLandscape(in geo: GeometryProxy) -> Bool {
+		geo.size.width > geo.size.height
 	}
 }
 

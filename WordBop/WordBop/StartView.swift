@@ -10,6 +10,7 @@ struct StartView: View {
 
 	var body: some View {
 		GeometryReader { geo in
+			let contentWidth = edgeToEdgeWidth(in: geo)
 			VStack(spacing: 0) {
 				VStack(spacing: 2) {
 					Text("WordBopper")
@@ -36,26 +37,38 @@ struct StartView: View {
 				startGameButton
 					.layoutPriority(3)
 
-				BestGameCard(bestGame: vm.bestGame)
-					.layoutPriority(2)
-			}
-			.frame(maxWidth: .infinity)
-			.frame(minHeight: geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom, alignment: .top)
-			.padding(.horizontal, 20)
-			.padding(.top, 24)
-			.padding(.bottom, geo.safeAreaInsets.bottom)
-		}
-		.onAppear {
+					BestGameCard(bestGame: vm.bestGame)
+						.layoutPriority(2)
+				}
+					.frame(width: contentWidth)
+					.frame(minHeight: geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom, alignment: .top)
+					.padding(.top, 24)
+					.padding(.bottom, geo.safeAreaInsets.bottom)
+					.ignoresSafeArea(edges: horizontalSafeAreaEdges(in: geo))
+				}
+			.onAppear {
 			UIAccessibility.post(notification: .screenChanged, argument: "WordBopper")
 		}
 		.sheet(isPresented: $showingInstructions) {
 			InstructionsSheet()
 				.presentationDragIndicator(.hidden)
 		}
-		.sheet(isPresented: $showingGameSettings) {
-			GameSettingsSheet()
-				.presentationDragIndicator(.hidden)
+			.sheet(isPresented: $showingGameSettings) {
+				GameSettingsSheet()
+					.presentationDragIndicator(.hidden)
+			}
 		}
+
+	private func edgeToEdgeWidth(in geo: GeometryProxy) -> CGFloat {
+		isLandscape(in: geo) ? geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing : geo.size.width
+	}
+
+	private func horizontalSafeAreaEdges(in geo: GeometryProxy) -> Edge.Set {
+		isLandscape(in: geo) ? .horizontal : []
+	}
+
+	private func isLandscape(in geo: GeometryProxy) -> Bool {
+		geo.size.width > geo.size.height
 	}
 
 	private var startScreenTopRow: some View {
@@ -153,12 +166,13 @@ private struct InstructionsSheet: View {
 		"Play together with friends at the same time to see who can Bopple the best! All on their own devices, of course."
 	]
 
-	var body: some View {
-		NavigationStack {
-			GeometryReader { geo in
-				ScrollView {
-					VStack(spacing: 0) {
-				Text("How to Play")
+		var body: some View {
+			NavigationStack {
+				GeometryReader { geo in
+					let contentWidth = sheetContentWidth(in: geo)
+					ScrollView {
+						VStack(spacing: 0) {
+					Text("How to Play")
 					.font(.title2.weight(.black))
 					.foregroundStyle(Color.wbText)
 					.accessibilityAddTraits(.isHeader)
@@ -186,24 +200,30 @@ private struct InstructionsSheet: View {
 					}
 				}
 				.frame(maxWidth: .infinity, alignment: .leading)
+						}
+						.frame(width: contentWidth)
+						.frame(minHeight: geo.size.height, alignment: .top)
 					}
-					.frame(maxWidth: .infinity)
-					.frame(minHeight: geo.size.height, alignment: .top)
+					.frame(width: contentWidth)
 				}
-			}
-			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-			.background(Color.wbBackground)
-			.toolbar {
-				ToolbarItem(placement: .topBarTrailing) {
+				.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+				.ignoresSafeArea(edges: .horizontal)
+				.background(Color.wbBackground)
+				.toolbar {
+					ToolbarItem(placement: .topBarTrailing) {
 					Button("Close") {
 						dismiss()
 					}
 				}
 			}
+			}
+			.preferredColorScheme(.dark)
 		}
-		.preferredColorScheme(.dark)
+
+		private func sheetContentWidth(in geo: GeometryProxy) -> CGFloat {
+			geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
+		}
 	}
-}
 
 private struct InstructionRow: View {
 	let item: String
@@ -247,12 +267,13 @@ private struct GameSettingsSheet: View {
 	@AccessibilityFocusState private var isLetterPositionFocused: Bool
 	@State private var showingAbout = false
 
-	var body: some View {
-		NavigationStack {
-			GeometryReader { geo in
-				ScrollView {
-					VStack(spacing: 0) {
-						Text("Game Settings")
+		var body: some View {
+			NavigationStack {
+				GeometryReader { geo in
+					let contentWidth = sheetContentWidth(in: geo)
+					ScrollView {
+						VStack(spacing: 0) {
+							Text("Game Settings")
 							.font(.title2.weight(.black))
 							.foregroundStyle(Color.wbText)
 							.accessibilityAddTraits(.isHeader)
@@ -427,18 +448,20 @@ private struct GameSettingsSheet: View {
 
 						SettingsDescriptionRow("Feel the Bop more with subtle game event vibrations.")
 
-						SettingsLinkButtonRow(title: "About WordBopper") {
-							showingAbout = true
+							SettingsLinkButtonRow(title: "About WordBopper") {
+								showingAbout = true
+							}
 						}
+						.frame(width: contentWidth)
+						.frame(minHeight: geo.size.height, alignment: .top)
 					}
-					.frame(maxWidth: .infinity)
-					.frame(minHeight: geo.size.height, alignment: .top)
+					.frame(width: contentWidth)
+					.scrollIndicators(.visible)
 				}
-				.scrollIndicators(.visible)
-			}
-			.background(Color.wbBackground)
-			.toolbar {
-				ToolbarItem(placement: .topBarTrailing) {
+				.ignoresSafeArea(edges: .horizontal)
+				.background(Color.wbBackground)
+				.toolbar {
+					ToolbarItem(placement: .topBarTrailing) {
 					Button("Close") {
 						dismiss()
 					}
@@ -448,9 +471,13 @@ private struct GameSettingsSheet: View {
 		.sheet(isPresented: $showingAbout) {
 			AboutWordBopperSheet()
 				.presentationDragIndicator(.hidden)
+			}
+			.preferredColorScheme(.dark)
 		}
-		.preferredColorScheme(.dark)
-	}
+
+		private func sheetContentWidth(in geo: GeometryProxy) -> CGFloat {
+			geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
+		}
 
 	private func refocusDictionaryLanguagePicker() {
 		isDictionaryLanguageFocused = false
@@ -647,128 +674,143 @@ private struct AboutWordBopperSheet: View {
 	@State private var activeMailDraft = AboutMailDraft.feedback
 	@State private var isAcknowledgementsExpanded = false
 
-	var body: some View {
-		NavigationStack {
-			ScrollView {
-				VStack(spacing: 18) {
-					Text("About WordBopper")
-						.font(.title2.weight(.black))
-						.foregroundStyle(Color.wbText)
-						.multilineTextAlignment(.center)
-						.fixedSize(horizontal: false, vertical: true)
-						.accessibilityAddTraits(.isHeader)
-
-					VStack(alignment: .leading, spacing: 12) {
-						Text("Chancey wanted this game to exist and vibe coded the initial version, then passed it to Marco to refine it into the original web game. Marco then decided to rewrite the whole game for iOS, and now here you are bopping away. Thanks for playing!")
-							.foregroundStyle(Color.wbText)
-
-						Text("If you enjoy this game, try out our other game on the App Store:")
-							.foregroundStyle(Color.wbText)
-
-						Link(destination: URL(string: "https://apps.apple.com/us/app/whack-a-braille/id6760976367")!) {
-							HStack(spacing: 12) {
-								Image("WhackABrailleIcon")
-									.resizable()
-									.scaledToFit()
-									.frame(width: 44, height: 44)
-									.clipShape(RoundedRectangle(cornerRadius: 10))
-									.accessibilityHidden(true)
-
-								Text("Whack A Braille!")
-									.font(.headline.weight(.black))
-									.underline()
-									.multilineTextAlignment(.leading)
-									.fixedSize(horizontal: false, vertical: true)
-							}
-							.frame(maxWidth: .infinity)
-							.frame(minHeight: 56)
-							.contentShape(Rectangle())
-						}
-						.foregroundStyle(Color.wbAccent5)
-						.accessibilityAddTraits(.isLink)
-						.accessibilityRemoveTraits(.isButton)
-						.accessibilityHint("Opens in the App Store")
-					}
-					.font(.body)
-					.multilineTextAlignment(.leading)
-
-					VStack(spacing: 0) {
-						Button {
-							sendMail(.feedback)
-						} label: {
-							Text("Send Game Feedback")
-								.frame(maxWidth: .infinity)
-								.frame(minHeight: 48)
+		var body: some View {
+			NavigationStack {
+				GeometryReader { geo in
+					let contentWidth = sheetContentWidth(in: geo)
+					ScrollView {
+						VStack(spacing: 18) {
+							Text("About WordBopper")
+								.font(.title2.weight(.black))
+								.foregroundStyle(Color.wbText)
+								.multilineTextAlignment(.center)
+								.fixedSize(horizontal: false, vertical: true)
+								.accessibilityAddTraits(.isHeader)
+								.frame(maxWidth: .infinity, minHeight: 72)
 								.contentShape(Rectangle())
-						}
-						.accessibilityHint("Opens Mail so you can send feedback about the game.")
-						.accessibilityFocused($isFeedbackButtonFocused)
 
-						Button {
-							sendMail(.missingWord(language: vm.dictionaryLanguage, mode: vm.gameMode))
-						} label: {
-							Text("Report Missing Word")
-								.frame(maxWidth: .infinity)
-								.frame(minHeight: 48)
-								.contentShape(Rectangle())
-						}
-						.accessibilityHint("Opens Mail with the current language and game mode included.")
-					}
-					.buttonStyle(.borderedProminent)
-					.tint(Color.wbAccent5)
-					.foregroundStyle(Color.black)
+							VStack(alignment: .leading, spacing: 12) {
+								Text("Chancey wanted this game to exist and vibe coded the initial version, then passed it to Marco to refine it into the original web game. Marco then decided to rewrite the whole game for iOS, and now here you are bopping away. Thanks for playing!")
+									.foregroundStyle(Color.wbText)
 
-					VStack(spacing: 8) {
-						Link("Privacy Policy", destination: URL(string: "https://marconius.com/wbPrivacy/")!)
-							.underline()
-							.accessibilityAddTraits(.isLink)
-							.accessibilityRemoveTraits(.isButton)
-							.accessibilityHint("Opens in external browser")
+								Text("If you enjoy this game, try out our other game on the App Store:")
+									.foregroundStyle(Color.wbText)
 
-						Button {
-							isAcknowledgementsExpanded.toggle()
-						} label: {
-							HStack {
-								Text("Acknowledgements")
-								Image(systemName: isAcknowledgementsExpanded ? "chevron.down" : "chevron.right")
-									.accessibilityHidden(true)
-							}
-							.frame(maxWidth: .infinity)
-							.frame(minHeight: 44)
-							.contentShape(Rectangle())
-						}
-						.buttonStyle(.plain)
-						.accessibilityAddTraits(.isHeader)
-						.accessibilityValue(isAcknowledgementsExpanded ? "Expanded" : "Collapsed")
+								Link(destination: URL(string: "https://apps.apple.com/us/app/whack-a-braille/id6760976367")!) {
+									HStack(spacing: 12) {
+										Image("WhackABrailleIcon")
+											.resizable()
+											.scaledToFit()
+											.frame(width: 44, height: 44)
+											.clipShape(RoundedRectangle(cornerRadius: 10))
+											.accessibilityHidden(true)
 
-						if isAcknowledgementsExpanded {
-							VStack(alignment: .leading, spacing: 8) {
-								ForEach(acknowledgementParagraphs, id: \.self) { paragraph in
-									Text(paragraph)
-										.font(.caption)
-										.foregroundStyle(Color.wbMuted)
-										.multilineTextAlignment(.leading)
-										.frame(maxWidth: .infinity, alignment: .leading)
+										Text("Whack A Braille!")
+											.font(.headline.weight(.black))
+											.underline()
+											.multilineTextAlignment(.leading)
+											.fixedSize(horizontal: false, vertical: true)
+									}
+									.frame(maxWidth: .infinity)
+									.frame(minHeight: 56)
+									.contentShape(Rectangle())
 								}
+								.foregroundStyle(Color.wbAccent5)
+								.accessibilityAddTraits(.isLink)
+								.accessibilityRemoveTraits(.isButton)
+								.accessibilityHint("Opens in the App Store")
 							}
-								.frame(maxWidth: .infinity, alignment: .leading)
-								.padding(.horizontal, 4)
-						}
+							.font(.body)
+							.multilineTextAlignment(.leading)
+							.padding(.horizontal, 24)
+							.frame(maxWidth: .infinity, alignment: .leading)
+							.contentShape(Rectangle())
 
-						Text("© 2026, \(versionText)")
+							VStack(spacing: 0) {
+								Button {
+									sendMail(.feedback)
+								} label: {
+									Text("Send Game Feedback")
+										.frame(maxWidth: .infinity)
+										.frame(minHeight: 48)
+										.contentShape(Rectangle())
+								}
+								.accessibilityHint("Opens Mail so you can send feedback about the game.")
+								.accessibilityFocused($isFeedbackButtonFocused)
+
+								Button {
+									sendMail(.missingWord(language: vm.dictionaryLanguage, mode: vm.gameMode))
+								} label: {
+									Text("Report Missing Word")
+										.frame(maxWidth: .infinity)
+										.frame(minHeight: 48)
+										.contentShape(Rectangle())
+								}
+								.accessibilityHint("Opens Mail with the current language and game mode included.")
+							}
+							.buttonStyle(.borderedProminent)
+							.tint(Color.wbAccent5)
+							.foregroundStyle(Color.black)
+							.frame(maxWidth: .infinity)
+							.contentShape(Rectangle())
+
+							VStack(spacing: 8) {
+								Link("Privacy Policy", destination: URL(string: "https://marconius.com/wbPrivacy/")!)
+									.underline()
+									.frame(maxWidth: .infinity, minHeight: 44)
+									.contentShape(Rectangle())
+									.accessibilityAddTraits(.isLink)
+									.accessibilityRemoveTraits(.isButton)
+									.accessibilityHint("Opens in external browser")
+
+								Button {
+									isAcknowledgementsExpanded.toggle()
+								} label: {
+									HStack {
+										Text("Acknowledgements")
+										Image(systemName: isAcknowledgementsExpanded ? "chevron.down" : "chevron.right")
+											.accessibilityHidden(true)
+									}
+									.frame(maxWidth: .infinity)
+									.frame(minHeight: 44)
+									.contentShape(Rectangle())
+								}
+								.buttonStyle(.plain)
+								.accessibilityAddTraits(.isHeader)
+								.accessibilityValue(isAcknowledgementsExpanded ? "Expanded" : "Collapsed")
+
+								if isAcknowledgementsExpanded {
+									VStack(alignment: .leading, spacing: 8) {
+										ForEach(acknowledgementParagraphs, id: \.self) { paragraph in
+											Text(paragraph)
+												.font(.caption)
+												.foregroundStyle(Color.wbMuted)
+												.multilineTextAlignment(.leading)
+												.frame(maxWidth: .infinity, alignment: .leading)
+										}
+									}
+									.frame(maxWidth: .infinity, alignment: .leading)
+									.padding(.horizontal, 24)
+								}
+
+								Text("© 2026, \(versionText)")
+									.frame(maxWidth: .infinity, minHeight: 44)
+									.contentShape(Rectangle())
+							}
+							.font(.footnote.weight(.semibold))
+							.foregroundStyle(Color.wbMuted)
+							.multilineTextAlignment(.center)
+						}
+						.frame(width: contentWidth, alignment: .top)
+						.padding(.top, 36)
+						.padding(.bottom, 24)
 					}
-					.font(.footnote.weight(.semibold))
-					.foregroundStyle(Color.wbMuted)
-					.multilineTextAlignment(.center)
+					.frame(width: contentWidth)
 				}
-				.frame(maxWidth: .infinity, alignment: .top)
-				.padding(.horizontal, 24)
-				.padding(.top, 36)
-				.padding(.bottom, 24)
-			}
-			.background(Color.wbBackground)
-			.toolbar {
-				ToolbarItem(placement: .topBarTrailing) {
+				.ignoresSafeArea(edges: .horizontal)
+				.background(Color.wbBackground)
+				.toolbar {
+					ToolbarItem(placement: .topBarTrailing) {
 					Button("Close") {
 						dismiss()
 					}
@@ -782,9 +824,13 @@ private struct AboutWordBopperSheet: View {
 				body: activeMailDraft.body,
 				onFinish: { _ in }
 			)
+			}
+			.preferredColorScheme(.dark)
 		}
-		.preferredColorScheme(.dark)
-	}
+
+		private func sheetContentWidth(in geo: GeometryProxy) -> CGFloat {
+			geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
+		}
 
 	private func sendMail(_ draft: AboutMailDraft) {
 		activeMailDraft = draft
