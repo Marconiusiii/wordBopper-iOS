@@ -2,35 +2,44 @@ import SwiftUI
 
 struct BubbleGridView: View {
 	@Environment(GameViewModel.self) private var vm
-	let cellSize: CGFloat
 
 	var body: some View {
-		VStack(spacing: 0) {
-			ForEach(0..<vm.gridSize, id: \.self) { row in
-				HStack(spacing: 0) {
-					ForEach(0..<vm.gridSize, id: \.self) { col in
-						let index = row * vm.gridSize + col
-						if index < vm.bubbles.count {
-							let bubble = vm.bubbles[index]
-							let selected = vm.isSelected(bubble)
-							BubbleButton(
-								bubble: bubble,
-								isSelected: selected,
-								bopAwayIsActive: vm.bopAwayIsActive,
-								size: cellSize,
-								letterPositionMode: vm.letterPositionMode,
-								speakLetterPhonetics: vm.speakLetterPhonetics,
-								dictionaryLanguage: vm.dictionaryLanguage,
-								speechLanguage: vm.dictionaryLanguage.speechLanguage,
-								textColorOption: vm.bubbleTextColorOption,
-								letterStyle: vm.bubbleLetterStyle
-							) {
-								vm.tapBubble(bubble)
+		GeometryReader { geo in
+			let cellWidth = geo.size.width / CGFloat(vm.gridSize)
+			let cellHeight = geo.size.height / CGFloat(vm.gridSize)
+			let visualSize = min(cellWidth, cellHeight)
+
+			VStack(spacing: 0) {
+				ForEach(0..<vm.gridSize, id: \.self) { row in
+					HStack(spacing: 0) {
+						ForEach(0..<vm.gridSize, id: \.self) { col in
+							let index = row * vm.gridSize + col
+							if index < vm.bubbles.count {
+								let bubble = vm.bubbles[index]
+								let selected = vm.isSelected(bubble)
+								BubbleButton(
+									bubble: bubble,
+									isSelected: selected,
+									bopAwayIsActive: vm.bopAwayIsActive,
+									visualSize: visualSize,
+									touchWidth: cellWidth,
+									touchHeight: cellHeight,
+									letterPositionMode: vm.letterPositionMode,
+									speakLetterPhonetics: vm.speakLetterPhonetics,
+									dictionaryLanguage: vm.dictionaryLanguage,
+									speechLanguage: vm.dictionaryLanguage.speechLanguage,
+									textColorOption: vm.bubbleTextColorOption,
+									letterStyle: vm.bubbleLetterStyle
+								) {
+									vm.tapBubble(bubble)
+								}
 							}
 						}
 					}
+					.frame(height: cellHeight)
 				}
 			}
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
 		}
 	}
 }
@@ -42,7 +51,9 @@ struct BubbleButton: View {
 	let bubble: Bubble
 	let isSelected: Bool
 	let bopAwayIsActive: Bool
-	let size: CGFloat
+	let visualSize: CGFloat
+	let touchWidth: CGFloat
+	let touchHeight: CGFloat
 	let letterPositionMode: LetterPositionMode
 	let speakLetterPhonetics: Bool
 	let dictionaryLanguage: DictionaryLanguage
@@ -132,7 +143,7 @@ struct BubbleButton: View {
 					.minimumScaleFactor(0.55)
 					.lineLimit(1)
 			}
-			.frame(width: size, height: size)
+			.frame(width: touchWidth, height: touchHeight)
 			.contentShape(Rectangle())
 			.animation(reduceMotion ? nil : .spring(response: 0.2, dampingFraction: 0.6), value: isSelected)
 			.animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: bopAwayPulse)
@@ -158,13 +169,13 @@ struct BubbleButton: View {
 	}
 
 	private var bubbleSize: CGFloat {
-		size * 0.92
+		visualSize * 0.92
 	}
 
 	private var bubbleLetterSize: CGFloat {
 		let scale = dynamicTypeSize.isAccessibilitySize ? 0.66 : 0.58
-		let cap: CGFloat = dynamicTypeSize.isAccessibilitySize ? 46 : 40
-		return min(size * scale, cap)
+		let cap: CGFloat = dynamicTypeSize.isAccessibilitySize ? 74 : 66
+		return min(visualSize * scale, cap)
 	}
 
 	private var letterWeight: Font.Weight {
