@@ -34,12 +34,13 @@ struct GameView: View {
 			BubbleGridView()
 				.frame(maxWidth: .infinity)
 				.frame(maxHeight: .infinity)
+				.layoutPriority(1)
 				.padding(.horizontal, 4)
 				.padding(.vertical, 6)
 				.environment(\.locale, vm.gameplayLocale)
 
 			ActionBar(bottomInset: geo.safeAreaInsets.bottom)
-				.frame(maxHeight: .infinity)
+				.frame(height: actionBarHeight(bottomInset: geo.safeAreaInsets.bottom))
 		}
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 		.ignoresSafeArea(edges: .bottom)
@@ -83,6 +84,7 @@ struct GameView: View {
 			BubbleGridView()
 				.frame(maxWidth: .infinity)
 				.frame(maxHeight: .infinity)
+				.layoutPriority(1)
 				.padding(.horizontal, 4)
 				.padding(.vertical, 6)
 				.environment(\.locale, vm.gameplayLocale)
@@ -99,11 +101,12 @@ struct GameView: View {
 					ChainMeterBar()
 				}
 			}
-			.frame(maxWidth: .infinity, maxHeight: .infinity)
+			.frame(maxWidth: .infinity)
 			.background(Color.wbSurface)
 
 			LandscapeActionPanel(bottomInset: bottomInset)
 				.frame(maxWidth: .infinity, maxHeight: .infinity)
+				.layoutPriority(1)
 		}
 		.background(Color.wbSurface)
 		.overlay(alignment: vm.leftHandedMode ? .trailing : .leading) {
@@ -118,11 +121,16 @@ struct GameView: View {
 			.lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
 			.fixedSize(horizontal: false, vertical: true)
 			.frame(maxWidth: .infinity, alignment: .leading)
-			.padding(.horizontal, 16)
-			.padding(.top, 8)
-			.padding(.bottom, 6)
+			.padding(.horizontal, 12)
+			.padding(.top, 4)
+			.padding(.bottom, 4)
 			.background(Color.wbSurface)
 			.accessibilityAddTraits(.isHeader)
+	}
+
+	private func actionBarHeight(bottomInset: CGFloat) -> CGFloat {
+		let base: CGFloat = dynamicTypeSize.isAccessibilitySize ? 142 : 104
+		return base + bottomInset
 	}
 
 }
@@ -143,7 +151,7 @@ private struct GameHeaderBar: View {
 				endGameButton(dividerAlignment: .leading)
 			}
 		}
-		.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 70 : 56)
+		.frame(height: dynamicTypeSize.isAccessibilitySize ? 70 : 54)
 		.background(Color.wbSurface)
 		.overlay(alignment: .bottom) {
 			Divider().background(Color.white.opacity(0.06))
@@ -326,8 +334,8 @@ private struct LandscapeStatsPanel: View {
 			}
 		}
 		.padding(.horizontal, 14)
-		.padding(.vertical, 12)
-		.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+		.padding(.vertical, dynamicTypeSize.isAccessibilitySize ? 10 : 8)
+		.frame(maxWidth: .infinity, alignment: .topLeading)
 		.background(Color.wbSurface)
 		.accessibilityElement(children: .ignore)
 		.accessibilityLabel(headerAccessibilityLabel)
@@ -385,7 +393,7 @@ private struct ChainMeterBar: View {
 				.frame(minWidth: 44, alignment: .trailing)
 		}
 		.padding(.horizontal, 16)
-		.padding(.vertical, 6)
+		.padding(.vertical, 4)
 		.background(Color.wbSurface)
 		.overlay(alignment: .bottom) {
 			Divider().background(Color.white.opacity(0.06))
@@ -418,7 +426,7 @@ private struct WordTrayBar: View {
 	@Environment(\.legibilityWeight) private var legibilityWeight
 
 	var body: some View {
-		VStack(alignment: .leading, spacing: 4) {
+		VStack(alignment: .leading, spacing: 2) {
 			Text("Word tray")
 				.font(.caption.weight(.bold))
 				.foregroundStyle(Color.wbMuted)
@@ -447,12 +455,12 @@ private struct WordTrayBar: View {
 				.animation(reduceMotion ? nil : .spring(response: 0.2), value: vm.selected.map(\.bubbleId))
 				.padding(.horizontal, 1)
 				}
-				.frame(height: tileSize + 4)
+				.frame(height: tileSize)
 				.environment(\.locale, vm.gameplayLocale)
 			}
-		.padding(.horizontal, 16)
-		.padding(.top, 6)
-		.padding(.bottom, 8)
+		.padding(.horizontal, 12)
+		.padding(.top, 4)
+		.padding(.bottom, 5)
 		.background(Color.wbSurface)
 		.overlay(alignment: .bottom) {
 			Divider().background(Color.white.opacity(0.06))
@@ -466,7 +474,7 @@ private struct WordTrayBar: View {
 	}
 
 	private var tileSize: CGFloat {
-		dynamicTypeSize.isAccessibilitySize ? 44 : 36
+		dynamicTypeSize.isAccessibilitySize ? 40 : 32
 	}
 }
 
