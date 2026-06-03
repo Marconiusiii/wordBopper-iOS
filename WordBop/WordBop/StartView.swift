@@ -409,6 +409,15 @@ private struct GameSettingsSheet: View {
 
 						SettingsDescriptionRow("Controls spoken game announcements for scoring, invalid words, and cleared letters.")
 
+						SettingsSectionHeading("Left-Handed Mode")
+
+						SettingsToggleRow(title: "Left-Handed Mode", isOn: Binding(
+							get: { vm.leftHandedMode },
+							set: { vm.leftHandedMode = $0 }
+						))
+
+						SettingsDescriptionRow("Mirrors gameplay controls for easier left-handed play.")
+
 						SettingsSectionHeading("Game Haptics")
 
 						SettingsToggleRow(title: "Game Haptics", isOn: Binding(

@@ -301,6 +301,9 @@ final class GameViewModel {
 			saveGameHapticsEnabled()
 		}
 	}
+	var leftHandedMode = false {
+		didSet { saveLeftHandedMode() }
+	}
 	var dictionaryLanguage: DictionaryLanguage = .english {
 		didSet {
 			saveDictionaryLanguage()
@@ -413,6 +416,7 @@ final class GameViewModel {
 		gameAnnouncementVerbosity = loadGameAnnouncementVerbosity()
 		gameHapticsEnabled = loadGameHapticsEnabled()
 		haptics.isEnabled = gameHapticsEnabled
+		leftHandedMode = loadLeftHandedMode()
 		dictionaryLanguage = loadDictionaryLanguage()
 		dictionary.preload(dictionaryLanguage)
 	}
@@ -935,6 +939,10 @@ final class GameViewModel {
 		return UserDefaults.standard.bool(forKey: "wordBopGameHapticsEnabled")
 	}
 
+	private func loadLeftHandedMode() -> Bool {
+		UserDefaults.standard.bool(forKey: "wordBopLeftHandedMode")
+	}
+
 	private func loadDictionaryLanguage() -> DictionaryLanguage {
 		guard let saved = UserDefaults.standard.string(forKey: "wordBopDictionaryLanguage") else {
 			return .english
@@ -982,6 +990,10 @@ final class GameViewModel {
 
 	private func saveGameHapticsEnabled() {
 		UserDefaults.standard.set(gameHapticsEnabled, forKey: "wordBopGameHapticsEnabled")
+	}
+
+	private func saveLeftHandedMode() {
+		UserDefaults.standard.set(leftHandedMode, forKey: "wordBopLeftHandedMode")
 	}
 
 	private func saveDictionaryLanguage() {

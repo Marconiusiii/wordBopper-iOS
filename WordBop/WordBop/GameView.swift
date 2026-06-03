@@ -53,49 +53,65 @@ struct GameView: View {
 		let cellSize = cellSize(in: leftWidth, height: safeHeight, reservedHeight: landscapeGridReservedHeight)
 
 		return HStack(spacing: 0) {
-			ScrollView(.vertical, showsIndicators: false) {
-				VStack(spacing: 0) {
-					HStack(spacing: 0) {
-						EndGameButton(width: dynamicTypeSize.isAccessibilitySize ? 132 : 112)
-
-						headingText
-					}
-					.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 64 : 50)
-
-					WordTrayBar()
-
-					BubbleGridView(cellSize: cellSize)
-						.frame(maxWidth: .infinity)
-						.padding(.horizontal, 4)
-						.padding(.vertical, 6)
-						.environment(\.locale, vm.gameplayLocale)
-				}
-				.frame(maxWidth: .infinity, alignment: .top)
-			}
-			.frame(width: leftWidth)
-			.frame(maxHeight: .infinity)
-			.background(Color.wbBackground)
-
-			VStack(spacing: 0) {
-				VStack(spacing: 0) {
-					LandscapeStatsPanel()
-					if vm.gameMode != .bopple {
-						ChainMeterBar()
-					}
-				}
-				.frame(maxWidth: .infinity, maxHeight: .infinity)
-				.background(Color.wbSurface)
-
-				LandscapeActionPanel(bottomInset: geo.safeAreaInsets.bottom)
+			if vm.leftHandedMode {
+				landscapeControlsPanel(bottomInset: geo.safeAreaInsets.bottom)
 					.frame(maxWidth: .infinity, maxHeight: .infinity)
-			}
-			.frame(maxWidth: .infinity, maxHeight: .infinity)
-			.overlay(alignment: .leading) {
-				Divider().background(Color.white.opacity(0.07))
+
+				landscapeGridPanel(cellSize: cellSize, endGamePlacement: .trailing)
+					.frame(width: leftWidth)
+					.frame(maxHeight: .infinity)
+			} else {
+				landscapeGridPanel(cellSize: cellSize, endGamePlacement: .leading)
+					.frame(width: leftWidth)
+					.frame(maxHeight: .infinity)
+
+				landscapeControlsPanel(bottomInset: geo.safeAreaInsets.bottom)
+					.frame(maxWidth: .infinity, maxHeight: .infinity)
 			}
 		}
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 		.ignoresSafeArea(edges: .bottom)
+	}
+
+	private func landscapeGridPanel(cellSize: CGFloat, endGamePlacement: EndGamePlacement) -> some View {
+		ScrollView(.vertical, showsIndicators: false) {
+			VStack(spacing: 0) {
+				LandscapeTitleRow(placement: endGamePlacement) {
+					headingText
+				}
+				.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 64 : 50)
+
+				WordTrayBar()
+
+				BubbleGridView(cellSize: cellSize)
+					.frame(maxWidth: .infinity)
+					.padding(.horizontal, 4)
+					.padding(.vertical, 6)
+					.environment(\.locale, vm.gameplayLocale)
+			}
+			.frame(maxWidth: .infinity, alignment: .top)
+		}
+		.background(Color.wbBackground)
+	}
+
+	private func landscapeControlsPanel(bottomInset: CGFloat) -> some View {
+		VStack(spacing: 0) {
+			VStack(spacing: 0) {
+				LandscapeStatsPanel()
+				if vm.gameMode != .bopple {
+					ChainMeterBar()
+				}
+			}
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
+			.background(Color.wbSurface)
+
+			LandscapeActionPanel(bottomInset: bottomInset)
+				.frame(maxWidth: .infinity, maxHeight: .infinity)
+		}
+		.background(Color.wbSurface)
+		.overlay(alignment: vm.leftHandedMode ? .trailing : .leading) {
+			Divider().background(Color.white.opacity(0.07))
+		}
 	}
 
 	private var headingText: some View {
@@ -142,37 +158,49 @@ private struct GameHeaderBar: View {
 
 	var body: some View {
 		HStack(spacing: 0) {
-			statsContent
-				.frame(maxWidth: .infinity, maxHeight: .infinity)
-				.padding(.horizontal, 16)
-				.padding(.vertical, 10)
-				.accessibilityElement(children: .ignore)
-				.accessibilityLabel(headerAccessibilityLabel)
-
-			Button { vm.endGame() } label: {
-				Text("End Game")
-					.font(.subheadline.weight(.bold))
-					.foregroundStyle(Color.wbAccent2)
-					.multilineTextAlignment(.center)
-					.minimumScaleFactor(0.8)
-					.lineLimit(2)
-					.frame(width: endGameButtonWidth)
-					.frame(maxHeight: .infinity)
-					.background(Color.wbAccent2.opacity(0.15))
-					.overlay(alignment: .leading) {
-						Divider().background(Color.wbAccent2.opacity(0.25))
-					}
+			if vm.leftHandedMode {
+				endGameButton(dividerAlignment: .trailing)
+				statsContentView
+			} else {
+				statsContentView
+				endGameButton(dividerAlignment: .leading)
 			}
-			.buttonStyle(.plain)
-			.keyboardShortcut(".", modifiers: .command)
-			.contentShape(Rectangle())
-			.accessibilityLabel("End game")
 		}
 		.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 70 : 56)
 		.background(Color.wbSurface)
 		.overlay(alignment: .bottom) {
 			Divider().background(Color.white.opacity(0.06))
 		}
+	}
+
+	private var statsContentView: some View {
+		statsContent
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
+			.padding(.horizontal, 16)
+			.padding(.vertical, 10)
+			.accessibilityElement(children: .ignore)
+			.accessibilityLabel(headerAccessibilityLabel)
+	}
+
+	private func endGameButton(dividerAlignment: Alignment) -> some View {
+		Button { vm.endGame() } label: {
+			Text("End Game")
+				.font(.subheadline.weight(.bold))
+				.foregroundStyle(Color.wbAccent2)
+				.multilineTextAlignment(.center)
+				.minimumScaleFactor(0.8)
+				.lineLimit(2)
+				.frame(width: endGameButtonWidth)
+				.frame(maxHeight: .infinity)
+				.background(Color.wbAccent2.opacity(0.15))
+				.overlay(alignment: dividerAlignment) {
+					Divider().background(Color.wbAccent2.opacity(0.25))
+				}
+		}
+		.buttonStyle(.plain)
+		.keyboardShortcut(".", modifiers: .command)
+		.contentShape(Rectangle())
+		.accessibilityLabel("End game")
 	}
 
 	private var statsContent: some View {
@@ -237,9 +265,47 @@ private struct GameHeaderBar: View {
 	}
 }
 
+private enum EndGamePlacement {
+	case leading
+	case trailing
+}
+
+private struct LandscapeTitleRow<Heading: View>: View {
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
+	let placement: EndGamePlacement
+	let heading: Heading
+
+	init(placement: EndGamePlacement, @ViewBuilder heading: () -> Heading) {
+		self.placement = placement
+		self.heading = heading()
+	}
+
+	var body: some View {
+		HStack(spacing: 0) {
+			if placement == .leading {
+				EndGameButton(width: endGameWidth, dividerAlignment: .trailing)
+				heading
+			} else {
+				heading
+				EndGameButton(width: endGameWidth, dividerAlignment: .leading)
+			}
+		}
+	}
+
+	private var endGameWidth: CGFloat {
+		dynamicTypeSize.isAccessibilitySize ? 132 : 112
+	}
+}
+
 private struct EndGameButton: View {
 	@Environment(GameViewModel.self) private var vm
 	let width: CGFloat
+	let dividerAlignment: Alignment
+
+	init(width: CGFloat, dividerAlignment: Alignment = .trailing) {
+		self.width = width
+		self.dividerAlignment = dividerAlignment
+	}
 
 	var body: some View {
 		Button { vm.endGame() } label: {
@@ -252,7 +318,7 @@ private struct EndGameButton: View {
 				.frame(width: width)
 				.frame(maxHeight: .infinity)
 				.background(Color.wbAccent2.opacity(0.15))
-				.overlay(alignment: .trailing) {
+				.overlay(alignment: dividerAlignment) {
 					Divider().background(Color.wbAccent2.opacity(0.25))
 				}
 		}
@@ -437,8 +503,13 @@ private struct ActionBar: View {
 	var body: some View {
 		GeometryReader { geo in
 			HStack(spacing: 0) {
-				clearButton(width: geo.size.width * (dynamicTypeSize.isAccessibilitySize ? 0.42 : 0.34))
-				makeWordButton
+				if vm.leftHandedMode {
+					makeWordButton
+					clearButton(width: geo.size.width * (dynamicTypeSize.isAccessibilitySize ? 0.42 : 0.34))
+				} else {
+					clearButton(width: geo.size.width * (dynamicTypeSize.isAccessibilitySize ? 0.42 : 0.34))
+					makeWordButton
+				}
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity)
 		}
