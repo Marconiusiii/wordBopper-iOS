@@ -514,17 +514,20 @@ private struct SettingsLinkButtonRow: View {
 
 	var body: some View {
 		Button(action: action) {
-			Text(title)
-				.font(.body.weight(.semibold))
-				.foregroundStyle(Color.wbAccent5)
-				.underline()
-				.multilineTextAlignment(.center)
-				.lineLimit(2)
-				.frame(maxWidth: .infinity, minHeight: 64)
-				.contentShape(Rectangle())
+			ZStack {
+				Color.wbBackground
+				Text(title)
+					.font(.body.weight(.semibold))
+					.foregroundStyle(Color.wbAccent5)
+					.underline()
+					.multilineTextAlignment(.center)
+					.lineLimit(2)
+					.padding(.horizontal, 24)
+			}
+			.frame(maxWidth: .infinity, minHeight: 64)
+			.contentShape(Rectangle())
 		}
 		.buttonStyle(.plain)
-		.background(Color.wbBackground)
 	}
 }
 
@@ -533,15 +536,16 @@ private struct SettingsToggleRow: View {
 	@Binding var isOn: Bool
 
 	var body: some View {
-		Toggle(title, isOn: $isOn)
-			.font(.body)
-			.foregroundStyle(Color.wbText)
-			.tint(Color.wbAccent5)
-			.padding(.horizontal, 24)
-			.padding(.vertical, 8)
-			.frame(maxWidth: .infinity, minHeight: 64)
-			.contentShape(Rectangle())
-			.background(Color.wbBackground)
+		ZStack {
+			Color.wbBackground
+			Toggle(title, isOn: $isOn)
+				.font(.body)
+				.foregroundStyle(Color.wbText)
+				.tint(Color.wbAccent5)
+				.padding(.horizontal, 24)
+		}
+		.frame(maxWidth: .infinity, minHeight: 64)
+		.contentShape(Rectangle())
 	}
 }
 
@@ -553,14 +557,16 @@ private struct SettingsSectionHeading: View {
 	}
 
 	var body: some View {
-		Text(title)
-			.font(.body.weight(.semibold))
-			.foregroundStyle(Color.wbText)
-			.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-			.padding(.horizontal, 24)
-			.contentShape(Rectangle())
-			.background(Color.wbBackground)
-			.accessibilityAddTraits(.isHeader)
+		ZStack(alignment: .leading) {
+			Color.wbBackground
+			Text(title)
+				.font(.body.weight(.semibold))
+				.foregroundStyle(Color.wbText)
+				.padding(.horizontal, 24)
+		}
+		.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+		.contentShape(Rectangle())
+		.accessibilityAddTraits(.isHeader)
 	}
 }
 
@@ -574,16 +580,17 @@ private struct SettingsDescriptionRow: View {
 	}
 
 	var body: some View {
-		Text(text)
-			.font(.footnote)
-			.foregroundStyle(Color.wbMuted)
-			.fixedSize(horizontal: false, vertical: true)
-			.frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
-			.frame(maxHeight: fillsRemainingSpace ? .infinity : nil, alignment: .topLeading)
-			.padding(.horizontal, 24)
-			.padding(.vertical, 10)
-			.contentShape(Rectangle())
-			.background(Color.wbBackground)
+		ZStack(alignment: .leading) {
+			Color.wbBackground
+			Text(text)
+				.font(.footnote)
+				.foregroundStyle(Color.wbMuted)
+				.fixedSize(horizontal: false, vertical: true)
+				.padding(.horizontal, 24)
+		}
+		.frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
+		.frame(maxHeight: fillsRemainingSpace ? .infinity : nil, alignment: .topLeading)
+		.contentShape(Rectangle())
 	}
 }
 
@@ -602,35 +609,40 @@ private struct SettingsPickerBlock<Content: View>: View {
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 0) {
-			Text(title)
-				.font(.body.weight(.semibold))
-				.foregroundStyle(Color.wbText)
-				.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-				.contentShape(Rectangle())
-				.accessibilityAddTraits(.isHeader)
-				.accessibilityLabeledPair(
-					role: .label,
-					id: pairID,
-					in: namespace
-				)
+			ZStack(alignment: .leading) {
+				Color.wbBackground
+				Text(title)
+					.font(.body.weight(.semibold))
+					.foregroundStyle(Color.wbText)
+					.padding(.horizontal, 24)
+			}
+			.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+			.contentShape(Rectangle())
+			.accessibilityAddTraits(.isHeader)
+			.accessibilityLabeledPair(
+				role: .label,
+				id: pairID,
+				in: namespace
+			)
 
-			content
-				.frame(maxWidth: .infinity)
-				.frame(minHeight: 44)
-				.tint(Color.wbAccent5)
-				.foregroundStyle(Color.wbAccent5)
-				.contentShape(Rectangle())
-				.accessibilityLabeledPair(
-					role: .content,
-					id: pairID,
-					in: namespace
-				)
+			ZStack {
+				Color.wbBackground
+				content
+					.frame(maxWidth: .infinity)
+					.tint(Color.wbAccent5)
+					.foregroundStyle(Color.wbAccent5)
+					.padding(.horizontal, 24)
+			}
+			.frame(maxWidth: .infinity, minHeight: 52)
+			.contentShape(Rectangle())
+			.accessibilityLabeledPair(
+				role: .content,
+				id: pairID,
+				in: namespace
+			)
 		}
-		.padding(.horizontal, 24)
-		.padding(.vertical, 10)
 		.frame(maxWidth: .infinity, alignment: .leading)
 		.contentShape(Rectangle())
-		.background(Color.wbBackground)
 	}
 }
 
