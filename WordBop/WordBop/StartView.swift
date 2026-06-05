@@ -926,49 +926,34 @@ private struct AcknowledgmentsSheet: View {
 
 private struct LanguageAcknowledgmentDisclosure: View {
 	let acknowledgment: LanguageAcknowledgment
-	@State private var isExpanded = false
 
 	var body: some View {
-		VStack(spacing: 0) {
-			Button {
-				isExpanded.toggle()
-			} label: {
-				HStack {
-					Text(acknowledgment.language)
-						.font(.body.weight(.semibold))
-					Spacer()
-					Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-						.font(.caption.weight(.bold))
-						.accessibilityHidden(true)
-				}
-				.foregroundStyle(Color.wbText)
-				.frame(maxWidth: .infinity)
-				.frame(minHeight: 52)
-				.padding(.horizontal, 24)
-				.contentShape(Rectangle())
-			}
-			.buttonStyle(.plain)
-			.accessibilityAddTraits(.isHeader)
-			.accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-
-			if isExpanded {
-				VStack(alignment: .leading, spacing: 12) {
-					ForEach(acknowledgment.items) { item in
-						switch item {
-						case let .text(text):
-							AcknowledgmentTextRow(text)
-						case let .link(title, url):
-							AcknowledgmentLinkRow(title: title, url: url)
-						}
+		DisclosureGroup {
+			VStack(alignment: .leading, spacing: 12) {
+				ForEach(acknowledgment.items) { item in
+					switch item {
+					case let .text(text):
+						AcknowledgmentTextRow(text)
+					case let .link(title, url):
+						AcknowledgmentLinkRow(title: title, url: url)
 					}
 				}
-				.frame(maxWidth: .infinity, alignment: .leading)
-				.padding(.bottom, 16)
-				.contentShape(Rectangle())
 			}
+			.frame(maxWidth: .infinity, alignment: .leading)
+			.padding(.bottom, 16)
+			.contentShape(Rectangle())
+		} label: {
+			Text(acknowledgment.language)
+				.font(.body.weight(.semibold))
+				.foregroundStyle(Color.wbText)
+				.frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+				.contentShape(Rectangle())
 		}
 		.frame(maxWidth: .infinity)
+		.padding(.horizontal, 24)
+		.tint(Color.wbAccent5)
 		.contentShape(Rectangle())
+		.accessibilityAddTraits(.isHeader)
 	}
 }
 
@@ -985,7 +970,6 @@ private struct AcknowledgmentTextRow: View {
 			.foregroundStyle(Color.wbMuted)
 			.fixedSize(horizontal: false, vertical: true)
 			.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-			.padding(.horizontal, 24)
 			.multilineTextAlignment(.leading)
 			.contentShape(Rectangle())
 	}
@@ -1006,7 +990,6 @@ private struct AcknowledgmentLinkRow: View {
 			.foregroundStyle(Color.wbAccent5)
 			.underline()
 			.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-			.padding(.horizontal, 24)
 			.contentShape(Rectangle())
 			.accessibilityAddTraits(.isLink)
 			.accessibilityRemoveTraits(.isButton)
