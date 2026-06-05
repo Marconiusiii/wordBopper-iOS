@@ -1090,42 +1090,42 @@ private struct BestGameCard: View {
 
 	var body: some View {
 		DisclosureGroup(isExpanded: $isExpanded) {
-			VStack(alignment: .leading, spacing: 0) {
-				modeSection(
-					title: "Timed Mode",
-					highestScoreLabel: "Highest score",
-					highestScore: bestGame.highestScore,
-					longestWord: bestGame.longestWord,
-					mostWords: bestGame.mostWords,
-					largestChain: bestGame.largestLetterChain
-				)
+			ScrollView {
+				VStack(alignment: .leading, spacing: 0) {
+					modeSection(
+						title: "Timed Mode",
+						highestScoreLabel: "Highest score",
+						highestScore: bestGame.highestScore,
+						longestWord: bestGame.longestWord,
+						mostWords: bestGame.mostWords,
+						largestChain: bestGame.largestLetterChain
+					)
 
-				modeSection(
-					title: "Bopple Mode",
-					highestScoreLabel: "Best score",
-					highestScore: bestGame.highestBoppleScore,
-					longestWord: bestGame.longestBoppleWord,
-					mostWords: bestGame.mostBoppleWords,
-					largestChain: nil
-				)
+					modeSection(
+						title: "Bopple Mode",
+						highestScoreLabel: "Best score",
+						highestScore: bestGame.highestBoppleScore,
+						longestWord: bestGame.longestBoppleWord,
+						mostWords: bestGame.mostBoppleWords,
+						largestChain: nil
+					)
 
-				modeSection(
-					title: "Non-Stop Mode",
-					highestScoreLabel: "Best score",
-					highestScore: bestGame.highestNonStopScore,
-					longestWord: bestGame.longestNonStopWord,
-					mostWords: bestGame.mostNonStopWords,
-					largestChain: bestGame.largestNonStopLetterChain
-				)
+					modeSection(
+						title: "Non-Stop Mode",
+						highestScoreLabel: "Best score",
+						highestScore: bestGame.highestNonStopScore,
+						longestWord: bestGame.longestNonStopWord,
+						mostWords: bestGame.mostNonStopWords,
+						largestChain: bestGame.largestNonStopLetterChain
+					)
 
-				if !languageModeBestGames.isEmpty {
-					sectionHeading("Language Stats")
 					ForEach(languageModeBestGames) { record in
 						languageModeSection(record)
 					}
 				}
+				.frame(maxWidth: .infinity, alignment: .leading)
 			}
-			.frame(maxWidth: .infinity, alignment: .leading)
+			.frame(maxHeight: expandedStatsMaxHeight)
 			.transition(.opacity)
 		} label: {
 			Text("Your best game")
@@ -1141,6 +1141,10 @@ private struct BestGameCard: View {
 		.clipShape(RoundedRectangle(cornerRadius: 16))
 		.overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.07)))
 		.frame(maxWidth: .infinity)
+	}
+
+	private var expandedStatsMaxHeight: CGFloat {
+		dynamicTypeSize.isAccessibilitySize ? 520 : 360
 	}
 
 	private var languageModeBestGames: [LanguageModeBestGame] {
@@ -1183,7 +1187,7 @@ private struct BestGameCard: View {
 		sectionHeading(record.heading)
 
 		statPair(
-			BestStat(label: "Best score", value: "\(record.highestScore)"),
+			BestStat(label: record.mode == .timed ? "Highest score" : "Best score", value: "\(record.highestScore)"),
 			BestStat(
 				label: "Longest word",
 				value: record.longestWord.isEmpty ? "None yet" : record.longestWord,

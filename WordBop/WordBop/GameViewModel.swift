@@ -1029,21 +1029,23 @@ final class GameViewModel {
 			word.count >= current.count ? word : current
 		}
 		var changed = false
-		switch gameMode {
-		case .timed:
-			if score > bestGame.highestScore { bestGame.highestScore = score; changed = true }
-			if !longest.isEmpty, longest.count >= bestGame.longestWord.count { bestGame.longestWord = longest; changed = true }
-			if wordCount > bestGame.mostWords { bestGame.mostWords = wordCount; changed = true }
-			if largestLetterChain > bestGame.largestLetterChain { bestGame.largestLetterChain = largestLetterChain; changed = true }
-		case .bopple:
-			if score > bestGame.highestBoppleScore { bestGame.highestBoppleScore = score; changed = true }
-			if !longest.isEmpty, longest.count >= bestGame.longestBoppleWord.count { bestGame.longestBoppleWord = longest; changed = true }
-			if wordCount > bestGame.mostBoppleWords { bestGame.mostBoppleWords = wordCount; changed = true }
-		case .nonStop:
-			if score > bestGame.highestNonStopScore { bestGame.highestNonStopScore = score; changed = true }
-			if !longest.isEmpty, longest.count >= bestGame.longestNonStopWord.count { bestGame.longestNonStopWord = longest; changed = true }
-			if wordCount > bestGame.mostNonStopWords { bestGame.mostNonStopWords = wordCount; changed = true }
-			if largestLetterChain > bestGame.largestNonStopLetterChain { bestGame.largestNonStopLetterChain = largestLetterChain; changed = true }
+		if dictionaryLanguage == .english {
+			switch gameMode {
+			case .timed:
+				if score > bestGame.highestScore { bestGame.highestScore = score; changed = true }
+				if !longest.isEmpty, longest.count >= bestGame.longestWord.count { bestGame.longestWord = longest; changed = true }
+				if wordCount > bestGame.mostWords { bestGame.mostWords = wordCount; changed = true }
+				if largestLetterChain > bestGame.largestLetterChain { bestGame.largestLetterChain = largestLetterChain; changed = true }
+			case .bopple:
+				if score > bestGame.highestBoppleScore { bestGame.highestBoppleScore = score; changed = true }
+				if !longest.isEmpty, longest.count >= bestGame.longestBoppleWord.count { bestGame.longestBoppleWord = longest; changed = true }
+				if wordCount > bestGame.mostBoppleWords { bestGame.mostBoppleWords = wordCount; changed = true }
+			case .nonStop:
+				if score > bestGame.highestNonStopScore { bestGame.highestNonStopScore = score; changed = true }
+				if !longest.isEmpty, longest.count >= bestGame.longestNonStopWord.count { bestGame.longestNonStopWord = longest; changed = true }
+				if wordCount > bestGame.mostNonStopWords { bestGame.mostNonStopWords = wordCount; changed = true }
+				if largestLetterChain > bestGame.largestNonStopLetterChain { bestGame.largestNonStopLetterChain = largestLetterChain; changed = true }
+			}
 		}
 		if updateLanguageModeBestGame(longest: longest) {
 			changed = true
