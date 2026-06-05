@@ -1089,89 +1089,126 @@ private struct BestGameCard: View {
 	@State private var isExpanded = true
 
 	var body: some View {
-		VStack(spacing: 0) {
-			Button {
-				isExpanded.toggle()
-			} label: {
-				HStack {
-					Text("Your best game")
-						.font(.headline.weight(.black))
-					Spacer()
-					Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-						.font(.caption.weight(.bold))
-						.accessibilityHidden(true)
+		DisclosureGroup(isExpanded: $isExpanded) {
+			VStack(alignment: .leading, spacing: 0) {
+				modeSection(
+					title: "Timed Mode",
+					highestScoreLabel: "Highest score",
+					highestScore: bestGame.highestScore,
+					longestWord: bestGame.longestWord,
+					mostWords: bestGame.mostWords,
+					largestChain: bestGame.largestLetterChain
+				)
+
+				modeSection(
+					title: "Bopple Mode",
+					highestScoreLabel: "Best score",
+					highestScore: bestGame.highestBoppleScore,
+					longestWord: bestGame.longestBoppleWord,
+					mostWords: bestGame.mostBoppleWords,
+					largestChain: nil
+				)
+
+				modeSection(
+					title: "Non-Stop Mode",
+					highestScoreLabel: "Best score",
+					highestScore: bestGame.highestNonStopScore,
+					longestWord: bestGame.longestNonStopWord,
+					mostWords: bestGame.mostNonStopWords,
+					largestChain: bestGame.largestNonStopLetterChain
+				)
+
+				if !languageModeBestGames.isEmpty {
+					sectionHeading("Language Stats")
+					ForEach(languageModeBestGames) { record in
+						languageModeSection(record)
+					}
 				}
+			}
+			.frame(maxWidth: .infinity, alignment: .leading)
+			.transition(.opacity)
+		} label: {
+			Text("Your best game")
+				.font(.headline.weight(.black))
 				.foregroundStyle(Color.wbText)
-				.frame(maxWidth: .infinity)
-				.frame(minHeight: 52)
+				.frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
 				.padding(.horizontal, 14)
 				.contentShape(Rectangle())
-			}
-			.buttonStyle(.plain)
-			.accessibilityAddTraits(.isHeader)
-			.accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-
-			if isExpanded {
-				VStack(alignment: .leading, spacing: 0) {
-					Text("Timed Mode")
-						.font(.caption.weight(.bold))
-						.foregroundStyle(Color.wbMuted)
-						.frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
-						.padding(.horizontal, 14)
-						.accessibilityAddTraits(.isHeader)
-						.accessibilityElement(children: .combine)
-
-					statPair(
-						BestStat(label: "Highest score", value: "\(bestGame.highestScore)"),
-						BestStat(label: "Longest word", value: bestGame.longestWord.isEmpty ? "None yet" : bestGame.longestWord)
-					)
-
-					statPair(
-						BestStat(label: "Most words", value: "\(bestGame.mostWords)"),
-						BestStat(label: "Largest chain", value: "\(bestGame.largestLetterChain)")
-					)
-
-					Text("Bopple Mode")
-						.font(.caption.weight(.bold))
-						.foregroundStyle(Color.wbMuted)
-						.frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
-						.padding(.horizontal, 14)
-						.accessibilityAddTraits(.isHeader)
-						.accessibilityElement(children: .combine)
-
-					statPair(
-						BestStat(label: "Best score", value: "\(bestGame.highestBoppleScore)"),
-						BestStat(label: "Longest word", value: bestGame.longestBoppleWord.isEmpty ? "None yet" : bestGame.longestBoppleWord)
-					)
-
-					BestStat(label: "Most words", value: "\(bestGame.mostBoppleWords)")
-
-					Text("Non-Stop Mode")
-						.font(.caption.weight(.bold))
-						.foregroundStyle(Color.wbMuted)
-						.frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
-						.padding(.horizontal, 14)
-						.accessibilityAddTraits(.isHeader)
-						.accessibilityElement(children: .combine)
-
-					statPair(
-						BestStat(label: "Best score", value: "\(bestGame.highestNonStopScore)"),
-						BestStat(label: "Longest word", value: bestGame.longestNonStopWord.isEmpty ? "None yet" : bestGame.longestNonStopWord)
-					)
-
-					statPair(
-						BestStat(label: "Most words", value: "\(bestGame.mostNonStopWords)"),
-						BestStat(label: "Largest chain", value: "\(bestGame.largestNonStopLetterChain)")
-					)
-				}
-				.frame(maxWidth: .infinity, alignment: .leading)
-				.transition(.opacity)
-			}
 		}
+		.disclosureGroupStyle(.automatic)
+		.tint(Color.wbText)
 		.background(Color.wbSurface)
 		.clipShape(RoundedRectangle(cornerRadius: 16))
 		.overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.07)))
 		.frame(maxWidth: .infinity)
+	}
+
+	private var languageModeBestGames: [LanguageModeBestGame] {
+		bestGame.languageModeBestGames.filter { $0.language != .english }.sorted {
+			if $0.language.label == $1.language.label {
+				return $0.mode.rawValue < $1.mode.rawValue
+			}
+			return $0.language.label < $1.language.label
+		}
+	}
+
+	@ViewBuilder
+	private func modeSection(
+		title: String,
+		highestScoreLabel: String,
+		highestScore: Int,
+		longestWord: String,
+		mostWords: Int,
+		largestChain: Int?
+	) -> some View {
+		sectionHeading(title)
+
+		statPair(
+			BestStat(label: highestScoreLabel, value: "\(highestScore)"),
+			BestStat(label: "Longest word", value: longestWord.isEmpty ? "None yet" : longestWord)
+		)
+
+		if let largestChain {
+			statPair(
+				BestStat(label: "Most words", value: "\(mostWords)"),
+				BestStat(label: "Largest chain", value: "\(largestChain)")
+			)
+		} else {
+			BestStat(label: "Most words", value: "\(mostWords)")
+		}
+	}
+
+	@ViewBuilder
+	private func languageModeSection(_ record: LanguageModeBestGame) -> some View {
+		sectionHeading(record.heading)
+
+		statPair(
+			BestStat(label: "Best score", value: "\(record.highestScore)"),
+			BestStat(
+				label: "Longest word",
+				value: record.longestWord.isEmpty ? "None yet" : record.longestWord,
+				valueLanguage: record.longestWord.isEmpty ? nil : record.language
+			)
+		)
+
+		if record.mode == .bopple {
+			BestStat(label: "Most words", value: "\(record.mostWords)")
+		} else {
+			statPair(
+				BestStat(label: "Most words", value: "\(record.mostWords)"),
+				BestStat(label: "Largest chain", value: "\(record.largestLetterChain)")
+			)
+		}
+	}
+
+	private func sectionHeading(_ title: String) -> some View {
+		Text(title)
+			.font(.caption.weight(.bold))
+			.foregroundStyle(Color.wbMuted)
+			.frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+			.padding(.horizontal, 14)
+			.accessibilityAddTraits(.isHeader)
+			.accessibilityElement(children: .combine)
 	}
 
 	@ViewBuilder
@@ -1193,13 +1230,14 @@ private struct BestGameCard: View {
 private struct BestStat: View {
 	let label: String
 	let value: String
+	var valueLanguage: DictionaryLanguage?
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 2) {
 			Text(label)
 				.font(.caption.weight(.bold))
 				.foregroundStyle(Color.wbMuted)
-			Text(value)
+			Text(spokenValue)
 				.font(.system(.body, design: .monospaced).weight(.bold))
 				.foregroundStyle(Color.wbText)
 				.fixedSize(horizontal: false, vertical: true)
@@ -1209,6 +1247,20 @@ private struct BestStat: View {
 		.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
 		.contentShape(Rectangle())
 		.accessibilityElement(children: .ignore)
-		.accessibilityLabel("\(label): \(value)")
+		.accessibilityLabel(Text(spokenAccessibilityLabel))
+	}
+
+	private var spokenValue: AttributedString {
+		var text = AttributedString(value)
+		if let valueLanguage {
+			text.languageIdentifier = valueLanguage.speechLanguage
+		}
+		return text
+	}
+
+	private var spokenAccessibilityLabel: AttributedString {
+		var text = AttributedString("\(label): ")
+		text += spokenValue
+		return text
 	}
 }

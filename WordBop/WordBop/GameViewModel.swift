@@ -82,7 +82,7 @@ enum GameAnnouncementVerbosity: String, CaseIterable, Identifiable {
 	}
 }
 
-enum GameMode: String, CaseIterable, Identifiable {
+enum GameMode: String, CaseIterable, Identifiable, Codable {
 	case timed
 	case bopple
 	case nonStop
@@ -201,6 +201,23 @@ enum LetterPositionMode: String, CaseIterable, Identifiable {
 	}
 }
 
+struct LanguageModeBestGame: Codable, Identifiable {
+	var language: DictionaryLanguage
+	var mode: GameMode
+	var highestScore: Int = 0
+	var longestWord: String = ""
+	var mostWords: Int = 0
+	var largestLetterChain: Int = 0
+
+	var id: String {
+		"\(language.rawValue)-\(mode.rawValue)"
+	}
+
+	var heading: String {
+		"\(language.label) \(mode.label) Mode"
+	}
+}
+
 struct BestGame: Codable {
 	var highestScore: Int = 0
 	var highestBoppleScore: Int = 0
@@ -214,6 +231,7 @@ struct BestGame: Codable {
 	var largestLetterChain: Int = 0
 	var largestBoppleLetterChain: Int = 0
 	var largestNonStopLetterChain: Int = 0
+	var languageModeBestGames: [LanguageModeBestGame] = []
 
 	init() {}
 
@@ -231,6 +249,7 @@ struct BestGame: Codable {
 		largestLetterChain = try container.decodeIfPresent(Int.self, forKey: .largestLetterChain) ?? 0
 		largestBoppleLetterChain = try container.decodeIfPresent(Int.self, forKey: .largestBoppleLetterChain) ?? 0
 		largestNonStopLetterChain = try container.decodeIfPresent(Int.self, forKey: .largestNonStopLetterChain) ?? 0
+		languageModeBestGames = try container.decodeIfPresent([LanguageModeBestGame].self, forKey: .languageModeBestGames) ?? []
 	}
 }
 
@@ -1026,6 +1045,46 @@ final class GameViewModel {
 			if wordCount > bestGame.mostNonStopWords { bestGame.mostNonStopWords = wordCount; changed = true }
 			if largestLetterChain > bestGame.largestNonStopLetterChain { bestGame.largestNonStopLetterChain = largestLetterChain; changed = true }
 		}
+		if updateLanguageModeBestGame(longest: longest) {
+			changed = true
+		}
 		if changed { saveBestGame() }
+	}
+
+	private func updateLanguageModeBestGame(longest: String) -> Bool {
+		guard dictionaryLanguage != .english else { return false }
+
+		let index = bestGame.languageModeBestGames.firstIndex {
+			$0.language == dictionaryLanguage && $0.mode == gameMode
+		}
+		var record = index.map { bestGame.languageModeBestGames[$0] } ?? LanguageModeBestGame(language: dictionaryLanguage, mode: gameMode)
+		var changed = index == nil
+
+		if score > record.highestScore {
+			record.highestScore = score
+			changed = true
+		}
+		if !longest.isEmpty, longest.count >= record.longestWord.count {
+			record.longestWord = longest
+			changed = true
+		}
+		if wordCount > record.mostWords {
+			record.mostWords = wordCount
+			changed = true
+		}
+		if gameMode != .bopple, largestLetterChain > record.largestLetterChain {
+			record.largestLetterChain = largestLetterChain
+			changed = true
+		}
+
+		if changed {
+			if let index {
+				bestGame.languageModeBestGames[index] = record
+			} else {
+				bestGame.languageModeBestGames.append(record)
+			}
+		}
+
+		return changed
 	}
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-enum DictionaryLanguage: String, CaseIterable, Identifiable {
+enum DictionaryLanguage: String, CaseIterable, Identifiable, Codable {
 	case english
 	case spanish
 	case french
