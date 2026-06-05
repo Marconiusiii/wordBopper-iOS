@@ -952,8 +952,6 @@ private struct LanguageAcknowledgmentDisclosure: View {
 		.frame(maxWidth: .infinity)
 		.padding(.horizontal, 24)
 		.tint(Color.wbAccent5)
-		.contentShape(Rectangle())
-		.accessibilityAddTraits(.isHeader)
 	}
 }
 

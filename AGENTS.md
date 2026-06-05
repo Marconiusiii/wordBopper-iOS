@@ -26,6 +26,17 @@
 - Never regress accessible design or working features.
 - Never prioritize sight-centric workflows over accessible and usable layouts and elements.
 
+## Accessibility Implementation Rules
+- Use native SwiftUI components first for standard interface patterns.
+- Do not custom-build accordions, disclosure controls, menus, pickers, toggles, sheets, navigation controls, or focus behavior when a native SwiftUI component exists.
+- Use `DisclosureGroup` for accordion or expandable section content unless the user explicitly asks for a custom control.
+- Put ordinary SwiftUI `Text`, `Link`, `Button`, `Toggle`, `Picker`, and other native controls directly in the view hierarchy so VoiceOver can navigate them naturally.
+- Do not add accessibility traits to native controls unless there is a confirmed reason and the behavior has been checked against VoiceOver expectations.
+- Do not use focus movement, sort priority, grouping, custom announcements, or hit-testing tricks to repair VoiceOver navigation.
+- If VoiceOver behavior is wrong, fix the actual view hierarchy and native control structure first.
+- If there is uncertainty about the accessibility behavior of a UI pattern, stop and propose the native SwiftUI component approach before editing.
+- Never hand-roll an accessible replacement for a standard SwiftUI control unless the user explicitly approves that custom implementation.
+
 ## When Asked for Review
 - Prioritize findings first: bugs, risks, regressions, missing tests.
 - Include file references with line numbers when possible.
