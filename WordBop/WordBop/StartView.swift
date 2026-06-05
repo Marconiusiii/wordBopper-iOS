@@ -684,7 +684,7 @@ private struct AboutWordBopperSheet: View {
 	@AccessibilityFocusState private var isFeedbackButtonFocused: Bool
 	@State private var isShowingMailComposer = false
 	@State private var activeMailDraft = AboutMailDraft.feedback
-	@State private var isAcknowledgementsExpanded = false
+	@State private var showingAcknowledgments = false
 
 		var body: some View {
 			NavigationStack {
@@ -776,34 +776,15 @@ private struct AboutWordBopperSheet: View {
 									.accessibilityHint("Opens in external browser")
 
 								Button {
-									isAcknowledgementsExpanded.toggle()
+									showingAcknowledgments = true
 								} label: {
-									HStack {
-										Text("Acknowledgements")
-										Image(systemName: isAcknowledgementsExpanded ? "chevron.down" : "chevron.right")
-											.accessibilityHidden(true)
-									}
+									Text("Acknowledgments")
 									.frame(maxWidth: .infinity)
 									.frame(minHeight: 44)
 									.contentShape(Rectangle())
 								}
 								.buttonStyle(.plain)
-								.accessibilityAddTraits(.isHeader)
-								.accessibilityValue(isAcknowledgementsExpanded ? "Expanded" : "Collapsed")
-
-								if isAcknowledgementsExpanded {
-									VStack(alignment: .leading, spacing: 8) {
-										ForEach(acknowledgementParagraphs, id: \.self) { paragraph in
-											Text(paragraph)
-												.font(.caption)
-												.foregroundStyle(Color.wbMuted)
-												.multilineTextAlignment(.leading)
-												.frame(maxWidth: .infinity, alignment: .leading)
-										}
-									}
-									.frame(maxWidth: .infinity, alignment: .leading)
-									.padding(.horizontal, 24)
-								}
+								.accessibilityHint("Opens word list credits and license acknowledgments.")
 
 								Text("© 2026, \(versionText)")
 									.frame(maxWidth: .infinity, minHeight: 44)
@@ -836,9 +817,13 @@ private struct AboutWordBopperSheet: View {
 				body: activeMailDraft.body,
 				onFinish: { _ in }
 			)
-			}
-			.preferredColorScheme(.dark)
 		}
+		.sheet(isPresented: $showingAcknowledgments) {
+			AcknowledgmentsSheet()
+				.presentationDragIndicator(.hidden)
+		}
+		.preferredColorScheme(.dark)
+	}
 
 		private func sheetContentWidth(in geo: GeometryProxy) -> CGFloat {
 			geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
@@ -869,40 +854,6 @@ private struct AboutWordBopperSheet: View {
 		refocusFeedbackButton()
 	}
 
-	private var acknowledgementsText: String {
-		"""
-		Word list copyright 2000-2026 by Kevin Atkinson.
-
-		Permission to use, copy, modify, distribute, and sell any part of the English Speller Database (ESDB, previously known as SCOWLv2), or word lists created from it, is hereby granted without fee, provided that the above copyright notice appears in all copies and that both the above copyright notice and this notice appear in supporting documentation. Kevin Atkinson makes no representations about the suitability of this database for any purpose. It is provided "as is" without express or implied warranty.
-
-		ESDB is derived from many sources, most of which are in the Public Domain. Data from the Corpus of Contemporary American English (COCA) was also used.
-
-		More information about COCA is available at https://www.english-corpora.org/coca/.
-
-			The primary source of words for ESDB comes from 12dicts and ENABLE2K. Both are in the Public Domain, but Alan Beale deserves special credit as the author of 12dicts and a major contributor to ENABLE2K.
-
-			The English word list also includes words from the Wordnik Wordlist, an open-source word list for game developers.
-
-			Wordnik Wordlist copyright 2020 Wordnik. The Wordnik Wordlist is made available under the MIT License. Permission is granted, free of charge, to use, copy, modify, merge, publish, distribute, sublicense, and sell copies, provided that the copyright notice and permission notice are included in copies or substantial portions of the software.
-
-			The Spanish, French, and German word lists are derived from Letterpress word lists made available under the Creative Commons CC0 1.0 Universal public domain dedication.
-
-		The Italian word list includes words derived from Letterpress word lists made available under the Creative Commons CC0 1.0 Universal public domain dedication.
-
-		The Italian word list also includes forms derived from Morph-it!, a free morphological lexicon for the Italian language by Marco Baroni and Eros Zanchetta.
-
-		Morph-it! is dual-licensed under the Creative Commons Attribution ShareAlike 2.0 License and the GNU Lesser General Public License. Morph-it! copyright 2004-2007 Marco Baroni and Eros Zanchetta.
-
-		The Brazilian Portuguese word list is derived from the pythonprobr/palavras word list, which is based primarily on the LibreOffice Brazilian Portuguese spelling dictionary and made available under the Mozilla Public License 2.0.
-		"""
-	}
-
-	private var acknowledgementParagraphs: [String] {
-		acknowledgementsText.components(separatedBy: "\n\n").map {
-			$0.trimmingCharacters(in: .whitespacesAndNewlines)
-		}.filter { !$0.isEmpty }
-	}
-
 	private func refocusFeedbackButton() {
 		DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
 			isFeedbackButtonFocused = true
@@ -914,6 +865,184 @@ private struct AboutWordBopperSheet: View {
 		let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
 		return "Version \(version) (\(build))"
 	}
+}
+
+private struct AcknowledgmentsSheet: View {
+	@Environment(\.dismiss) private var dismiss
+
+	var body: some View {
+		NavigationStack {
+			GeometryReader { geo in
+				let contentWidth = sheetContentWidth(in: geo)
+				ScrollView {
+					VStack(spacing: 0) {
+						Text("Acknowledgments")
+							.font(.title2.weight(.black))
+							.foregroundStyle(Color.wbText)
+							.multilineTextAlignment(.center)
+							.fixedSize(horizontal: false, vertical: true)
+							.accessibilityAddTraits(.isHeader)
+							.frame(maxWidth: .infinity, minHeight: 72)
+							.contentShape(Rectangle())
+
+						Text("Massive thanks to the following developers and resources for our language word lists.")
+							.font(.body)
+							.foregroundStyle(Color.wbText)
+							.fixedSize(horizontal: false, vertical: true)
+							.frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+							.padding(.horizontal, 24)
+							.contentShape(Rectangle())
+
+						VStack(spacing: 0) {
+							ForEach(LanguageAcknowledgment.all) { acknowledgment in
+								LanguageAcknowledgmentDisclosure(acknowledgment: acknowledgment)
+							}
+						}
+						.frame(maxWidth: .infinity)
+					}
+					.frame(width: contentWidth, alignment: .top)
+					.padding(.top, 36)
+					.padding(.bottom, 24)
+				}
+				.frame(width: contentWidth)
+			}
+			.ignoresSafeArea(edges: .horizontal)
+			.background(Color.wbBackground)
+			.toolbar {
+				ToolbarItem(placement: .topBarTrailing) {
+					Button("Close") {
+						dismiss()
+					}
+				}
+			}
+		}
+		.preferredColorScheme(.dark)
+	}
+
+	private func sheetContentWidth(in geo: GeometryProxy) -> CGFloat {
+		geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
+	}
+}
+
+private struct LanguageAcknowledgmentDisclosure: View {
+	let acknowledgment: LanguageAcknowledgment
+	@State private var isExpanded = false
+
+	var body: some View {
+		VStack(spacing: 0) {
+			Button {
+				isExpanded.toggle()
+			} label: {
+				HStack {
+					Text(acknowledgment.language)
+						.font(.body.weight(.semibold))
+					Spacer()
+					Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+						.font(.caption.weight(.bold))
+						.accessibilityHidden(true)
+				}
+				.foregroundStyle(Color.wbText)
+				.frame(maxWidth: .infinity)
+				.frame(minHeight: 52)
+				.padding(.horizontal, 24)
+				.contentShape(Rectangle())
+			}
+			.buttonStyle(.plain)
+			.accessibilityAddTraits(.isHeader)
+			.accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+
+			if isExpanded {
+				VStack(alignment: .leading, spacing: 12) {
+					ForEach(acknowledgment.paragraphs) { paragraph in
+						Text(paragraph.text)
+							.font(.footnote)
+							.foregroundStyle(Color.wbMuted)
+							.tint(Color.wbAccent5)
+							.fixedSize(horizontal: false, vertical: true)
+							.frame(maxWidth: .infinity, alignment: .leading)
+							.multilineTextAlignment(.leading)
+					}
+				}
+				.frame(maxWidth: .infinity, alignment: .leading)
+				.padding(.horizontal, 24)
+				.padding(.bottom, 16)
+				.contentShape(Rectangle())
+			}
+		}
+		.frame(maxWidth: .infinity)
+		.contentShape(Rectangle())
+	}
+}
+
+private struct AcknowledgmentParagraph: Identifiable {
+	let id = UUID()
+	let text: AttributedString
+
+	init(_ markdown: String) {
+		text = (try? AttributedString(markdown: markdown)) ?? AttributedString(markdown)
+	}
+}
+
+private struct LanguageAcknowledgment: Identifiable {
+	let language: String
+	let paragraphs: [AcknowledgmentParagraph]
+
+	var id: String { language }
+
+	static let all: [LanguageAcknowledgment] = [
+		LanguageAcknowledgment(
+			language: "English",
+			paragraphs: [
+				AcknowledgmentParagraph("Word list copyright 2000-2026 by Kevin Atkinson."),
+				AcknowledgmentParagraph("Permission to use, copy, modify, distribute, and sell any part of the English Speller Database (ESDB, previously known as SCOWLv2), or word lists created from it, is hereby granted without fee, provided that the above copyright notice appears in all copies and that both the above copyright notice and this notice appear in supporting documentation. Kevin Atkinson makes no representations about the suitability of this database for any purpose. It is provided \"as is\" without express or implied warranty."),
+				AcknowledgmentParagraph("ESDB is derived from many sources, most of which are in the Public Domain. Data from the Corpus of Contemporary American English (COCA) was also used."),
+				AcknowledgmentParagraph("More information about COCA is available at [english-corpora.org/coca](https://www.english-corpora.org/coca/)."),
+				AcknowledgmentParagraph("The primary source of words for ESDB comes from 12dicts and ENABLE2K. Both are in the Public Domain, but Alan Beale deserves special credit as the author of 12dicts and a major contributor to ENABLE2K."),
+				AcknowledgmentParagraph("The English word list also includes words from the Wordnik Wordlist, an open-source word list for game developers."),
+				AcknowledgmentParagraph("Wordnik Wordlist copyright 2020 Wordnik. The Wordnik Wordlist is made available under the MIT License. Permission is granted, free of charge, to use, copy, modify, merge, publish, distribute, sublicense, and sell copies, provided that the copyright notice and permission notice are included in copies or substantial portions of the software.")
+			]
+		),
+		LanguageAcknowledgment(
+			language: "Spanish",
+			paragraphs: [
+				AcknowledgmentParagraph("The Spanish word list is derived from Letterpress word lists made available under the [Creative Commons CC0 1.0 Universal public domain dedication](https://creativecommons.org/publicdomain/zero/1.0/).")
+			]
+		),
+		LanguageAcknowledgment(
+			language: "French",
+			paragraphs: [
+				AcknowledgmentParagraph("The French word list is derived from Letterpress word lists made available under the [Creative Commons CC0 1.0 Universal public domain dedication](https://creativecommons.org/publicdomain/zero/1.0/).")
+			]
+		),
+		LanguageAcknowledgment(
+			language: "German",
+			paragraphs: [
+				AcknowledgmentParagraph("The German word list is derived from Letterpress word lists made available under the [Creative Commons CC0 1.0 Universal public domain dedication](https://creativecommons.org/publicdomain/zero/1.0/).")
+			]
+		),
+		LanguageAcknowledgment(
+			language: "Dutch",
+			paragraphs: [
+				AcknowledgmentParagraph("The Dutch word list is derived from the Dutch word list by [OpenTaal](https://opentaal.org)."),
+				AcknowledgmentParagraph("OpenTaal makes the Dutch language files freely available under the [Revised BSD License](https://opensource.org/licenses/BSD-3-Clause) and/or the [Creative Commons Attribution 3.0 Unported License](https://creativecommons.org/licenses/by/3.0/legalcode.txt)."),
+				AcknowledgmentParagraph("Dutch word list copyright 2020 OpenTaal; 2006-2011 OpenTaal; 2001-2005 Simon Brouwer and others; 1996 Nederlandstalige TeX Gebruikersgroep.")
+			]
+		),
+		LanguageAcknowledgment(
+			language: "Italian",
+			paragraphs: [
+				AcknowledgmentParagraph("The Italian word list includes words derived from Letterpress word lists made available under the [Creative Commons CC0 1.0 Universal public domain dedication](https://creativecommons.org/publicdomain/zero/1.0/)."),
+				AcknowledgmentParagraph("The Italian word list also includes forms derived from Morph-it!, a free morphological lexicon for the Italian language by Marco Baroni and Eros Zanchetta."),
+				AcknowledgmentParagraph("Morph-it! is dual-licensed under the [Creative Commons Attribution ShareAlike 2.0 License](https://creativecommons.org/licenses/by-sa/2.0/) and the [GNU Lesser General Public License](https://www.gnu.org/licenses/lgpl-3.0.html). Morph-it! copyright 2004-2007 Marco Baroni and Eros Zanchetta.")
+			]
+		),
+		LanguageAcknowledgment(
+			language: "Brazilian Portuguese",
+			paragraphs: [
+				AcknowledgmentParagraph("The Brazilian Portuguese word list is derived from the [pythonprobr/palavras](https://github.com/pythonprobr/palavras) word list, which is based primarily on the LibreOffice Brazilian Portuguese spelling dictionary and made available under the [Mozilla Public License 2.0](https://www.mozilla.org/MPL/2.0/).")
+			]
+		)
+	]
 }
 
 private struct BestGameCard: View {

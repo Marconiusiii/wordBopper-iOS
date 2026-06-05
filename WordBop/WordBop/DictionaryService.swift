@@ -5,6 +5,7 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 	case spanish
 	case french
 	case german
+	case dutch
 	case italian
 	case brazilianPortuguese
 
@@ -20,6 +21,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"French"
 		case .german:
 			"German"
+		case .dutch:
+			"Dutch"
 		case .italian:
 			"Italian"
 		case .brazilianPortuguese:
@@ -37,6 +40,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			Locale(identifier: "fr")
 		case .german:
 			Locale(identifier: "de")
+		case .dutch:
+			Locale(identifier: "nl-NL")
 		case .italian:
 			Locale(identifier: "it")
 		case .brazilianPortuguese:
@@ -54,6 +59,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"fr"
 		case .german:
 			"de"
+		case .dutch:
+			"nl-NL"
 		case .italian:
 			"it"
 		case .brazilianPortuguese:
@@ -71,6 +78,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"words-fr"
 		case .german:
 			"words-de"
+		case .dutch:
+			"words-nl"
 		case .italian:
 			"words-it"
 		case .brazilianPortuguese:
@@ -92,6 +101,8 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 			"aaaaaaaaabcccddeeeeeeeeeeeeeefghiiiiiiiiijklllllllmmnnnnnnnoooooppqrrrrrrrrssssssssssttttttuuuvwxyzç"
 		case .german:
 			"aaaaaabbccddeeeeeeeeeeeeeeeffggghhhhiiiiiiiiiijkkllllmmnnnnnnnnnooopqrrrrrrrssssssstttttttuuuuvwxyzß"
+		case .dutch:
+			"aaaaaaabbbcccddddeeeeeeeeeeeeeeeffggghhiiiiiiiijjkkkllllmmmmnnnnnnnnoooooopppqrrrrrrrsssssssttttttuuuvvwwxyz"
 		case .italian:
 			"aaaaaaaaaaabccccddeeeeeeeeeefgghiiiiiiiiiiiijklllmmmmmmnnnnnnooooooooppqrrrrrrrrsssssssttttttuvvwxyz"
 		case .brazilianPortuguese:
@@ -222,6 +233,35 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable {
 				"y": "Ypsilon",
 				"z": "Zacharias"
 			]
+		case .dutch:
+			[
+				"a": "Anton",
+				"b": "Bernard",
+				"c": "Cornelis",
+				"d": "Dirk",
+				"e": "Eduard",
+				"f": "Ferdinand",
+				"g": "Gerard",
+				"h": "Hendrik",
+				"i": "Izaak",
+				"j": "Jan",
+				"k": "Karel",
+				"l": "Lodewijk",
+				"m": "Maria",
+				"n": "Nico",
+				"o": "Otto",
+				"p": "Pieter",
+				"q": "Quirinus",
+				"r": "Rudolf",
+				"s": "Simon",
+				"t": "Theodoor",
+				"u": "Utrecht",
+				"v": "Victor",
+				"w": "Willem",
+				"x": "Xantippe",
+				"y": "Ypsilon",
+				"z": "Zaandam"
+			]
 		case .italian:
 			[
 				"a": "Ancona",
@@ -326,7 +366,7 @@ final class DictionaryService {
 	private func normalized(_ word: String, for language: DictionaryLanguage) -> String {
 		let protectedCharacters: [Character: String]
 		switch language {
-		case .english, .italian:
+		case .english, .dutch, .italian:
 			protectedCharacters = [:]
 		case .spanish:
 			protectedCharacters = ["ñ": "__WB_NTILDE__"]

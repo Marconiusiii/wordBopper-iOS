@@ -14,7 +14,7 @@ Connected words earn bonus points in Timed and Non-Stop modes. Make enough conne
 
 - Timed, Bopple, and Non-Stop game modes
 - Adjustable 3 by 3, 4 by 4, 5 by 5, and 6 by 6 grids
-- Multiple bubble languages, including English, Spanish, French, German, Italian, and Brazilian Portuguese
+- Multiple bubble languages, including English, Spanish, French, German, Dutch, Italian, and Brazilian Portuguese
 - Letter-bopping word play
 - Connected-word bonuses in Timed and Non-Stop modes
 - Boggle-style Bopple scoring
