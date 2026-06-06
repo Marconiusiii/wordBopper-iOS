@@ -8,6 +8,7 @@ struct ResultsView: View {
 	var body: some View {
 		GeometryReader { geo in
 			let contentWidth = edgeToEdgeWidth(in: geo)
+			let longestWordLanguage = longestWord == "—" ? nil : vm.dictionaryLanguage
 			VStack(spacing: 0) {
 				ScrollView {
 					VStack(spacing: 16) {
@@ -15,7 +16,6 @@ struct ResultsView: View {
 							.font(.title2.weight(.black))
 							.foregroundStyle(Color.wbText)
 							.accessibilityAddTraits(.isHeader)
-							.accessibilitySortPriority(100)
 
 						VStack(spacing: 2) {
 							Text("\(vm.score)")
@@ -36,7 +36,7 @@ struct ResultsView: View {
 								ResultStat(value: "\(vm.wordCount)", label: "Words made", color: .wbAccent4)
 								ResultStat(value: "\(vm.totalLettersUsed)", label: "Letters used", color: .wbAccent5)
 								ResultStat(value: averageLength, label: "Average length", color: .wbAccent1)
-								ResultStat(value: longestWord, label: "Longest word", color: .wbAccent3)
+								ResultStat(value: longestWord, label: "Longest word", color: .wbAccent3, valueLanguage: longestWordLanguage)
 							} else {
 								HStack(spacing: 16) {
 									ResultStat(value: "\(vm.wordCount)", label: "Words made", color: .wbAccent4)
@@ -45,7 +45,7 @@ struct ResultsView: View {
 
 								HStack(spacing: 16) {
 									ResultStat(value: averageLength, label: "Average length", color: .wbAccent1)
-									ResultStat(value: longestWord, label: "Longest word", color: .wbAccent3)
+									ResultStat(value: longestWord, label: "Longest word", color: .wbAccent3, valueLanguage: longestWordLanguage)
 								}
 							}
 							}
@@ -204,10 +204,11 @@ private struct ResultStat: View {
 	let value: String
 	let label: String
 	let color: Color
+	var valueLanguage: DictionaryLanguage?
 
 	var body: some View {
 		VStack(spacing: 2) {
-			Text(value)
+			Text(spokenValue)
 				.font(.system(.title, design: .monospaced).weight(.bold))
 				.foregroundStyle(color)
 				.minimumScaleFactor(0.75)
@@ -218,6 +219,20 @@ private struct ResultStat: View {
 				.multilineTextAlignment(.center)
 		}
 		.accessibilityElement(children: .ignore)
-		.accessibilityLabel("\(label): \(value)")
+		.accessibilityLabel(Text(spokenAccessibilityLabel))
+	}
+
+	private var spokenValue: AttributedString {
+		var text = AttributedString(value)
+		if let valueLanguage {
+			text.languageIdentifier = valueLanguage.speechLanguage
+		}
+		return text
+	}
+
+	private var spokenAccessibilityLabel: AttributedString {
+		var text = AttributedString("\(label): ")
+		text += spokenValue
+		return text
 	}
 }

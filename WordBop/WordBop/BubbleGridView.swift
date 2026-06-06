@@ -97,19 +97,12 @@ struct BubbleButton: View {
 		case .off:
 			return ""
 		case .columnNumberRowNumber:
-			return "\(localizedNumber(bubble.col + 1)) \(localizedNumber(bubble.row + 1))"
+			return "\(bubble.col + 1) \(bubble.row + 1)"
 		case .columnLetterRowNumber:
 			return "\(gridLetter(for: bubble.col))\(bubble.row + 1)"
 		case .columnNumberRowLetter:
 			return "\(bubble.col + 1)\(gridLetter(for: bubble.row))"
 		}
-	}
-
-	private func localizedNumber(_ number: Int) -> String {
-		let formatter = NumberFormatter()
-		formatter.locale = Locale(identifier: speechLanguage)
-		formatter.numberStyle = .spellOut
-		return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
 	}
 
 	private func gridLetter(for index: Int) -> String {

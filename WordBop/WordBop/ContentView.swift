@@ -19,40 +19,29 @@ struct ContentView: View {
 				ResultsView()
 			}
 		}
-		.background {
-			AgeAssuranceComplianceView()
-		}
 		.preferredColorScheme(.dark)
-	}
-}
-
-private struct AgeAssuranceComplianceView: View {
-	var body: some View {
-		if #available(iOS 26.0, *) {
-			DeclaredAgeRangeComplianceTask()
+		.task {
+			await checkDeclaredAgeRangeIfRequired()
 		}
 	}
+
+	@MainActor
+	private func checkDeclaredAgeRangeIfRequired() async {
+#if canImport(DeclaredAgeRange) && !targetEnvironment(simulator)
+		if #available(iOS 26.0, *) {
+			await DeclaredAgeRangeCompliance.checkIfRequired()
+		}
+#endif
+	}
 }
 
-#if canImport(DeclaredAgeRange)
+#if canImport(DeclaredAgeRange) && !targetEnvironment(simulator)
 @available(iOS 26.0, *)
-private struct DeclaredAgeRangeComplianceTask: View {
-	@Environment(\.requestAgeRange) private var requestAgeRange
-	@State private var hasCheckedAgeRange = false
+private enum DeclaredAgeRangeCompliance {
+	@Environment(\.requestAgeRange) private static var requestAgeRange
 
-	var body: some View {
-		Color.clear
-			.frame(width: 0, height: 0)
-			.accessibilityHidden(true)
-			.task {
-				await checkDeclaredAgeRangeIfRequired()
-			}
-	}
-
-	private func checkDeclaredAgeRangeIfRequired() async {
-		guard !hasCheckedAgeRange else { return }
-		hasCheckedAgeRange = true
-
+	@MainActor
+	static func checkIfRequired() async {
 		do {
 			if #available(iOS 26.4, *) {
 				let features = try await AgeRangeService.shared.requiredRegulatoryFeatures
@@ -66,13 +55,6 @@ private struct DeclaredAgeRangeComplianceTask: View {
 		} catch {
 			// Age range sharing is platform-managed and optional outside required regions.
 		}
-	}
-}
-#else
-@available(iOS 26.0, *)
-private struct DeclaredAgeRangeComplianceTask: View {
-	var body: some View {
-		EmptyView()
 	}
 }
 #endif

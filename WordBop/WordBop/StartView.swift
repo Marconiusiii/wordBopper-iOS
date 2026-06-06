@@ -11,41 +11,43 @@ struct StartView: View {
 	var body: some View {
 		GeometryReader { geo in
 			let contentWidth = edgeToEdgeWidth(in: geo)
-			VStack(spacing: 0) {
-				VStack(spacing: 2) {
-					Text("WordBopper")
-						.font(.largeTitle.weight(.black))
-						.foregroundStyle(Color.wbText)
-						.multilineTextAlignment(.center)
-						.lineLimit(2)
-						.minimumScaleFactor(0.8)
+			ScrollView {
+				VStack(spacing: 0) {
+					VStack(spacing: 2) {
+						Text("WordBopper")
+							.font(.largeTitle.weight(.black))
+							.foregroundStyle(Color.wbText)
+							.multilineTextAlignment(.center)
+							.lineLimit(2)
+							.minimumScaleFactor(0.8)
 
-					Text("By Chancey Fleet and Marco Salsiccia")
-						.font(.footnote.weight(.semibold))
-						.foregroundStyle(Color.wbMuted)
-						.multilineTextAlignment(.center)
-						.fixedSize(horizontal: false, vertical: true)
-				}
-				.accessibilityElement(children: .combine)
+						Text("By Chancey Fleet and Marco Salsiccia")
+							.font(.footnote.weight(.semibold))
+							.foregroundStyle(Color.wbMuted)
+							.multilineTextAlignment(.center)
+							.fixedSize(horizontal: false, vertical: true)
+					}
+					.accessibilityElement(children: .combine)
 					.accessibilityAddTraits(.isHeader)
-					.accessibilitySortPriority(100)
 					.frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 96 : 72)
 					.contentShape(Rectangle())
 
-				startScreenTopRow
+					startScreenTopRow
 
-				startGameButton
-					.layoutPriority(3)
+					startGameButton
+						.layoutPriority(3)
 
 					BestGameCard(bestGame: vm.bestGame)
 						.layoutPriority(2)
 				}
-					.frame(width: contentWidth)
-					.frame(minHeight: geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom, alignment: .top)
-					.padding(.top, 24)
-					.padding(.bottom, geo.safeAreaInsets.bottom)
-					.ignoresSafeArea(edges: horizontalSafeAreaEdges(in: geo))
-				}
+				.frame(width: contentWidth)
+				.frame(minHeight: geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom, alignment: .top)
+				.padding(.top, 24)
+				.padding(.bottom, geo.safeAreaInsets.bottom)
+			}
+			.frame(width: contentWidth)
+			.ignoresSafeArea(edges: horizontalSafeAreaEdges(in: geo))
+		}
 			.onAppear {
 			UIAccessibility.post(notification: .screenChanged, argument: "WordBopper")
 		}
@@ -55,6 +57,7 @@ struct StartView: View {
 		}
 			.sheet(isPresented: $showingGameSettings) {
 				GameSettingsSheet()
+					.environment(vm)
 					.presentationDragIndicator(.hidden)
 			}
 		}
@@ -470,6 +473,7 @@ private struct GameSettingsSheet: View {
 		}
 		.sheet(isPresented: $showingAbout) {
 			AboutWordBopperSheet()
+				.environment(vm)
 				.presentationDragIndicator(.hidden)
 			}
 			.preferredColorScheme(.dark)
@@ -1090,14 +1094,7 @@ private struct BestGameCard: View {
 
 	var body: some View {
 		DisclosureGroup(isExpanded: $isExpanded) {
-			ViewThatFits(in: .vertical) {
-				statsContent
-
-				ScrollView {
-					statsContent
-				}
-				.frame(maxHeight: expandedStatsMaxHeight)
-			}
+			statsContent
 			.transition(.opacity)
 		} label: {
 			Text("Your best game")
@@ -1113,10 +1110,6 @@ private struct BestGameCard: View {
 		.clipShape(RoundedRectangle(cornerRadius: 16))
 		.overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.07)))
 		.frame(maxWidth: .infinity)
-	}
-
-	private var expandedStatsMaxHeight: CGFloat {
-		dynamicTypeSize.isAccessibilitySize ? 520 : 360
 	}
 
 	private var statsContent: some View {
@@ -1219,8 +1212,10 @@ private struct BestGameCard: View {
 			.foregroundStyle(Color.wbMuted)
 			.frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
 			.padding(.horizontal, 14)
+			.contentShape(Rectangle())
+			.accessibilityElement(children: .ignore)
+			.accessibilityLabel(title)
 			.accessibilityAddTraits(.isHeader)
-			.accessibilityElement(children: .combine)
 	}
 
 	@ViewBuilder
