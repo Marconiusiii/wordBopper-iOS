@@ -1090,42 +1090,14 @@ private struct BestGameCard: View {
 
 	var body: some View {
 		DisclosureGroup(isExpanded: $isExpanded) {
-			ScrollView {
-				VStack(alignment: .leading, spacing: 0) {
-					modeSection(
-						title: "Timed Mode",
-						highestScoreLabel: "Highest score",
-						highestScore: bestGame.highestScore,
-						longestWord: bestGame.longestWord,
-						mostWords: bestGame.mostWords,
-						largestChain: bestGame.largestLetterChain
-					)
+			ViewThatFits(in: .vertical) {
+				statsContent
 
-					modeSection(
-						title: "Bopple Mode",
-						highestScoreLabel: "Best score",
-						highestScore: bestGame.highestBoppleScore,
-						longestWord: bestGame.longestBoppleWord,
-						mostWords: bestGame.mostBoppleWords,
-						largestChain: nil
-					)
-
-					modeSection(
-						title: "Non-Stop Mode",
-						highestScoreLabel: "Best score",
-						highestScore: bestGame.highestNonStopScore,
-						longestWord: bestGame.longestNonStopWord,
-						mostWords: bestGame.mostNonStopWords,
-						largestChain: bestGame.largestNonStopLetterChain
-					)
-
-					ForEach(languageModeBestGames) { record in
-						languageModeSection(record)
-					}
+				ScrollView {
+					statsContent
 				}
-				.frame(maxWidth: .infinity, alignment: .leading)
+				.frame(maxHeight: expandedStatsMaxHeight)
 			}
-			.frame(maxHeight: expandedStatsMaxHeight)
 			.transition(.opacity)
 		} label: {
 			Text("Your best game")
@@ -1145,6 +1117,42 @@ private struct BestGameCard: View {
 
 	private var expandedStatsMaxHeight: CGFloat {
 		dynamicTypeSize.isAccessibilitySize ? 520 : 360
+	}
+
+	private var statsContent: some View {
+		VStack(alignment: .leading, spacing: 0) {
+			modeSection(
+				title: "Timed Mode",
+				highestScoreLabel: "Highest score",
+				highestScore: bestGame.highestScore,
+				longestWord: bestGame.longestWord,
+				mostWords: bestGame.mostWords,
+				largestChain: bestGame.largestLetterChain
+			)
+
+			modeSection(
+				title: "Bopple Mode",
+				highestScoreLabel: "Best score",
+				highestScore: bestGame.highestBoppleScore,
+				longestWord: bestGame.longestBoppleWord,
+				mostWords: bestGame.mostBoppleWords,
+				largestChain: nil
+			)
+
+			modeSection(
+				title: "Non-Stop Mode",
+				highestScoreLabel: "Best score",
+				highestScore: bestGame.highestNonStopScore,
+				longestWord: bestGame.longestNonStopWord,
+				mostWords: bestGame.mostNonStopWords,
+				largestChain: bestGame.largestNonStopLetterChain
+			)
+
+			ForEach(languageModeBestGames) { record in
+				languageModeSection(record)
+			}
+		}
+		.frame(maxWidth: .infinity, alignment: .leading)
 	}
 
 	private var languageModeBestGames: [LanguageModeBestGame] {
