@@ -133,8 +133,8 @@ struct BubbleButton: View {
 				Text(bubble.letter.uppercased())
 					.font(.system(size: bubbleLetterSize, weight: letterWeight, design: letterStyle.fontDesign))
 					.foregroundStyle(isSelected ? selectedTextColor : textColor)
-					.minimumScaleFactor(0.55)
 					.lineLimit(1)
+					.fixedSize()
 			}
 			.frame(width: touchWidth, height: touchHeight)
 			.contentShape(Rectangle())
@@ -161,14 +161,60 @@ struct BubbleButton: View {
 		return 1.0
 	}
 
+	// The circle is allowed to grow until adjacent bubbles just touch
+	// (no overlap). It fills the cell save for a hairline so neighboring
+	// circles read as distinct shapes rather than a merged blob.
 	private var bubbleSize: CGFloat {
-		visualSize * 0.92
+		visualSize * 0.97
 	}
 
+	// Letter sizing honors Dynamic Type first, then is clamped to the
+	// largest size whose drawn glyph still fits inside the cell with a
+	// no-overlap margin on every side. The clamp — not Dynamic Type — is
+	// the guarantee that letters never touch, clip, or get truncated.
+	//
+	// `letterFitFraction` is the share of the square cell the glyph's
+	// bounding box may occupy. It is tuned for the worst case: a wide
+	// uppercase glyph ("W"/"M") in the black weight of the widest font
+	// design (monospaced). Because the cap derives from the cell size,
+	// it is automatically correct at every grid dimension and in both
+	// orientations (cells are always square via min(cellW, cellH)).
 	private var bubbleLetterSize: CGFloat {
-		let scale = dynamicTypeSize.isAccessibilitySize ? 0.66 : 0.58
-		let cap: CGFloat = dynamicTypeSize.isAccessibilitySize ? 74 : 66
-		return min(visualSize * scale, cap)
+		// Map the system text size to a point target so a low-vision
+		// user's Dynamic Type setting genuinely enlarges the letter,
+		// rather than being a minor nudge as before.
+		let target = dynamicTypeTargetPointSize
+		let cap = visualSize * letterFitFraction
+		return min(target, cap)
+	}
+
+	// Point size the user's Dynamic Type setting "wants" for the letter,
+	// before the per-cell fit clamp is applied. The largest accessibility
+	// sizes ask for a very large glyph; the clamp then caps it to fit.
+	private var dynamicTypeTargetPointSize: CGFloat {
+		switch dynamicTypeSize {
+		case .xSmall:           return 44
+		case .small:            return 48
+		case .medium:           return 52
+		case .large:            return 56
+		case .xLarge:           return 62
+		case .xxLarge:          return 68
+		case .xxxLarge:         return 76
+		case .accessibility1:   return 88
+		case .accessibility2:   return 100
+		case .accessibility3:   return 116
+		case .accessibility4:   return 132
+		case .accessibility5:   return 148
+		@unknown default:       return 56
+		}
+	}
+
+	// Fraction of the cell the glyph box may fill. The black weight needs
+	// a touch more breathing room than bold to keep adjacent glyphs from
+	// crowding, so the no-overlap margin tightens slightly when Bold Text
+	// (legibilityWeight == .bold) is on.
+	private var letterFitFraction: CGFloat {
+		legibilityWeight == .bold ? 0.66 : 0.70
 	}
 
 	private var letterWeight: Font.Weight {
