@@ -26,9 +26,9 @@ enum BubbleTextColorOption: String, CaseIterable, Identifiable {
 	var label: String {
 		switch self {
 		case .dark:
-			"Dark Text"
+			String(localized: "Dark Text")
 		case .light:
-			"Light Text"
+			String(localized: "Light Text")
 		}
 	}
 }
@@ -43,11 +43,11 @@ enum BubbleLetterStyle: String, CaseIterable, Identifiable {
 	var label: String {
 		switch self {
 		case .playful:
-			"Playful"
+			String(localized: "Playful")
 		case .simple:
-			"Simple"
+			String(localized: "Simple")
 		case .typewriter:
-			"Typewriter"
+			String(localized: "Typewriter")
 		}
 	}
 
@@ -73,11 +73,11 @@ enum GameAnnouncementVerbosity: String, CaseIterable, Identifiable {
 	var label: String {
 		switch self {
 		case .normal:
-			"Normal"
+			String(localized: "Normal")
 		case .low:
-			"Low"
+			String(localized: "Low")
 		case .off:
-			"Off"
+			String(localized: "Off", comment: "Announcement verbosity option: announcements turned off")
 		}
 	}
 }
@@ -92,22 +92,22 @@ enum GameMode: String, CaseIterable, Identifiable, Codable {
 	var label: String {
 		switch self {
 		case .timed:
-			"Timed"
+			String(localized: "Timed")
 		case .bopple:
-			"Bopple"
+			String(localized: "Bopple", comment: "Game mode name, brand term kept untranslated")
 		case .nonStop:
-			"Non-Stop"
+			String(localized: "Non-Stop")
 		}
 	}
 
 	var settingsBlurb: String {
 		switch self {
 		case .timed:
-			"Make as many words as you can in 2 minutes! Letters change as you use them."
+			String(localized: "Make as many words as you can in 2 minutes! Letters change as you use them.")
 		case .bopple:
-			"Bopped letters will not change when you make words. Words must be made up of letters that are next to each other in the grid. How many words can you create in 3 minutes?"
+			String(localized: "Bopped letters will not change when you make words. Words must be made up of letters that are next to each other in the grid. How many words can you create in 3 minutes?")
 		case .nonStop:
-			"Bop to the Top! Non-Stop mode takes away the game timer, so bop as many letters and make as many words as you want!"
+			String(localized: "Bop to the Top! Non-Stop mode takes away the game timer, so bop as many letters and make as many words as you want!")
 		}
 	}
 }
@@ -124,15 +124,15 @@ enum BoppleTimerOption: String, CaseIterable, Identifiable {
 	var label: String {
 		switch self {
 		case .threeMinutes:
-			"3 Minutes"
+			String(localized: "3 Minutes")
 		case .fourMinutes:
-			"4 Minutes"
+			String(localized: "4 Minutes")
 		case .fiveMinutes:
-			"5 Minutes"
+			String(localized: "5 Minutes")
 		case .sixMinutes:
-			"6 Minutes"
+			String(localized: "6 Minutes")
 		case .nonStop:
-			"Non-Stop Boppling!"
+			String(localized: "Non-Stop Boppling!", comment: "Bopple timer option; Boppling is a brand term")
 		}
 	}
 
@@ -162,7 +162,7 @@ enum GridSizeOption: Int, CaseIterable, Identifiable {
 	var dimension: Int { rawValue }
 
 	var label: String {
-		"\(rawValue) by \(rawValue)"
+		String(localized: "\(rawValue) by \(rawValue)", comment: "Grid size label, e.g. 5 by 5")
 	}
 }
 
@@ -177,26 +177,26 @@ enum LetterPositionMode: String, CaseIterable, Identifiable {
 	var label: String {
 		switch self {
 		case .off:
-			"Off"
+			String(localized: "Off", comment: "Letter position mode: positions not spoken")
 		case .columnNumberRowNumber:
-			"Column Number, Row Number"
+			String(localized: "Column Number, Row Number")
 		case .columnLetterRowNumber:
-			"Column Letter, Row Number"
+			String(localized: "Column Letter, Row Number")
 		case .columnNumberRowLetter:
-			"Column Number, Row Letter"
+			String(localized: "Column Number, Row Letter")
 		}
 	}
 
 	var settingsBlurb: String {
 		switch self {
 		case .off:
-			"Column and Row positions will not be spoken."
+			String(localized: "Column and Row positions will not be spoken.")
 		case .columnNumberRowNumber:
-			"Speaks the column number followed by the row number after the letter, like \"W, 2 3\" or \"A, 1 5.\""
+			String(localized: "Speaks the column number followed by the row number after the letter, like \"W, 2 3\" or \"A, 1 5.\"")
 		case .columnLetterRowNumber:
-			"Speaks columns as A through E and rows as 1 through 5, like \"G, B3\" for column B, row 3."
+			String(localized: "Speaks columns as A through E and rows as 1 through 5, like \"G, B3\" for column B, row 3.")
 		case .columnNumberRowLetter:
-			"Speaks columns as 1 through 5 and rows as A through E, like \"W, 3A\" for column 3, row A."
+			String(localized: "Speaks columns as 1 through 5 and rows as A through E, like \"W, 3A\" for column 3, row A.")
 		}
 	}
 }
@@ -214,7 +214,7 @@ struct LanguageModeBestGame: Codable, Identifiable {
 	}
 
 	var heading: String {
-		"\(language.label) \(mode.label) Mode"
+		String(localized: "\(language.label) \(mode.label) Mode", comment: "Best-game section heading: <language> <mode> Mode")
 	}
 }
 
@@ -263,24 +263,24 @@ final class GameViewModel {
 	static let boppleGameDuration = 180
 	static let colorCount = 8
 	static let gameplayHeadingPhrases = [
-		"Start bopping!",
-		"Bop to it!",
-		"Bop out some words!",
-		"Bop those letters!",
-		"Bop to the future!",
-		"Start your bopping!",
-		"Bop til you Drop!",
-		"Bop All The Things!",
-		"Bop to the Top!",
-		"Commence bopping!"
+		String(localized: "Start bopping!"),
+		String(localized: "Bop to it!"),
+		String(localized: "Bop out some words!"),
+		String(localized: "Bop those letters!"),
+		String(localized: "Bop to the future!"),
+		String(localized: "Start your bopping!"),
+		String(localized: "Bop til you Drop!"),
+		String(localized: "Bop All The Things!"),
+		String(localized: "Bop to the Top!"),
+		String(localized: "Commence bopping!")
 	]
 	static let boppleGameplayHeadingPhrases = [
-		"The Boppler Effect",
-		"Bopple Away!",
-		"All the Bopples",
-		"Boplift Your Vocabulary!",
-		"The Bopple Exquisite",
-		"The Bopple Bops Back"
+		String(localized: "The Boppler Effect"),
+		String(localized: "Bopple Away!"),
+		String(localized: "All the Bopples"),
+		String(localized: "Boplift Your Vocabulary!"),
+		String(localized: "The Bopple Exquisite"),
+		String(localized: "The Bopple Bops Back")
 	]
 
 	// MARK: - Navigation
@@ -363,15 +363,16 @@ final class GameViewModel {
 	}
 
 	var wordTrayLabel: String {
-		if selected.isEmpty { return "Word tray, empty" }
-		return "Word tray: " + selected.map { $0.letter.lowercased() }.joined(separator: ", ")
+		if selected.isEmpty { return String(localized: "Word tray, empty") }
+		let letters = selected.map { $0.letter.lowercased() }.joined(separator: ", ")
+		return String(localized: "Word tray: \(letters)", comment: "VoiceOver label for the word tray, followed by the selected letters")
 	}
 
 	var chainMeterValue: String {
 		if chainPowerUpActive {
-			return "3 times chain bop active, \(chainPowerUpSecondsLeft) seconds left"
+			return String(localized: "3 times chain bop active, \(chainPowerUpSecondsLeft) seconds left")
 		}
-		return "\(connectedWordStreak) of 3 chains"
+		return String(localized: "\(connectedWordStreak) of 3 chains", comment: "Chain meter VoiceOver value: <n> of 3 chains")
 	}
 
 	var chainMeterProgress: Double {
@@ -409,11 +410,11 @@ final class GameViewModel {
 	}
 
 	var clearActionTitle: String {
-		bopAwayIsActive ? "Clear Word" : "Clear Letters"
+		bopAwayIsActive ? String(localized: "Clear Word") : String(localized: "Clear Letters")
 	}
 
 	var clearActionAccessibilityLabel: String {
-		bopAwayIsActive ? "Clear word" : "Clear selected letters"
+		bopAwayIsActive ? String(localized: "Clear word") : String(localized: "Clear selected letters")
 	}
 
 	func isSelected(_ bubble: Bubble) -> Bool {

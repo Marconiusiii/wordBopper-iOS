@@ -1,19 +1,19 @@
 import Foundation
 
 enum GameplayAnnouncements {
-	static let cleared = "Cleared."
-	static let wordCleared = "Word cleared."
-	static let clearedWithTimeBonus = "Cleared. 15 seconds added."
+	static var cleared: String { String(localized: "Cleared.") }
+	static var wordCleared: String { String(localized: "Word cleared.") }
+	static var clearedWithTimeBonus: String { String(localized: "Cleared. 15 seconds added.") }
 
 	static func invalidWord(_ word: String, language: DictionaryLanguage) -> AttributedString {
-		spokenWord(word, language: language) + AttributedString(", not valid.")
+		spokenWord(word, language: language) + AttributedString(String(localized: ", not valid.", comment: "Spoken after an invalid word; leading comma joins it to the word"))
 	}
 
 	static func duplicateWord(_ word: String, language: DictionaryLanguage) -> AttributedString {
-		spokenWord(word, language: language) + AttributedString(", already found.")
+		spokenWord(word, language: language) + AttributedString(String(localized: ", already found.", comment: "Spoken after a duplicate word; leading comma joins it to the word"))
 	}
 
-	static let disconnectedBoppleWord = "Bopple words must use letters that are next to each other."
+	static var disconnectedBoppleWord: String { String(localized: "Bopple words must use letters that are next to each other.") }
 
 	static func scoredWord(
 		word: String,
@@ -24,22 +24,23 @@ enum GameplayAnnouncements {
 		powerUpActivated: Bool,
 		verbosity: GameAnnouncementVerbosity
 	) -> AttributedString {
-		let pointText = points == 1 ? "1 point" : "\(points) points"
+		let pointText = String(localized: "\(points) points", comment: "Score points spoken aloud; supports plural rules, e.g. 1 point / 5 points")
 
 		if verbosity == .low {
-			return AttributedString(powerUpActivated ? "3 times active!" : "\(pointText).")
+			if powerUpActivated { return AttributedString(String(localized: "3 times active!")) }
+			return AttributedString(String(localized: "\(pointText).", comment: "Low-verbosity score readout: the point count followed by a period"))
 		}
 
 		if powerUpActivated {
-			return AttributedString("3 times active!")
+			return AttributedString(String(localized: "3 times active!"))
 		}
 
-		var announcement = spokenWord(word, language: language) + AttributedString(", \(pointText)")
+		var announcement = spokenWord(word, language: language) + AttributedString(String(localized: ", \(pointText)", comment: "Joins the spoken word to its point count, e.g. 'cat, 3 points'"))
 
 		if multiplier > 1 {
-			announcement += AttributedString(", 3 times")
+			announcement += AttributedString(String(localized: ", 3 times", comment: "Spoken suffix when a 3x multiplier is active"))
 		} else if chainBonus > 0 {
-			announcement += AttributedString(", chain bonus")
+			announcement += AttributedString(String(localized: ", chain bonus", comment: "Spoken suffix when a chain bonus is earned"))
 		}
 
 		return announcement + AttributedString(".")

@@ -14,19 +14,19 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable, Codable {
 	var label: String {
 		switch self {
 		case .english:
-			"English"
+			String(localized: "English", comment: "Bubble Language name")
 		case .spanish:
-			"Spanish"
+			String(localized: "Spanish", comment: "Bubble Language name")
 		case .french:
-			"French"
+			String(localized: "French", comment: "Bubble Language name")
 		case .german:
-			"German"
+			String(localized: "German", comment: "Bubble Language name")
 		case .dutch:
-			"Dutch"
+			String(localized: "Dutch", comment: "Bubble Language name")
 		case .italian:
-			"Italian"
+			String(localized: "Italian", comment: "Bubble Language name")
 		case .brazilianPortuguese:
-			"Brazilian Portuguese"
+			String(localized: "Brazilian Portuguese", comment: "Bubble Language name")
 		}
 	}
 

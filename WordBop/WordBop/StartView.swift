@@ -295,7 +295,7 @@ private struct GameSettingsSheet: View {
 								.pickerStyle(.segmented)
 							}
 
-							SettingsDescriptionRow(vm.gameMode.settingsBlurb)
+							SettingsDescriptionRow(verbatim: vm.gameMode.settingsBlurb)
 
 							SettingsPickerBlock(title: "Grid Size", namespace: gridSizeNamespace, pairID: "gridSize") {
 								Picker("Grid Size", selection: Binding(
@@ -369,7 +369,7 @@ private struct GameSettingsSheet: View {
 							.accessibilityFocused($isLetterPositionFocused)
 						}
 
-						SettingsDescriptionRow(vm.letterPositionMode.settingsBlurb)
+						SettingsDescriptionRow(verbatim: vm.letterPositionMode.settingsBlurb)
 
 						SettingsSectionHeading("Letter Phonetics")
 
@@ -513,7 +513,7 @@ private struct GameSettingsSheet: View {
 }
 
 private struct SettingsLinkButtonRow: View {
-	let title: String
+	let title: LocalizedStringKey
 	let action: () -> Void
 
 	var body: some View {
@@ -536,7 +536,7 @@ private struct SettingsLinkButtonRow: View {
 }
 
 private struct SettingsToggleRow: View {
-	let title: String
+	let title: LocalizedStringKey
 	@Binding var isOn: Bool
 
 	var body: some View {
@@ -554,9 +554,9 @@ private struct SettingsToggleRow: View {
 }
 
 private struct SettingsSectionHeading: View {
-	let title: String
+	let title: LocalizedStringKey
 
-	init(_ title: String) {
+	init(_ title: LocalizedStringKey) {
 		self.title = title
 	}
 
@@ -575,18 +575,23 @@ private struct SettingsSectionHeading: View {
 }
 
 private struct SettingsDescriptionRow: View {
-	let text: String
+	let text: Text
 	let fillsRemainingSpace: Bool
 
-	init(_ text: String, fillsRemainingSpace: Bool = false) {
-		self.text = text
+	init(_ text: LocalizedStringKey, fillsRemainingSpace: Bool = false) {
+		self.text = Text(text)
+		self.fillsRemainingSpace = fillsRemainingSpace
+	}
+
+	init(verbatim text: String, fillsRemainingSpace: Bool = false) {
+		self.text = Text(verbatim: text)
 		self.fillsRemainingSpace = fillsRemainingSpace
 	}
 
 	var body: some View {
 		ZStack(alignment: .leading) {
 			Color.wbBackground
-			Text(text)
+			text
 				.font(.footnote)
 				.foregroundStyle(Color.wbMuted)
 				.fixedSize(horizontal: false, vertical: true)
@@ -599,12 +604,12 @@ private struct SettingsDescriptionRow: View {
 }
 
 private struct SettingsPickerBlock<Content: View>: View {
-	let title: String
+	let title: LocalizedStringKey
 	let namespace: Namespace.ID
 	let pairID: String
 	let content: Content
 
-	init(title: String, namespace: Namespace.ID, pairID: String, @ViewBuilder content: () -> Content) {
+	init(title: LocalizedStringKey, namespace: Namespace.ID, pairID: String, @ViewBuilder content: () -> Content) {
 		self.title = title
 		self.namespace = namespace
 		self.pairID = pairID
@@ -657,9 +662,9 @@ private enum AboutMailDraft {
 	var subject: String {
 		switch self {
 		case .feedback:
-			"WordBopper iOS Feedback"
+			String(localized: "WordBopper iOS Feedback", comment: "Email subject; WordBopper is a brand term")
 		case .missingWord:
-			"WordBopper Missing Word"
+			String(localized: "WordBopper Missing Word", comment: "Email subject; WordBopper is a brand term")
 		}
 	}
 
@@ -668,14 +673,14 @@ private enum AboutMailDraft {
 		case .feedback:
 			nil
 		case let .missingWord(language, mode):
-			"""
+			String(localized: """
 			Missing word:
 
 			Bubble Language: \(language.label)
 			Game Mode: \(mode.label)
 
 			Please include the missing word above. If you know the language or regional spelling details, feel free to add those too.
-			"""
+			""", comment: "Prefilled email body for reporting a missing word")
 		}
 	}
 }
@@ -867,7 +872,7 @@ private struct AboutWordBopperSheet: View {
 	private var versionText: String {
 		let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 		let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
-		return "Version \(version) (\(build))"
+		return String(localized: "Version \(version) (\(build))", comment: "App version string, e.g. Version 1.0.0 (1)")
 	}
 }
 
@@ -947,7 +952,7 @@ private struct LanguageAcknowledgmentDisclosure: View {
 			.padding(.bottom, 16)
 			.contentShape(Rectangle())
 		} label: {
-			Text(acknowledgment.language)
+			Text(LocalizedStringKey(acknowledgment.language))
 				.font(.body.weight(.semibold))
 				.foregroundStyle(Color.wbText)
 				.frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
@@ -1115,8 +1120,8 @@ private struct BestGameCard: View {
 	private var statsContent: some View {
 		VStack(alignment: .leading, spacing: 0) {
 			modeSection(
-				title: "Timed Mode",
-				highestScoreLabel: "Highest score",
+				title: String(localized: "Timed Mode"),
+				highestScoreLabel: String(localized: "Highest score"),
 				highestScore: bestGame.highestScore,
 				longestWord: bestGame.longestWord,
 				mostWords: bestGame.mostWords,
@@ -1124,8 +1129,8 @@ private struct BestGameCard: View {
 			)
 
 			modeSection(
-				title: "Bopple Mode",
-				highestScoreLabel: "Best score",
+				title: String(localized: "Bopple Mode", comment: "Best-game section; Bopple is a brand term"),
+				highestScoreLabel: String(localized: "Best score"),
 				highestScore: bestGame.highestBoppleScore,
 				longestWord: bestGame.longestBoppleWord,
 				mostWords: bestGame.mostBoppleWords,
@@ -1133,8 +1138,8 @@ private struct BestGameCard: View {
 			)
 
 			modeSection(
-				title: "Non-Stop Mode",
-				highestScoreLabel: "Best score",
+				title: String(localized: "Non-Stop Mode"),
+				highestScoreLabel: String(localized: "Best score"),
 				highestScore: bestGame.highestNonStopScore,
 				longestWord: bestGame.longestNonStopWord,
 				mostWords: bestGame.mostNonStopWords,
@@ -1170,16 +1175,16 @@ private struct BestGameCard: View {
 
 		statPair(
 			BestStat(label: highestScoreLabel, value: "\(highestScore)"),
-			BestStat(label: "Longest word", value: longestWord.isEmpty ? "None yet" : longestWord)
+			BestStat(label: String(localized: "Longest word"), value: longestWord.isEmpty ? String(localized: "None yet") : longestWord)
 		)
 
 		if let largestChain {
 			statPair(
-				BestStat(label: "Most words", value: "\(mostWords)"),
-				BestStat(label: "Largest chain", value: "\(largestChain)")
+				BestStat(label: String(localized: "Most words"), value: "\(mostWords)"),
+				BestStat(label: String(localized: "Largest chain"), value: "\(largestChain)")
 			)
 		} else {
-			BestStat(label: "Most words", value: "\(mostWords)")
+			BestStat(label: String(localized: "Most words"), value: "\(mostWords)")
 		}
 	}
 
@@ -1188,20 +1193,20 @@ private struct BestGameCard: View {
 		sectionHeading(record.heading)
 
 		statPair(
-			BestStat(label: record.mode == .timed ? "Highest score" : "Best score", value: "\(record.highestScore)"),
+			BestStat(label: record.mode == .timed ? String(localized: "Highest score") : String(localized: "Best score"), value: "\(record.highestScore)"),
 			BestStat(
-				label: "Longest word",
-				value: record.longestWord.isEmpty ? "None yet" : record.longestWord,
+				label: String(localized: "Longest word"),
+				value: record.longestWord.isEmpty ? String(localized: "None yet") : record.longestWord,
 				valueLanguage: record.longestWord.isEmpty ? nil : record.language
 			)
 		)
 
 		if record.mode == .bopple {
-			BestStat(label: "Most words", value: "\(record.mostWords)")
+			BestStat(label: String(localized: "Most words"), value: "\(record.mostWords)")
 		} else {
 			statPair(
-				BestStat(label: "Most words", value: "\(record.mostWords)"),
-				BestStat(label: "Largest chain", value: "\(record.largestLetterChain)")
+				BestStat(label: String(localized: "Most words"), value: "\(record.mostWords)"),
+				BestStat(label: String(localized: "Largest chain"), value: "\(record.largestLetterChain)")
 			)
 		}
 	}
@@ -1241,7 +1246,7 @@ private struct BestStat: View {
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 2) {
-			Text(label)
+			Text(verbatim: label)
 				.font(.caption.weight(.bold))
 				.foregroundStyle(Color.wbMuted)
 			Text(spokenValue)
@@ -1266,7 +1271,7 @@ private struct BestStat: View {
 	}
 
 	private var spokenAccessibilityLabel: AttributedString {
-		var text = AttributedString("\(label): ")
+		var text = AttributedString(label + ": ")
 		text += spokenValue
 		return text
 	}

@@ -33,19 +33,19 @@ struct ResultsView: View {
 
 						VStack(spacing: 10) {
 							if dynamicTypeSize.isAccessibilitySize {
-								ResultStat(value: "\(vm.wordCount)", label: "Words made", color: .wbAccent4)
-								ResultStat(value: "\(vm.totalLettersUsed)", label: "Letters used", color: .wbAccent5)
-								ResultStat(value: averageLength, label: "Average length", color: .wbAccent1)
-								ResultStat(value: longestWord, label: "Longest word", color: .wbAccent3, valueLanguage: longestWordLanguage)
+								ResultStat(value: "\(vm.wordCount)", label: String(localized: "Words made"), color: .wbAccent4)
+								ResultStat(value: "\(vm.totalLettersUsed)", label: String(localized: "Letters used"), color: .wbAccent5)
+								ResultStat(value: averageLength, label: String(localized: "Average length"), color: .wbAccent1)
+								ResultStat(value: longestWord, label: String(localized: "Longest word"), color: .wbAccent3, valueLanguage: longestWordLanguage)
 							} else {
 								HStack(spacing: 16) {
-									ResultStat(value: "\(vm.wordCount)", label: "Words made", color: .wbAccent4)
-									ResultStat(value: "\(vm.totalLettersUsed)", label: "Letters used", color: .wbAccent5)
+									ResultStat(value: "\(vm.wordCount)", label: String(localized: "Words made"), color: .wbAccent4)
+									ResultStat(value: "\(vm.totalLettersUsed)", label: String(localized: "Letters used"), color: .wbAccent5)
 								}
 
 								HStack(spacing: 16) {
-									ResultStat(value: averageLength, label: "Average length", color: .wbAccent1)
-									ResultStat(value: longestWord, label: "Longest word", color: .wbAccent3, valueLanguage: longestWordLanguage)
+									ResultStat(value: averageLength, label: String(localized: "Average length"), color: .wbAccent1)
+									ResultStat(value: longestWord, label: String(localized: "Longest word"), color: .wbAccent3, valueLanguage: longestWordLanguage)
 								}
 							}
 							}
@@ -213,7 +213,7 @@ private struct ResultStat: View {
 				.foregroundStyle(color)
 				.minimumScaleFactor(0.75)
 				.lineLimit(1)
-			Text(label)
+			Text(verbatim: label)
 				.font(.caption.weight(.bold))
 				.foregroundStyle(Color.wbMuted)
 				.multilineTextAlignment(.center)
@@ -231,7 +231,7 @@ private struct ResultStat: View {
 	}
 
 	private var spokenAccessibilityLabel: AttributedString {
-		var text = AttributedString("\(label): ")
+		var text = AttributedString(label + ": ")
 		text += spokenValue
 		return text
 	}

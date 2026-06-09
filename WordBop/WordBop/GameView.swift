@@ -250,7 +250,7 @@ private struct GameHeaderBar: View {
 				VStack(alignment: .leading, spacing: 8) {
 					if vm.showsTimer {
 						statBlock(
-							label: "Time",
+							label: String(localized: "Time"),
 							value: vm.formattedTime,
 							color: vm.timerIsWarning ? .wbAccent2 : .wbTimerGreen,
 							alignment: .leading
@@ -258,15 +258,15 @@ private struct GameHeaderBar: View {
 					}
 
 					HStack(spacing: 16) {
-						statBlock(label: "Score", value: "\(vm.score)", color: .wbAccent1, alignment: .leading)
-						statBlock(label: "Words", value: "\(vm.wordCount)", color: .wbAccent4, alignment: .leading)
+						statBlock(label: String(localized: "Score"), value: "\(vm.score)", color: .wbAccent1, alignment: .leading)
+						statBlock(label: String(localized: "Words"), value: "\(vm.wordCount)", color: .wbAccent4, alignment: .leading)
 					}
 				}
 			} else {
 				HStack {
 					if vm.showsTimer {
 						statBlock(
-							label: "Time",
+							label: String(localized: "Time"),
 							value: vm.formattedTime,
 							color: vm.timerIsWarning ? .wbAccent2 : .wbTimerGreen,
 							alignment: .leading
@@ -274,9 +274,9 @@ private struct GameHeaderBar: View {
 						Spacer(minLength: 8)
 					}
 
-					statBlock(label: "Score", value: "\(vm.score)", color: .wbAccent1)
+					statBlock(label: String(localized: "Score"), value: "\(vm.score)", color: .wbAccent1)
 					Spacer(minLength: 8)
-					statBlock(label: "Words", value: "\(vm.wordCount)", color: .wbAccent4, alignment: .trailing)
+					statBlock(label: String(localized: "Words"), value: "\(vm.wordCount)", color: .wbAccent4, alignment: .trailing)
 				}
 			}
 		}
@@ -301,8 +301,8 @@ private struct GameHeaderBar: View {
 	}
 
 	private var headerAccessibilityLabel: String {
-		if !vm.showsTimer { return "Score: \(vm.score), Words: \(vm.wordCount)" }
-		return "Time: \(vm.formattedTime), Score: \(vm.score), Words: \(vm.wordCount)"
+		if !vm.showsTimer { return String(localized: "Score: \(vm.score), Words: \(vm.wordCount)") }
+		return String(localized: "Time: \(vm.formattedTime), Score: \(vm.score), Words: \(vm.wordCount)")
 	}
 }
 
@@ -378,15 +378,15 @@ private struct LandscapeStatsPanel: View {
 		VStack(alignment: .leading, spacing: dynamicTypeSize.isAccessibilitySize ? 12 : 8) {
 			if vm.showsTimer {
 				statBlock(
-					label: "Time",
+					label: String(localized: "Time"),
 					value: vm.formattedTime,
 					color: vm.timerIsWarning ? .wbAccent2 : .wbTimerGreen
 				)
 			}
 
 			HStack(spacing: 12) {
-				statBlock(label: "Score", value: "\(vm.score)", color: .wbAccent1)
-				statBlock(label: "Words", value: "\(vm.wordCount)", color: .wbAccent4)
+				statBlock(label: String(localized: "Score"), value: "\(vm.score)", color: .wbAccent1)
+				statBlock(label: String(localized: "Words"), value: "\(vm.wordCount)", color: .wbAccent4)
 			}
 		}
 		.padding(.horizontal, 14)
@@ -413,8 +413,8 @@ private struct LandscapeStatsPanel: View {
 	}
 
 	private var headerAccessibilityLabel: String {
-		if !vm.showsTimer { return "Score: \(vm.score), Words: \(vm.wordCount)" }
-		return "Time: \(vm.formattedTime), Score: \(vm.score), Words: \(vm.wordCount)"
+		if !vm.showsTimer { return String(localized: "Score: \(vm.score), Words: \(vm.wordCount)") }
+		return String(localized: "Time: \(vm.formattedTime), Score: \(vm.score), Words: \(vm.wordCount)")
 	}
 }
 
@@ -577,7 +577,7 @@ private struct ActionBar: View {
 	private var makeWordButton: some View {
 		Button { vm.makeWord() } label: {
 			ButtonZone(bottomInset: bottomInset) {
-				makeWordButtonVisual("Make Word", enabled: vm.makeWordEnabled)
+				makeWordButtonVisual(String(localized: "Make Word"), enabled: vm.makeWordEnabled)
 			}
 		}
 		.buttonStyle(.plain)
@@ -643,7 +643,7 @@ private struct LandscapeActionPanel: View {
 			.accessibilityLabel(vm.clearActionAccessibilityLabel)
 
 			Button { vm.makeWord() } label: {
-				landscapeButtonVisual("Make Word", isPrimary: true, enabled: vm.makeWordEnabled)
+				landscapeButtonVisual(String(localized: "Make Word"), isPrimary: true, enabled: vm.makeWordEnabled)
 			}
 			.buttonStyle(.plain)
 			.disabled(!vm.makeWordEnabled)
