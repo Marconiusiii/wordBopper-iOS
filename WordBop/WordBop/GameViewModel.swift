@@ -337,6 +337,7 @@ final class GameViewModel {
 	var madeWords: [String] = []
 	var secondsLeft = GameViewModel.timedGameDuration
 	var gameActive = false
+	var gamePaused = false
 	var connectedWordStreak = 0
 	var chainPowerUpActive = false
 	var chainPowerUpSecondsLeft = 0
@@ -353,6 +354,7 @@ final class GameViewModel {
 	private let dictionary = DictionaryService.shared
 	private var gameTimer: Timer?
 	private var powerUpTimer: Timer?
+	private var powerUpAudioResumeWorkItem: DispatchWorkItem?
 	private var announcementWorkItem: DispatchWorkItem?
 
 	// MARK: - Computed
@@ -452,6 +454,7 @@ final class GameViewModel {
 		madeWords = []
 		secondsLeft = gameDuration
 		gameActive = true
+		gamePaused = false
 		consumedBopAwayBubbleIds.removeAll()
 		connectedWordStreak = 0
 		chainPowerUpActive = false
@@ -472,8 +475,25 @@ final class GameViewModel {
 		if showsTimer { startTimer() }
 	}
 
+	func pauseGame(playSound: Bool = true) {
+		guard gameActive, !gamePaused else { return }
+		gamePaused = true
+		stopTimer()
+		pausePowerUpCountdown()
+		if playSound { audio.playPauseSound() }
+	}
+
+	func resumeGame() {
+		guard gameActive, gamePaused else { return }
+		gamePaused = false
+		audio.playResumeSound()
+		if showsTimer { startTimer() }
+		if chainPowerUpActive { startPowerUpCountdown(audioDelay: 0.55) }
+	}
+
 	func endGame() {
 		guard gameActive else { return }
+		gamePaused = false
 		gameActive = false
 		stopTimer()
 		stopPowerUp()
@@ -498,7 +518,7 @@ final class GameViewModel {
 	// MARK: - Bubble interaction
 
 	func tapBubble(_ bubble: Bubble) {
-		guard gameActive else { return }
+		guard gameActive, !gamePaused else { return }
 		if bopAwayIsActive {
 			guard !consumedBopAwayBubbleIds.contains(bubble.id) else { return }
 			consumedBopAwayBubbleIds.insert(bubble.id)
@@ -535,6 +555,7 @@ final class GameViewModel {
 	}
 
 	func clearSelection() {
+		guard gameActive, !gamePaused else { return }
 		guard !selected.isEmpty else {
 			return
 		}
@@ -557,7 +578,7 @@ final class GameViewModel {
 	// MARK: - Make word
 
 	func makeWord() {
-		guard gameActive, selected.count >= 3 else { return }
+		guard gameActive, !gamePaused, selected.count >= 3 else { return }
 		let word = currentWord.lowercased()
 
 		if gameMode == .bopple, !isFullyConnectedWord() {
@@ -717,9 +738,23 @@ final class GameViewModel {
 		connectedWordStreak = 0
 		chainPowerUpActive = true
 		chainPowerUpSecondsLeft = 15
-		audio.startPowerUpChimes(duration: 15)
 		haptics.powerUpActivated()
+		startPowerUpCountdown()
+	}
 
+	private func startPowerUpCountdown(audioDelay: TimeInterval = 0) {
+		guard chainPowerUpActive, chainPowerUpSecondsLeft > 0 else { return }
+		powerUpAudioResumeWorkItem?.cancel()
+		if audioDelay > 0 {
+			let workItem = DispatchWorkItem { [weak self] in
+				guard let self, self.chainPowerUpActive, !self.gamePaused else { return }
+				self.audio.startPowerUpChimes(duration: Double(self.chainPowerUpSecondsLeft))
+			}
+			powerUpAudioResumeWorkItem = workItem
+			DispatchQueue.main.asyncAfter(deadline: .now() + audioDelay, execute: workItem)
+		} else {
+			audio.startPowerUpChimes(duration: Double(chainPowerUpSecondsLeft))
+		}
 		powerUpTimer?.invalidate()
 		powerUpTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
 			guard let self else { return }
@@ -728,12 +763,22 @@ final class GameViewModel {
 		}
 	}
 
+	private func pausePowerUpCountdown() {
+		powerUpAudioResumeWorkItem?.cancel()
+		powerUpAudioResumeWorkItem = nil
+		powerUpTimer?.invalidate()
+		powerUpTimer = nil
+		audio.stopPowerUpChimes()
+	}
+
 	private func stopPowerUp() {
 		chainPowerUpActive = false
 		chainPowerUpSecondsLeft = 0
 		connectedWordStreak = 0
 		powerUpTimer?.invalidate()
 		powerUpTimer = nil
+		powerUpAudioResumeWorkItem?.cancel()
+		powerUpAudioResumeWorkItem = nil
 		audio.stopPowerUpChimes()
 	}
 

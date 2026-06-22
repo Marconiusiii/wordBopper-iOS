@@ -1,9 +1,11 @@
 import SwiftUI
 import UIKit
+import MessageUI
 
 struct GameView: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
+	@Environment(\.scenePhase) private var scenePhase
 
 	var body: some View {
 		GeometryReader { geo in
@@ -21,6 +23,19 @@ struct GameView: View {
 		}
 		.onAppear {
 			UIAccessibility.post(notification: .screenChanged, argument: vm.gameplayHeading)
+		}
+		.onChange(of: scenePhase) { _, newPhase in
+			if newPhase != .active {
+				vm.pauseGame(playSound: false)
+			}
+		}
+		.fullScreenCover(isPresented: Binding(
+			get: { vm.gamePaused },
+			set: { _ in }
+		)) {
+			GamePauseCover()
+				.environment(vm)
+				.interactiveDismissDisabled()
 		}
 	}
 
@@ -200,11 +215,11 @@ private struct GameHeaderBar: View {
 	var body: some View {
 		HStack(spacing: 0) {
 			if vm.leftHandedMode {
-				endGameButton(dividerAlignment: .trailing)
+				gameMenuButton(dividerAlignment: .trailing)
 				statsContentView
 			} else {
 				statsContentView
-				endGameButton(dividerAlignment: .leading)
+				gameMenuButton(dividerAlignment: .leading)
 			}
 		}
 		.frame(height: dynamicTypeSize.isAccessibilitySize ? 70 : 54)
@@ -223,9 +238,9 @@ private struct GameHeaderBar: View {
 			.accessibilityLabel(headerAccessibilityLabel)
 	}
 
-	private func endGameButton(dividerAlignment: Alignment) -> some View {
-		Button { vm.endGame() } label: {
-			Text("End Game")
+	private func gameMenuButton(dividerAlignment: Alignment) -> some View {
+		Button { vm.pauseGame() } label: {
+			Text(gameMenuButtonVisibleTitle)
 				.font(.subheadline.weight(.bold))
 				.foregroundStyle(Color.wbAccent2)
 				.multilineTextAlignment(.center)
@@ -241,7 +256,22 @@ private struct GameHeaderBar: View {
 		.buttonStyle(.plain)
 		.keyboardShortcut(".", modifiers: .command)
 		.contentShape(Rectangle())
-		.accessibilityLabel("End game")
+		.accessibilityLabel(gameMenuButtonAccessibilityLabel)
+		.accessibilityInputLabels(gameMenuButtonInputLabels)
+	}
+
+	private var gameMenuButtonVisibleTitle: String {
+		vm.gameMode == .nonStop ? String(localized: "Options") : String(localized: "Pause")
+	}
+
+	private var gameMenuButtonAccessibilityLabel: String {
+		vm.gameMode == .nonStop ? String(localized: "Game Options") : String(localized: "Pause Game")
+	}
+
+	private var gameMenuButtonInputLabels: [LocalizedStringKey] {
+		vm.gameMode == .nonStop
+			? ["Options", "Game Options"]
+			: ["Pause", "Pause Game"]
 	}
 
 	private var statsContent: some View {
@@ -324,11 +354,11 @@ private struct LandscapeTitleRow<Heading: View>: View {
 	var body: some View {
 		HStack(spacing: 0) {
 			if placement == .leading {
-				EndGameButton(width: endGameWidth, dividerAlignment: .trailing)
+				GameMenuButton(width: endGameWidth, dividerAlignment: .trailing)
 				heading
 			} else {
 				heading
-				EndGameButton(width: endGameWidth, dividerAlignment: .leading)
+				GameMenuButton(width: endGameWidth, dividerAlignment: .leading)
 			}
 		}
 	}
@@ -338,7 +368,7 @@ private struct LandscapeTitleRow<Heading: View>: View {
 	}
 }
 
-private struct EndGameButton: View {
+private struct GameMenuButton: View {
 	@Environment(GameViewModel.self) private var vm
 	let width: CGFloat
 	let dividerAlignment: Alignment
@@ -349,8 +379,8 @@ private struct EndGameButton: View {
 	}
 
 	var body: some View {
-		Button { vm.endGame() } label: {
-			Text("End Game")
+		Button { vm.pauseGame() } label: {
+			Text(gameMenuButtonVisibleTitle)
 				.font(.subheadline.weight(.bold))
 				.foregroundStyle(Color.wbAccent2)
 				.multilineTextAlignment(.center)
@@ -366,7 +396,142 @@ private struct EndGameButton: View {
 		.buttonStyle(.plain)
 		.keyboardShortcut(".", modifiers: .command)
 		.contentShape(Rectangle())
-		.accessibilityLabel("End game")
+		.accessibilityLabel(gameMenuButtonAccessibilityLabel)
+		.accessibilityInputLabels(gameMenuButtonInputLabels)
+	}
+
+	private var gameMenuButtonVisibleTitle: String {
+		vm.gameMode == .nonStop ? String(localized: "Options") : String(localized: "Pause")
+	}
+
+	private var gameMenuButtonAccessibilityLabel: String {
+		vm.gameMode == .nonStop ? String(localized: "Game Options") : String(localized: "Pause Game")
+	}
+
+	private var gameMenuButtonInputLabels: [LocalizedStringKey] {
+		vm.gameMode == .nonStop
+			? ["Options", "Game Options"]
+			: ["Pause", "Pause Game"]
+	}
+}
+
+private struct GamePauseCover: View {
+	@Environment(GameViewModel.self) private var vm
+	@Environment(\.openURL) private var openURL
+	@Environment(\.scenePhase) private var scenePhase
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
+	@State private var isShowingMailComposer = false
+
+	private let mailRecipient = "marco@marconius.com"
+
+	var body: some View {
+		GeometryReader { geo in
+			ZStack {
+				Color.wbBackground.ignoresSafeArea()
+
+				ScrollView {
+					VStack(spacing: 0) {
+					Text(heading)
+						.font(.title2.weight(.black))
+						.foregroundStyle(Color.wbText)
+						.multilineTextAlignment(.center)
+						.fixedSize(horizontal: false, vertical: true)
+						.frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 96 : 76)
+						.contentShape(Rectangle())
+						.accessibilityAddTraits(.isHeader)
+
+					pauseActionButton(
+						title: String(localized: "Resume Game"),
+						foregroundColor: .black,
+						backgroundColor: .wbAccent5
+					) {
+						vm.resumeGame()
+					}
+					.keyboardShortcut(.defaultAction)
+
+					pauseActionButton(
+						title: String(localized: "End Game"),
+						foregroundColor: .wbAccent2,
+						backgroundColor: Color.wbAccent2.opacity(0.15)
+					) {
+						vm.endGame()
+					}
+
+					pauseActionButton(
+						title: String(localized: "Report Missing Word"),
+						foregroundColor: .wbText,
+						backgroundColor: .wbPanel
+					) {
+						reportMissingWord()
+					}
+					.accessibilityHint("Opens Mail with the current language and game mode included.")
+					}
+					.frame(width: geo.size.width)
+					.frame(minHeight: geo.size.height)
+				}
+				.frame(width: geo.size.width)
+			}
+		}
+		.preferredColorScheme(.dark)
+		.onAppear(perform: announcePausedScreen)
+		.onChange(of: scenePhase) { _, newPhase in
+			if newPhase == .active, vm.gamePaused {
+				announcePausedScreen()
+			}
+		}
+		.sheet(isPresented: $isShowingMailComposer, onDismiss: announcePausedScreen) {
+			MailComposerView(
+				recipient: mailRecipient,
+				subject: missingWordDraft.subject,
+				body: missingWordDraft.body,
+				onFinish: { _ in }
+			)
+		}
+	}
+
+	private var heading: String {
+		vm.gameMode == .nonStop ? String(localized: "Game Options") : String(localized: "Game Paused")
+	}
+
+	private var missingWordDraft: WordBopMailDraft {
+		.missingWord(language: vm.dictionaryLanguage, mode: vm.gameMode)
+	}
+
+	private func pauseActionButton(
+		title: String,
+		foregroundColor: Color,
+		backgroundColor: Color,
+		action: @escaping () -> Void
+	) -> some View {
+		Button(action: action) {
+			Text(title)
+				.font(.headline.weight(.black))
+				.foregroundStyle(foregroundColor)
+				.multilineTextAlignment(.center)
+				.fixedSize(horizontal: false, vertical: true)
+				.frame(maxWidth: .infinity, maxHeight: .infinity)
+				.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 86 : 64)
+				.padding(.horizontal, 20)
+				.background(backgroundColor)
+				.contentShape(Rectangle())
+		}
+		.buttonStyle(.plain)
+		.frame(maxWidth: .infinity, maxHeight: .infinity)
+		.contentShape(Rectangle())
+	}
+
+	private func reportMissingWord() {
+		if MFMailComposeViewController.canSendMail() {
+			isShowingMailComposer = true
+		} else if let mailURL = missingWordDraft.mailURL(recipient: mailRecipient) {
+			openURL(mailURL)
+		}
+	}
+
+	private func announcePausedScreen() {
+		DispatchQueue.main.async {
+			UIAccessibility.post(notification: .screenChanged, argument: heading)
+		}
 	}
 }
 

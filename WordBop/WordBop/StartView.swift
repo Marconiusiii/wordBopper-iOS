@@ -169,6 +169,23 @@ private struct InstructionsSheet: View {
 		"Play together with friends at the same time to see who can Bopple the best! All on their own devices, of course."
 	]
 
+	private var keyboardHeading: String {
+		ProcessInfo.processInfo.isiOSAppOnMac ? "Keyboard Controls" : "External Keyboard"
+	}
+
+	private var keyboardInstructions: [String] {
+		var items: [String] = []
+		if ProcessInfo.processInfo.isiOSAppOnMac {
+			items.append("Use Tab and Shift-Tab to move between controls. Press Space to activate the focused control.")
+		} else {
+			items.append("With Full Keyboard Access turned on, use Tab and Shift-Tab to move between controls. Press Space to activate the focused control.")
+		}
+		items.append("Press Return to start a game, make the current word, resume a paused game, or play again.")
+		items.append("Press Escape to clear the current letters or word. On the Round Results screen, Escape returns home.")
+		items.append("Press Command-period during a game to open Pause Game or Game Options.")
+		return items
+	}
+
 		var body: some View {
 			NavigationStack {
 				GeometryReader { geo in
@@ -184,6 +201,21 @@ private struct InstructionsSheet: View {
 
 				VStack(alignment: .leading, spacing: 0) {
 					ForEach(instructions, id: \.self) { item in
+						InstructionRow(item)
+					}
+				}
+				.frame(maxWidth: .infinity, alignment: .leading)
+
+				Text(keyboardHeading)
+					.font(.headline.weight(.black))
+					.foregroundStyle(Color.wbText)
+					.frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+					.padding(.horizontal, 24)
+					.contentShape(Rectangle())
+					.accessibilityAddTraits(.isHeader)
+
+				VStack(alignment: .leading, spacing: 0) {
+					ForEach(keyboardInstructions, id: \.self) { item in
 						InstructionRow(item)
 					}
 				}
@@ -655,36 +687,6 @@ private struct SettingsPickerBlock<Content: View>: View {
 	}
 }
 
-private enum AboutMailDraft {
-	case feedback
-	case missingWord(language: DictionaryLanguage, mode: GameMode)
-
-	var subject: String {
-		switch self {
-		case .feedback:
-			String(localized: "WordBopper iOS Feedback", comment: "Email subject; WordBopper is a brand term")
-		case .missingWord:
-			String(localized: "WordBopper Missing Word", comment: "Email subject; WordBopper is a brand term")
-		}
-	}
-
-	var body: String? {
-		switch self {
-		case .feedback:
-			nil
-		case let .missingWord(language, mode):
-			String(localized: """
-			Missing word:
-
-			Bubble Language: \(language.label)
-			Game Mode: \(mode.label)
-
-			Please include the missing word above. If you know the language or regional spelling details, feel free to add those too.
-			""", comment: "Prefilled email body for reporting a missing word")
-		}
-	}
-}
-
 private struct AboutWordBopperSheet: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dismiss) private var dismiss
@@ -692,7 +694,7 @@ private struct AboutWordBopperSheet: View {
 
 	@AccessibilityFocusState private var isFeedbackButtonFocused: Bool
 	@State private var isShowingMailComposer = false
-	@State private var activeMailDraft = AboutMailDraft.feedback
+	@State private var activeMailDraft = WordBopMailDraft.feedback
 	@State private var showingAcknowledgments = false
 
 		var body: some View {
@@ -838,7 +840,7 @@ private struct AboutWordBopperSheet: View {
 			geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
 		}
 
-	private func sendMail(_ draft: AboutMailDraft) {
+	private func sendMail(_ draft: WordBopMailDraft) {
 		activeMailDraft = draft
 		if MFMailComposeViewController.canSendMail() {
 			isShowingMailComposer = true
@@ -847,17 +849,8 @@ private struct AboutWordBopperSheet: View {
 		}
 	}
 
-	private func openMailFallback(for draft: AboutMailDraft) {
-		var components = URLComponents()
-		components.scheme = "mailto"
-		components.path = "marco@marconius.com"
-		var queryItems = [URLQueryItem(name: "subject", value: draft.subject)]
-		if let body = draft.body {
-			queryItems.append(URLQueryItem(name: "body", value: body))
-		}
-		components.queryItems = queryItems
-
-		if let mailURL = components.url {
+	private func openMailFallback(for draft: WordBopMailDraft) {
+		if let mailURL = draft.mailURL(recipient: "marco@marconius.com") {
 			openURL(mailURL)
 		}
 		refocusFeedbackButton()

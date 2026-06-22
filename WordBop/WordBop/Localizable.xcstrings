@@ -3319,6 +3319,12 @@
         }
       }
     },
+    "Game Options" : {
+
+    },
+    "Game Paused" : {
+
+    },
     "Game Settings" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4677,6 +4683,15 @@
         }
       }
     },
+    "Options" : {
+
+    },
+    "Pause" : {
+
+    },
+    "Pause Game" : {
+
+    },
     "Pick your preference of light or dark text for the bubbles. Either option will still have colorful bubbles to bop!" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4922,6 +4937,9 @@
           }
         }
       }
+    },
+    "Resume Game" : {
+
     },
     "Return Home" : {
       "extractionState" : "manual",

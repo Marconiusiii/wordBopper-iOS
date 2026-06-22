@@ -220,6 +220,28 @@ final class AudioEngine {
 		play(ctx.toBuffer(), priority: .score)
 	}
 
+	func playPauseSound() {
+		let scale: [Double] = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 659.25]
+		let motifs = [
+			[0, 2, 1, 4, 6],
+			[0, 1, 3, 2, 5],
+			[1, 0, 2, 4, 6],
+			[0, 3, 2, 5, 6]
+		]
+		playPauseResumeMotif(notes: (motifs.randomElement() ?? motifs[0]).map { scale[$0] })
+	}
+
+	func playResumeSound() {
+		let scale: [Double] = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 659.25]
+		let motifs = [
+			[6, 4, 5, 2, 0],
+			[6, 5, 3, 4, 1],
+			[5, 6, 4, 2, 0],
+			[6, 3, 4, 1, 0]
+		]
+		playPauseResumeMotif(notes: (motifs.randomElement() ?? motifs[0]).map { scale[$0] })
+	}
+
 	func playRoundEndSound() {
 		let chordTones: [Double] = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]
 		var noteIndex = Int.random(in: 0...4)
@@ -278,9 +300,27 @@ final class AudioEngine {
 		powerUpTimer = nil
 		powerUpStartedAt = nil
 		powerUpChimeStep = 0
+		for index in voices.indices where voices[index].priority == .ambient {
+			voices[index].player.stop()
+			voices[index].reservedUntil = .distantPast
+		}
 	}
 
 	// MARK: - Private helpers
+
+	private func playPauseResumeMotif(notes: [Double]) {
+		let spacing = 0.075
+		let duration = Double(notes.count) * spacing + 0.5
+		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
+		for (index, frequency) in notes.enumerated() {
+			let start = Double(index) * spacing
+			ctx.addOsc(type: .sine, freq: frequency, start: start, attackTime: 0.01,
+					   peakAmp: 0.22, releaseTime: 0.42, settleRatio: 0.4, settleTime: 0.07)
+			ctx.addOsc(type: .triangle, freq: frequency * 2, start: start, attackTime: 0.008,
+					   peakAmp: 0.055, releaseTime: 0.32, settleRatio: 0.3, settleTime: 0.06)
+		}
+		play(ctx.toBuffer(), priority: .score)
+	}
 
 	private func addSparkle(to ctx: inout SynthContext, step: Int, masterGain: Double) {
 		let sparkleNotes: [Double] = [659.25, 698.46, 783.99, 880.00, 987.77, 1046.50,
