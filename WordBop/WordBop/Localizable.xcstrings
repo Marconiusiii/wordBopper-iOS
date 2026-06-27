@@ -1881,6 +1881,9 @@
         }
       }
     },
+    "Bubble Color Theme" : {
+
+    },
     "Bubble Language" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2045,6 +2048,9 @@
         }
       }
     },
+    "Candy" : {
+
+    },
     "Chained words" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2167,6 +2173,9 @@
           }
         }
       }
+    },
+    "Choose a bubble color set that feels good to play with. Every theme keeps the letter contrast strong." : {
+
     },
     "Choose a smaller grid for a quicker, easier bop, or a larger grid for a bigger challenge. 5 by 5 is the classic size." : {
       "extractionState" : "manual",
@@ -2331,6 +2340,12 @@
           }
         }
       }
+    },
+    "Classic Bright" : {
+
+    },
+    "Classic Deep" : {
+
     },
     "Clear Letters" : {
       "extractionState" : "manual",
@@ -3072,6 +3087,9 @@
         }
       }
     },
+    "Fall" : {
+
+    },
     "Feel the Bop more with subtle game event vibrations." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3154,6 +3172,9 @@
         }
       }
     },
+    "Forest" : {
+
+    },
     "French" : {
       "comment" : "Bubble Language name",
       "extractionState" : "manual",
@@ -3195,6 +3216,9 @@
           }
         }
       }
+    },
+    "Galaxy" : {
+
     },
     "Game Announcements" : {
       "extractionState" : "manual",
@@ -3365,6 +3389,9 @@
           }
         }
       }
+    },
+    "Garden" : {
+
     },
     "German" : {
       "comment" : "Bubble Language name",
@@ -4189,6 +4216,9 @@
         }
       }
     },
+    "Neon" : {
+
+    },
     "No words made — try again!" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4435,6 +4465,9 @@
           }
         }
       }
+    },
+    "Ocean" : {
+
     },
     "Off" : {
       "comment" : "Announcement verbosity / position mode: off",
@@ -4684,6 +4717,9 @@
       }
     },
     "Options" : {
+
+    },
+    "Pastel" : {
 
     },
     "Pause" : {
@@ -5187,6 +5223,15 @@
         }
       }
     },
+    "Sky" : {
+
+    },
+    "Soft Charcoal" : {
+
+    },
+    "Soft White" : {
+
+    },
     "Spanish" : {
       "comment" : "Bubble Language name",
       "extractionState" : "manual",
@@ -5393,6 +5438,9 @@
         }
       }
     },
+    "Spring" : {
+
+    },
     "Start bopping!" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5515,6 +5563,15 @@
           }
         }
       }
+    },
+    "Summer" : {
+
+    },
+    "Sunrise" : {
+
+    },
+    "Sunset" : {
+
     },
     "The Bopple Bops Back" : {
       "extractionState" : "manual",
@@ -5926,6 +5983,9 @@
           }
         }
       }
+    },
+    "Winter" : {
+
     },
     "Word cleared." : {
       "extractionState" : "manual",

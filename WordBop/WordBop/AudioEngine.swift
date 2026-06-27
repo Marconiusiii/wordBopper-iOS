@@ -13,6 +13,12 @@ final class AudioEngine {
 	private var powerUpDuration: Double = 15
 	private var powerUpChimeStep = 0
 
+	var volume: Float = 0.82 {
+		didSet {
+			engine.mainMixerNode.outputVolume = min(max(volume, 0), 1)
+		}
+	}
+
 	// MARK: - Init
 
 	init() {
@@ -35,7 +41,7 @@ final class AudioEngine {
 			engine.connect(player, to: engine.mainMixerNode, format: format)
 			voices.append(AudioVoice(player: player))
 		}
-		engine.mainMixerNode.outputVolume = 0.82
+		engine.mainMixerNode.outputVolume = volume
 	}
 
 	// MARK: - Public sound interface

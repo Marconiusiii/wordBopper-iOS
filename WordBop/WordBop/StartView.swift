@@ -295,11 +295,13 @@ private struct GameSettingsSheet: View {
 	@Namespace private var letterPositionNamespace
 	@Namespace private var bubbleLetterStyleNamespace
 	@Namespace private var bubbleTextColorNamespace
+	@Namespace private var bubbleColorThemeNamespace
 	@Namespace private var gameAnnouncementsNamespace
 	@AccessibilityFocusState private var isBoppleTimerFocused: Bool
 	@AccessibilityFocusState private var isGridSizeFocused: Bool
 	@AccessibilityFocusState private var isDictionaryLanguageFocused: Bool
 	@AccessibilityFocusState private var isLetterPositionFocused: Bool
+	@AccessibilityFocusState private var isBubbleColorThemeFocused: Bool
 	@State private var showingAbout = false
 
 		var body: some View {
@@ -451,6 +453,30 @@ private struct GameSettingsSheet: View {
 
 						SettingsDescriptionRow("Pick your preference of light or dark text for the bubbles. Either option will still have colorful bubbles to bop!")
 
+							SettingsPickerBlock(title: "Bubble Color Theme", namespace: bubbleColorThemeNamespace, pairID: "bubbleColorTheme") {
+								Picker("Bubble Color Theme", selection: Binding(
+									get: { vm.bubbleColorTheme },
+									set: { theme in
+										vm.bubbleColorTheme = theme
+										refocusBubbleColorThemePicker()
+									}
+								)) {
+									ForEach(BubbleColorTheme.options(for: vm.bubbleTextColorOption)) { theme in
+										Text(theme.label).tag(theme)
+									}
+								}
+								.pickerStyle(.menu)
+								.accessibilityFocused($isBubbleColorThemeFocused)
+							}
+
+						SettingsDescriptionRow("Choose a bubble color set that feels good to play with. Every theme keeps the letter contrast strong.")
+
+						BubbleThemePreview(
+							textColorOption: vm.bubbleTextColorOption,
+							colorTheme: vm.bubbleColorTheme,
+							letterStyle: vm.bubbleLetterStyle
+						)
+
 						SettingsPickerBlock(title: "Game Announcements", namespace: gameAnnouncementsNamespace, pairID: "gameAnnouncements") {
 							Picker("Game Announcements", selection: Binding(
 								get: { vm.gameAnnouncementVerbosity },
@@ -482,6 +508,15 @@ private struct GameSettingsSheet: View {
 						))
 
 						SettingsDescriptionRow("Feel the Bop more with subtle game event vibrations.")
+
+						SettingsSectionHeading("Game Volume")
+
+						SettingsSliderRow(title: "Game Volume", value: Binding(
+							get: { vm.gameVolume },
+							set: { vm.gameVolume = $0 }
+						))
+
+						SettingsDescriptionRow("Set how loud the game sounds should be.")
 
 							SettingsLinkButtonRow(title: "About WordBopper") {
 								showingAbout = true
@@ -540,6 +575,13 @@ private struct GameSettingsSheet: View {
 		isLetterPositionFocused = false
 		DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
 			isLetterPositionFocused = true
+		}
+	}
+
+	private func refocusBubbleColorThemePicker() {
+		isBubbleColorThemeFocused = false
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+			isBubbleColorThemeFocused = true
 		}
 	}
 }
@@ -684,6 +726,91 @@ private struct SettingsPickerBlock<Content: View>: View {
 		}
 		.frame(maxWidth: .infinity, alignment: .leading)
 		.contentShape(Rectangle())
+	}
+}
+
+private struct SettingsSliderRow: View {
+	let title: LocalizedStringKey
+	@Binding var value: Double
+
+	private var percentValue: Int {
+		Int((value * 100).rounded())
+	}
+
+	var body: some View {
+		ZStack {
+			Color.wbBackground
+			Slider(value: $value, in: 0...1) {
+				Text(title)
+			}
+			.labelsHidden()
+			.tint(Color.wbAccent5)
+			.padding(.horizontal, 24)
+			.accessibilityValue("\(percentValue) percent")
+		}
+		.frame(maxWidth: .infinity, minHeight: 64)
+		.contentShape(Rectangle())
+	}
+}
+
+private struct BubbleThemePreview: View {
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
+	@Environment(\.legibilityWeight) private var legibilityWeight
+	let textColorOption: BubbleTextColorOption
+	let colorTheme: BubbleColorTheme
+	let letterStyle: BubbleLetterStyle
+
+	private let sampleLetters = ["B", "O", "P"]
+
+	private var palette: [Color] {
+		Color.bubbleFill(for: textColorOption, theme: colorTheme)
+	}
+
+	private var textColor: Color {
+		Color.bubbleText(for: textColorOption)
+	}
+
+	var body: some View {
+		ZStack {
+			Color.wbBackground
+			HStack(spacing: 10) {
+				ForEach(Array(sampleLetters.enumerated()), id: \.offset) { index, letter in
+					Text(letter)
+						.font(.system(size: letterSize, weight: letterWeight, design: letterStyle.fontDesign))
+						.foregroundStyle(textColor)
+						.lineLimit(1)
+						.minimumScaleFactor(0.7)
+						.frame(width: bubbleSize, height: bubbleSize)
+						.background(palette[index % palette.count])
+						.clipShape(Circle())
+						.shadow(color: .black.opacity(0.25), radius: 4, y: 3)
+				}
+			}
+			.padding(.vertical, 10)
+			.padding(.horizontal, 24)
+		}
+		.frame(maxWidth: .infinity, minHeight: 76)
+		.contentShape(Rectangle())
+		.accessibilityHidden(true)
+	}
+
+	private var bubbleSize: CGFloat {
+		switch dynamicTypeSize {
+		case .accessibility3, .accessibility4, .accessibility5:
+			58
+		case .accessibility1, .accessibility2:
+			54
+		default:
+			50
+		}
+	}
+
+	private var letterSize: CGFloat {
+		bubbleSize * 0.48
+	}
+
+	private var letterWeight: Font.Weight {
+		legibilityWeight == .bold ? .black : .bold
 	}
 }
 

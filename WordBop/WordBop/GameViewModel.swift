@@ -33,6 +33,92 @@ enum BubbleTextColorOption: String, CaseIterable, Identifiable {
 	}
 }
 
+enum BubbleColorTheme: String, CaseIterable, Identifiable {
+	case classicBright
+	case pastel
+	case spring
+	case summer
+	case candy
+	case garden
+	case sunrise
+	case sky
+	case softWhite
+	case classicDeep
+	case neon
+	case fall
+	case winter
+	case forest
+	case ocean
+	case sunset
+	case galaxy
+	case softCharcoal
+
+	var id: String { rawValue }
+
+	var label: String {
+		switch self {
+		case .classicBright:
+			String(localized: "Classic Bright")
+		case .pastel:
+			String(localized: "Pastel")
+		case .spring:
+			String(localized: "Spring")
+		case .summer:
+			String(localized: "Summer")
+		case .candy:
+			String(localized: "Candy")
+		case .garden:
+			String(localized: "Garden")
+		case .sunrise:
+			String(localized: "Sunrise")
+		case .sky:
+			String(localized: "Sky")
+		case .softWhite:
+			String(localized: "Soft White")
+		case .classicDeep:
+			String(localized: "Classic Deep")
+		case .neon:
+			String(localized: "Neon")
+		case .fall:
+			String(localized: "Fall")
+		case .winter:
+			String(localized: "Winter")
+		case .forest:
+			String(localized: "Forest")
+		case .ocean:
+			String(localized: "Ocean")
+		case .sunset:
+			String(localized: "Sunset")
+		case .galaxy:
+			String(localized: "Galaxy")
+		case .softCharcoal:
+			String(localized: "Soft Charcoal")
+		}
+	}
+
+	static func options(for textColorOption: BubbleTextColorOption) -> [BubbleColorTheme] {
+		switch textColorOption {
+		case .dark:
+			[.classicBright, .pastel, .spring, .summer, .candy, .garden, .sunrise, .sky, .softWhite]
+		case .light:
+			[.classicDeep, .neon, .fall, .winter, .forest, .ocean, .sunset, .galaxy, .softCharcoal]
+		}
+	}
+
+	static func defaultTheme(for textColorOption: BubbleTextColorOption) -> BubbleColorTheme {
+		switch textColorOption {
+		case .dark:
+			.classicBright
+		case .light:
+			.classicDeep
+		}
+	}
+
+	func supports(_ textColorOption: BubbleTextColorOption) -> Bool {
+		Self.options(for: textColorOption).contains(self)
+	}
+}
+
 enum BubbleLetterStyle: String, CaseIterable, Identifiable {
 	case playful
 	case simple
@@ -306,7 +392,15 @@ final class GameViewModel {
 		didSet { saveBopAway() }
 	}
 	var bubbleTextColorOption: BubbleTextColorOption = .dark {
-		didSet { saveBubbleTextColorOption() }
+		didSet {
+			if !bubbleColorTheme.supports(bubbleTextColorOption) {
+				bubbleColorTheme = BubbleColorTheme.defaultTheme(for: bubbleTextColorOption)
+			}
+			saveBubbleTextColorOption()
+		}
+	}
+	var bubbleColorTheme: BubbleColorTheme = .classicBright {
+		didSet { saveBubbleColorTheme() }
 	}
 	var bubbleLetterStyle: BubbleLetterStyle = .playful {
 		didSet { saveBubbleLetterStyle() }
@@ -318,6 +412,17 @@ final class GameViewModel {
 		didSet {
 			haptics.isEnabled = gameHapticsEnabled
 			saveGameHapticsEnabled()
+		}
+	}
+	var gameVolume: Double = 0.82 {
+		didSet {
+			let clampedVolume = min(max(gameVolume, 0), 1)
+			if clampedVolume != gameVolume {
+				gameVolume = clampedVolume
+				return
+			}
+			audio.volume = Float(clampedVolume)
+			saveGameVolume()
 		}
 	}
 	var leftHandedMode = false {
@@ -434,10 +539,13 @@ final class GameViewModel {
 		speakLetterPhonetics = loadSpeakLetterPhonetics()
 		bopAway = loadBopAway()
 		bubbleTextColorOption = loadBubbleTextColorOption()
+		bubbleColorTheme = loadBubbleColorTheme(for: bubbleTextColorOption)
 		bubbleLetterStyle = loadBubbleLetterStyle()
 		gameAnnouncementVerbosity = loadGameAnnouncementVerbosity()
 		gameHapticsEnabled = loadGameHapticsEnabled()
 		haptics.isEnabled = gameHapticsEnabled
+		gameVolume = loadGameVolume()
+		audio.volume = Float(gameVolume)
 		leftHandedMode = loadLeftHandedMode()
 		dictionaryLanguage = loadDictionaryLanguage()
 		dictionary.preload(dictionaryLanguage)
@@ -983,6 +1091,15 @@ final class GameViewModel {
 		return BubbleTextColorOption(rawValue: saved) ?? .dark
 	}
 
+	private func loadBubbleColorTheme(for textColorOption: BubbleTextColorOption) -> BubbleColorTheme {
+		guard let saved = UserDefaults.standard.string(forKey: "wordBopBubbleColorTheme"),
+			  let theme = BubbleColorTheme(rawValue: saved),
+			  theme.supports(textColorOption) else {
+			return BubbleColorTheme.defaultTheme(for: textColorOption)
+		}
+		return theme
+	}
+
 	private func loadBubbleLetterStyle() -> BubbleLetterStyle {
 		guard let saved = UserDefaults.standard.string(forKey: "wordBopBubbleLetterStyle") else {
 			return .playful
@@ -1002,6 +1119,13 @@ final class GameViewModel {
 			return true
 		}
 		return UserDefaults.standard.bool(forKey: "wordBopGameHapticsEnabled")
+	}
+
+	private func loadGameVolume() -> Double {
+		if UserDefaults.standard.object(forKey: "wordBopGameVolume") == nil {
+			return 0.82
+		}
+		return min(max(UserDefaults.standard.double(forKey: "wordBopGameVolume"), 0), 1)
 	}
 
 	private func loadLeftHandedMode() -> Bool {
@@ -1045,6 +1169,10 @@ final class GameViewModel {
 		UserDefaults.standard.set(bubbleTextColorOption.rawValue, forKey: "wordBopBubbleTextColorOption")
 	}
 
+	private func saveBubbleColorTheme() {
+		UserDefaults.standard.set(bubbleColorTheme.rawValue, forKey: "wordBopBubbleColorTheme")
+	}
+
 	private func saveBubbleLetterStyle() {
 		UserDefaults.standard.set(bubbleLetterStyle.rawValue, forKey: "wordBopBubbleLetterStyle")
 	}
@@ -1055,6 +1183,10 @@ final class GameViewModel {
 
 	private func saveGameHapticsEnabled() {
 		UserDefaults.standard.set(gameHapticsEnabled, forKey: "wordBopGameHapticsEnabled")
+	}
+
+	private func saveGameVolume() {
+		UserDefaults.standard.set(gameVolume, forKey: "wordBopGameVolume")
 	}
 
 	private func saveLeftHandedMode() {

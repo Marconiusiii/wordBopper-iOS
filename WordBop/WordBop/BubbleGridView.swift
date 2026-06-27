@@ -29,6 +29,7 @@ struct BubbleGridView: View {
 									dictionaryLanguage: vm.dictionaryLanguage,
 									speechLanguage: vm.dictionaryLanguage.speechLanguage,
 									textColorOption: vm.bubbleTextColorOption,
+									colorTheme: vm.bubbleColorTheme,
 									letterStyle: vm.bubbleLetterStyle
 								) {
 									vm.tapBubble(bubble)
@@ -59,12 +60,13 @@ struct BubbleButton: View {
 	let dictionaryLanguage: DictionaryLanguage
 	let speechLanguage: String
 	let textColorOption: BubbleTextColorOption
+	let colorTheme: BubbleColorTheme
 	let letterStyle: BubbleLetterStyle
 	let action: () -> Void
 	@State private var bopAwayPulse = false
 
 	private var fillColor: Color {
-		let palette = Color.bubbleFill(for: textColorOption)
+		let palette = Color.bubbleFill(for: textColorOption, theme: colorTheme)
 		guard bubble.colorIndex < palette.count else { return palette[0] }
 		return palette[bubble.colorIndex]
 	}
