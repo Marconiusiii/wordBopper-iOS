@@ -75,6 +75,7 @@ final class AudioEngine {
 		// Sparkle for 4th letter onward
 		if step >= 3 {
 			addSparkle(to: &ctx, rootFrequency: freq, step: step, masterGain: 1.0)
+			ctx.addReverbTail(gain: 0.055 + min(0.035, Double(step - 3) * 0.004), decay: 0.52)
 		}
 		play(ctx.toBuffer(), priority: .transient)
 	}
@@ -113,6 +114,7 @@ final class AudioEngine {
 		if wordLength >= 5 {
 			ctx.addNoise(start: 0, duration: 0.045, amplitude: wordLength >= 7 ? 0.4 : 0.22, highpass: false, bandpass: true)
 		}
+		ctx.addReverbTail(gain: wordLength >= 7 ? 0.15 : 0.11, decay: 0.58)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -132,6 +134,7 @@ final class AudioEngine {
 			ctx.addOsc(type: .sine,     freq: freq,     start: delay, attackTime: 0.01, peakAmp: 0.42, releaseTime: 0.28)
 			ctx.addOsc(type: .triangle, freq: freq * 2, start: delay, attackTime: 0.001, peakAmp: 0.12, releaseTime: 0.2)
 		}
+		ctx.addReverbTail(gain: 0.08, decay: 0.48)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -149,6 +152,7 @@ final class AudioEngine {
 			ctx.addOsc(type: type, freq: freq, start: t, attackTime: 0.01, peakAmp: shimmerVol,
 					   releaseTime: 0.5, filter: FilterSpec(kind: .bandpass, frequency: freq, q: 8))
 		}
+		ctx.addReverbTail(gain: 0.1, decay: 0.56)
 		play(ctx.toBuffer(), priority: .connected)
 	}
 
@@ -160,6 +164,7 @@ final class AudioEngine {
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		ctx.addOsc(type: .sine,     freq: root,  start: 0, attackTime: 0.012, peakAmp: 0.1, releaseTime: 0.42)
 		ctx.addOsc(type: .triangle, freq: fifth, start: 0, attackTime: 0.012, peakAmp: 0.08, releaseTime: 0.42)
+		ctx.addReverbTail(gain: 0.07, decay: 0.5)
 		play(ctx.toBuffer(), priority: .connected)
 	}
 
@@ -208,6 +213,7 @@ final class AudioEngine {
 		}
 		ctx.addNoise(start: 0.03, duration: 0.18, amplitude: 0.16 * masterVol, highpass: true)
 		ctx.addNoise(start: finishStart, duration: 0.09, amplitude: 0.09 * masterVol, highpass: false, bandpass: true)
+		ctx.addReverbTail(gain: 0.13, decay: 0.62)
 
 		play(ctx.toBuffer(), priority: .connected)
 	}
@@ -239,6 +245,7 @@ final class AudioEngine {
 			ctx.addOsc(type: .sine,     freq: freq,     start: nd, attackTime: 0.012, peakAmp: 0.27, releaseTime: 0.46)
 			ctx.addOsc(type: .triangle, freq: freq * 2, start: nd, attackTime: 0.012, peakAmp: 0.072, releaseTime: 0.46)
 		}
+		ctx.addReverbTail(gain: 0.1, decay: 0.54)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -257,6 +264,7 @@ final class AudioEngine {
 					   filter: FilterSpec(kind: .bandpass, frequency: freq * 2, q: 5))
 		}
 		ctx.addNoise(start: 0.02, duration: 0.08, amplitude: 0.07, highpass: false, bandpass: true)
+		ctx.addReverbTail(gain: 0.1, decay: 0.54)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -272,6 +280,7 @@ final class AudioEngine {
 					   peakAmp: 0.035, releaseTime: 0.7, settleRatio: 0.3, settleTime: 0.14)
 		}
 		ctx.addOscWithFreqSlide(freq: 523.25, endFreq: 783.99, start: 0.18, duration: 0.38, peakAmp: 0.055)
+		ctx.addReverbTail(gain: 0.12, decay: 0.58)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -315,6 +324,7 @@ final class AudioEngine {
 			ctx.addOsc(type: .triangle, freq: freq * 2,   start: nd, attackTime: 0.01, peakAmp: 0.088, releaseTime: 0.7)
 			ctx.addOsc(type: .sine,     freq: freq * 0.5, start: nd, attackTime: 0.01, peakAmp: 0.106, releaseTime: 0.7)
 		}
+		ctx.addReverbTail(gain: 0.13, decay: 0.6)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -374,6 +384,7 @@ final class AudioEngine {
 			ctx.addOsc(type: .triangle, freq: frequency * 2, start: start, attackTime: 0.008,
 					   peakAmp: 0.055, releaseTime: 0.32, settleRatio: 0.3, settleTime: 0.06)
 		}
+		ctx.addReverbTail(gain: 0.09, decay: 0.52)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -646,6 +657,21 @@ private struct SynthContext {
 			let progress = Double(i - startSample) / Double(max(noiseSamples, 1))
 			let gain = amplitude * exp(-progress * 5.0)
 			samples[i] += Float(filtered * gain)
+		}
+	}
+
+	mutating func addReverbTail(delay: Double = 0.055, gain: Double, decay: Double, taps: Int = 4) {
+		let dry = samples
+		let delaySamples = max(1, Int(delay * sampleRate))
+		guard taps > 0, delaySamples < dry.count else { return }
+
+		for tap in 1...taps {
+			let offset = delaySamples * tap
+			guard offset < dry.count else { break }
+			let tapGain = Float(gain * pow(decay, Double(tap - 1)))
+			for index in 0..<(dry.count - offset) {
+				samples[index + offset] += dry[index] * tapGain
+			}
 		}
 	}
 
