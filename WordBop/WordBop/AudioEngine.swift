@@ -391,29 +391,29 @@ final class AudioEngine {
 	}
 
 	private func addSparkle(to ctx: inout SynthContext, rootFrequency: Double, step: Int, masterGain: Double) {
-		let sparkleGain = min(0.064, 0.018 + Double(step - 3) * 0.005) * masterGain
-		let octaveFrequency = min(rootFrequency * 2.0, 4186.01)
-		let fifthFrequency = min(rootFrequency * 3.0, 5274.04)
-		let shimmerFrequency = min(rootFrequency * 4.0, 6271.93)
-
-		ctx.addOsc(type: .sine, freq: octaveFrequency, start: 0.06, attackTime: 0.008,
-				   peakAmp: sparkleGain, releaseTime: 0.26,
-				   filter: FilterSpec(kind: .bandpass, frequency: octaveFrequency, q: 7))
-
-		if step >= 5 {
-			ctx.addOsc(type: .triangle, freq: fifthFrequency, start: 0.108, attackTime: 0.007,
-					   peakAmp: sparkleGain * 0.48, releaseTime: 0.24,
-					   filter: FilterSpec(kind: .bandpass, frequency: fifthFrequency, q: 6))
+		let sparkleScale: [Double] = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88,
+									  523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77,
+									  1046.50, 1174.66, 1318.51, 1396.91, 1567.98, 1760.00,
+									  1975.53, 2093.00, 2349.32, 2637.02, 2793.83, 3135.96,
+									  3520.00, 3951.07, 4186.01]
+		let sparkleCount = min(4, max(1, step - 2))
+		let sparkleGain = min(0.082, 0.026 + Double(step - 3) * 0.008) * masterGain
+		let selectedRootIndex = sparkleScale.lastIndex(where: { $0 <= rootFrequency }) ?? 0
+		let rootIndex = min(max(0, selectedRootIndex - 2), max(0, sparkleScale.count - sparkleCount))
+		var phrase = Array(sparkleScale[rootIndex..<(rootIndex + sparkleCount)])
+		if step >= 7, phrase.count > 1 {
+			let last = phrase.removeLast()
+			phrase.shuffle()
+			phrase.append(last)
 		}
 
-		if step >= 7 {
-			ctx.addOsc(type: .sine, freq: shimmerFrequency, start: 0.156, attackTime: 0.006,
-					   peakAmp: sparkleGain * 0.24, releaseTime: 0.2,
-					   filter: FilterSpec(kind: .bandpass, frequency: shimmerFrequency, q: 8))
-		}
-
-		if step >= 9 {
-			ctx.addNoise(start: 0.04, duration: 0.035, amplitude: 0.028 * masterGain, highpass: false, bandpass: true)
+		for (i, freq) in phrase.enumerated() {
+			let delay = 0.055 + Double(i) * 0.06
+			ctx.addOsc(type: .sine, freq: freq, start: delay, attackTime: 0.018, peakAmp: sparkleGain,
+					   releaseTime: 0.48, filter: FilterSpec(kind: .lowpass, frequency: 2600, q: 0.7))
+			ctx.addOsc(type: .triangle, freq: freq * 2, start: delay + 0.006, attackTime: 0.01,
+					   peakAmp: sparkleGain * 0.16, releaseTime: 0.34,
+					   filter: FilterSpec(kind: .bandpass, frequency: freq * 2, q: 5))
 		}
 	}
 
