@@ -378,22 +378,27 @@ final class AudioEngine {
 	}
 
 	private func addSparkle(to ctx: inout SynthContext, rootFrequency: Double, step: Int, masterGain: Double) {
-		let harmonicGain = min(0.052, 0.018 + Double(step - 3) * 0.0045) * masterGain
+		let progress = min(1.0, Double(step - 3) / 7.0)
+		let glowGain = (0.028 + progress * 0.062) * masterGain
+		let glowRelease = 0.42 + progress * 0.22
 		let octaveFrequency = min(rootFrequency * 2.0, 4186.01)
 		let fifthFrequency = min(rootFrequency * 3.0, 5274.04)
+		let shimmerFrequency = min(rootFrequency * 4.0, 6271.93)
 
-		ctx.addOsc(type: .sine, freq: octaveFrequency, start: 0.07, attackTime: 0.018,
-				   peakAmp: harmonicGain, releaseTime: 0.34,
-				   filter: FilterSpec(kind: .bandpass, frequency: octaveFrequency, q: 6))
+		ctx.addOsc(type: .sine, freq: octaveFrequency, start: 0.045, attackTime: 0.02,
+				   peakAmp: glowGain, releaseTime: glowRelease,
+				   filter: FilterSpec(kind: .bandpass, frequency: octaveFrequency, q: 7))
 
 		if step >= 5 {
-			ctx.addOsc(type: .triangle, freq: fifthFrequency, start: 0.125, attackTime: 0.016,
-					   peakAmp: harmonicGain * 0.58, releaseTime: 0.38,
-					   filter: FilterSpec(kind: .bandpass, frequency: fifthFrequency, q: 5))
+			ctx.addOsc(type: .triangle, freq: fifthFrequency, start: 0.1, attackTime: 0.018,
+					   peakAmp: glowGain * 0.54, releaseTime: glowRelease * 0.92,
+					   filter: FilterSpec(kind: .bandpass, frequency: fifthFrequency, q: 6))
 		}
 
-		if step >= 8 {
-			ctx.addNoise(start: 0.04, duration: 0.045, amplitude: 0.035 * masterGain, highpass: false, bandpass: true)
+		if step >= 7 {
+			ctx.addOsc(type: .sine, freq: shimmerFrequency, start: 0.155, attackTime: 0.016,
+					   peakAmp: glowGain * 0.32, releaseTime: glowRelease * 0.78,
+					   filter: FilterSpec(kind: .bandpass, frequency: shimmerFrequency, q: 8))
 		}
 	}
 
