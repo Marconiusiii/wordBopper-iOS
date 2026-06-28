@@ -56,11 +56,12 @@ final class AudioEngine {
 
 	func playSelectSound() {
 		let selectNotes: [Double] = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88,
-									 523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50]
+									 523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50,
+									 1174.66, 1318.51, 1396.91, 1567.98, 1760.00, 1975.53, 2093.00]
 		let step = selectNoteIndex
 		selectNoteIndex += 1
 		let freq = selectNotes[min(step, selectNotes.count - 1)]
-		let duration = step >= 3 ? 0.64 : 0.44
+		let duration = step >= 7 ? 0.74 : step >= 5 ? 0.68 : step >= 3 ? 0.64 : 0.44
 
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		// Marimba: 3 harmonics
@@ -73,7 +74,7 @@ final class AudioEngine {
 		ctx.addNoise(start: 0, duration: 0.01, amplitude: 0.18, highpass: true)
 		// Sparkle for 4th letter onward
 		if step >= 3 {
-			addSparkle(to: &ctx, step: step, masterGain: 1.0)
+			addSparkle(to: &ctx, rootFrequency: freq, step: step, masterGain: 1.0)
 		}
 		play(ctx.toBuffer(), priority: .transient)
 	}
@@ -212,6 +213,21 @@ final class AudioEngine {
 	}
 
 	func playRoundStartSound() {
+		playRoundStartSound(for: .timed)
+	}
+
+	func playRoundStartSound(for gameMode: GameMode) {
+		switch gameMode {
+		case .timed:
+			playTimedRoundStartSound()
+		case .bopple:
+			playBoppleRoundStartSound()
+		case .nonStop:
+			playNonStopRoundStartSound()
+		}
+	}
+
+	private func playTimedRoundStartSound() {
 		let chordNotes: [Double] = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]
 		let shapes = [[0,1,2,3],[2,1,3,0],[1,3,2,4],[3,2,4,5],[4,2,3,1]]
 		let shape = shapes[Int.random(in: 0..<shapes.count)]
@@ -223,6 +239,39 @@ final class AudioEngine {
 			ctx.addOsc(type: .sine,     freq: freq,     start: nd, attackTime: 0.012, peakAmp: 0.27, releaseTime: 0.46)
 			ctx.addOsc(type: .triangle, freq: freq * 2, start: nd, attackTime: 0.012, peakAmp: 0.072, releaseTime: 0.46)
 		}
+		play(ctx.toBuffer(), priority: .score)
+	}
+
+	private func playBoppleRoundStartSound() {
+		let rollNotes: [Double] = [392.00, 523.25, 587.33, 659.25, 783.99, 1046.50]
+		let shapes = [[0, 2, 1, 3, 5], [1, 0, 3, 2, 4], [2, 3, 1, 4, 5]]
+		let notes = (shapes.randomElement() ?? shapes[0]).map { rollNotes[$0] }
+		let duration = Double(notes.count) * 0.06 + 0.62
+		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
+		for (i, freq) in notes.enumerated() {
+			let nd = Double(i) * 0.06
+			ctx.addOsc(type: .sine, freq: freq, start: nd, attackTime: 0.01,
+					   peakAmp: 0.22, releaseTime: 0.48, settleRatio: 0.4, settleTime: 0.08)
+			ctx.addOsc(type: .triangle, freq: freq * 2, start: nd, attackTime: 0.006,
+					   peakAmp: 0.058, releaseTime: 0.36,
+					   filter: FilterSpec(kind: .bandpass, frequency: freq * 2, q: 5))
+		}
+		ctx.addNoise(start: 0.02, duration: 0.08, amplitude: 0.07, highpass: false, bandpass: true)
+		play(ctx.toBuffer(), priority: .score)
+	}
+
+	private func playNonStopRoundStartSound() {
+		let chordNotes: [Double] = [261.63, 392.00, 523.25, 659.25, 783.99]
+		let duration = 1.04
+		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
+		for (i, freq) in chordNotes.enumerated() {
+			let nd = Double(i) * 0.035
+			ctx.addOsc(type: .sine, freq: freq, start: nd, attackTime: 0.035,
+					   peakAmp: 0.18, releaseTime: 0.88, settleRatio: 0.42, settleTime: 0.16)
+			ctx.addOsc(type: .triangle, freq: freq * 2, start: nd, attackTime: 0.028,
+					   peakAmp: 0.035, releaseTime: 0.7, settleRatio: 0.3, settleTime: 0.14)
+		}
+		ctx.addOscWithFreqSlide(freq: 523.25, endFreq: 783.99, start: 0.18, duration: 0.38, peakAmp: 0.055)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -328,23 +377,23 @@ final class AudioEngine {
 		play(ctx.toBuffer(), priority: .score)
 	}
 
-	private func addSparkle(to ctx: inout SynthContext, step: Int, masterGain: Double) {
-		let sparkleNotes: [Double] = [659.25, 698.46, 783.99, 880.00, 987.77, 1046.50,
-									  1174.66, 1318.51, 1396.91, 1567.98]
-		let sparkleCount = min(4, max(3, step - 1))
-		let sparkleGain = min(0.07, 0.024 + Double(step - 3) * 0.007) * masterGain
-		let rootIndex = min(step - 3, sparkleNotes.count - 4)
-		var phrase = Array(sparkleNotes[rootIndex..<min(rootIndex + sparkleCount, sparkleNotes.count)])
-		if step >= 7, phrase.count > 1 {
-			let last = phrase.removeLast()
-			phrase.shuffle()
-			phrase.append(last)
+	private func addSparkle(to ctx: inout SynthContext, rootFrequency: Double, step: Int, masterGain: Double) {
+		let harmonicGain = min(0.052, 0.018 + Double(step - 3) * 0.0045) * masterGain
+		let octaveFrequency = min(rootFrequency * 2.0, 4186.01)
+		let fifthFrequency = min(rootFrequency * 3.0, 5274.04)
+
+		ctx.addOsc(type: .sine, freq: octaveFrequency, start: 0.07, attackTime: 0.018,
+				   peakAmp: harmonicGain, releaseTime: 0.34,
+				   filter: FilterSpec(kind: .bandpass, frequency: octaveFrequency, q: 6))
+
+		if step >= 5 {
+			ctx.addOsc(type: .triangle, freq: fifthFrequency, start: 0.125, attackTime: 0.016,
+					   peakAmp: harmonicGain * 0.58, releaseTime: 0.38,
+					   filter: FilterSpec(kind: .bandpass, frequency: fifthFrequency, q: 5))
 		}
 
-		for (i, freq) in phrase.enumerated() {
-			let delay = 0.055 + Double(i) * 0.06
-			ctx.addOsc(type: .sine, freq: freq, start: delay, attackTime: 0.018, peakAmp: sparkleGain,
-					   releaseTime: 0.36, filter: FilterSpec(kind: .lowpass, frequency: 2400, q: 0.7))
+		if step >= 8 {
+			ctx.addNoise(start: 0.04, duration: 0.045, amplitude: 0.035 * masterGain, highpass: false, bandpass: true)
 		}
 	}
 

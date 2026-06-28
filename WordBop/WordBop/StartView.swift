@@ -477,6 +477,15 @@ private struct GameSettingsSheet: View {
 							letterStyle: vm.bubbleLetterStyle
 						)
 
+						SettingsSectionHeading("Game Volume")
+
+						SettingsSliderRow(title: "Game Volume", value: Binding(
+							get: { vm.gameVolume },
+							set: { vm.gameVolume = $0 }
+						))
+
+						SettingsDescriptionRow("Set how loud the game sounds should be.")
+
 						SettingsPickerBlock(title: "Game Announcements", namespace: gameAnnouncementsNamespace, pairID: "gameAnnouncements") {
 							Picker("Game Announcements", selection: Binding(
 								get: { vm.gameAnnouncementVerbosity },
@@ -508,15 +517,6 @@ private struct GameSettingsSheet: View {
 						))
 
 						SettingsDescriptionRow("Feel the Bop more with subtle game event vibrations.")
-
-						SettingsSectionHeading("Game Volume")
-
-						SettingsSliderRow(title: "Game Volume", value: Binding(
-							get: { vm.gameVolume },
-							set: { vm.gameVolume = $0 }
-						))
-
-						SettingsDescriptionRow("Set how loud the game sounds should be.")
 
 							SettingsLinkButtonRow(title: "About WordBopper") {
 								showingAbout = true

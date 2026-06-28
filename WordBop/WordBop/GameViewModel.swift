@@ -579,7 +579,7 @@ final class GameViewModel {
 		}
 
 		screen = .game
-		audio.playRoundStartSound()
+		audio.playRoundStartSound(for: gameMode)
 		if showsTimer { startTimer() }
 	}
 

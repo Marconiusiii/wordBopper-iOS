@@ -492,6 +492,9 @@
         }
       }
     },
+    "%lld percent" : {
+
+    },
     "%lld points" : {
       "comment" : "Score points spoken aloud; supports plural rules",
       "extractionState" : "manual",
@@ -3390,6 +3393,9 @@
         }
       }
     },
+    "Game Volume" : {
+
+    },
     "Garden" : {
 
     },
@@ -5181,6 +5187,9 @@
           }
         }
       }
+    },
+    "Set how loud the game sounds should be." : {
+
     },
     "Simple" : {
       "extractionState" : "manual",
