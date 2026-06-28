@@ -61,7 +61,7 @@ final class AudioEngine {
 		let step = selectNoteIndex
 		selectNoteIndex += 1
 		let freq = selectNotes[min(step, selectNotes.count - 1)]
-		let duration = step >= 7 ? 0.74 : step >= 5 ? 0.68 : step >= 3 ? 0.64 : 0.44
+		let duration = step >= 7 ? 1.08 : step >= 5 ? 0.94 : step >= 3 ? 0.78 : 0.44
 
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		// Marimba: 3 harmonics
@@ -75,7 +75,10 @@ final class AudioEngine {
 		// Sparkle for 4th letter onward
 		if step >= 3 {
 			addSparkle(to: &ctx, rootFrequency: freq, step: step, masterGain: 1.0)
-			ctx.addReverbTail(gain: 0.055 + min(0.035, Double(step - 3) * 0.004), decay: 0.52)
+			ctx.addReverbTail(delay: 0.07,
+							  gain: 0.14 + min(0.08, Double(step - 3) * 0.01),
+							  decay: 0.72,
+							  taps: 7)
 		}
 		play(ctx.toBuffer(), priority: .transient)
 	}
@@ -114,7 +117,7 @@ final class AudioEngine {
 		if wordLength >= 5 {
 			ctx.addNoise(start: 0, duration: 0.045, amplitude: wordLength >= 7 ? 0.4 : 0.22, highpass: false, bandpass: true)
 		}
-		ctx.addReverbTail(gain: wordLength >= 7 ? 0.15 : 0.11, decay: 0.58)
+		ctx.addReverbTail(delay: 0.065, gain: wordLength >= 7 ? 0.24 : 0.18, decay: 0.68, taps: 6)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -134,7 +137,7 @@ final class AudioEngine {
 			ctx.addOsc(type: .sine,     freq: freq,     start: delay, attackTime: 0.01, peakAmp: 0.42, releaseTime: 0.28)
 			ctx.addOsc(type: .triangle, freq: freq * 2, start: delay, attackTime: 0.001, peakAmp: 0.12, releaseTime: 0.2)
 		}
-		ctx.addReverbTail(gain: 0.08, decay: 0.48)
+		ctx.addReverbTail(delay: 0.065, gain: 0.14, decay: 0.62, taps: 5)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -152,7 +155,7 @@ final class AudioEngine {
 			ctx.addOsc(type: type, freq: freq, start: t, attackTime: 0.01, peakAmp: shimmerVol,
 					   releaseTime: 0.5, filter: FilterSpec(kind: .bandpass, frequency: freq, q: 8))
 		}
-		ctx.addReverbTail(gain: 0.1, decay: 0.56)
+		ctx.addReverbTail(delay: 0.065, gain: 0.18, decay: 0.68, taps: 6)
 		play(ctx.toBuffer(), priority: .connected)
 	}
 
@@ -164,7 +167,7 @@ final class AudioEngine {
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		ctx.addOsc(type: .sine,     freq: root,  start: 0, attackTime: 0.012, peakAmp: 0.1, releaseTime: 0.42)
 		ctx.addOsc(type: .triangle, freq: fifth, start: 0, attackTime: 0.012, peakAmp: 0.08, releaseTime: 0.42)
-		ctx.addReverbTail(gain: 0.07, decay: 0.5)
+		ctx.addReverbTail(delay: 0.06, gain: 0.13, decay: 0.62, taps: 5)
 		play(ctx.toBuffer(), priority: .connected)
 	}
 
@@ -213,7 +216,7 @@ final class AudioEngine {
 		}
 		ctx.addNoise(start: 0.03, duration: 0.18, amplitude: 0.16 * masterVol, highpass: true)
 		ctx.addNoise(start: finishStart, duration: 0.09, amplitude: 0.09 * masterVol, highpass: false, bandpass: true)
-		ctx.addReverbTail(gain: 0.13, decay: 0.62)
+		ctx.addReverbTail(delay: 0.07, gain: 0.23, decay: 0.72, taps: 7)
 
 		play(ctx.toBuffer(), priority: .connected)
 	}
@@ -245,7 +248,7 @@ final class AudioEngine {
 			ctx.addOsc(type: .sine,     freq: freq,     start: nd, attackTime: 0.012, peakAmp: 0.27, releaseTime: 0.46)
 			ctx.addOsc(type: .triangle, freq: freq * 2, start: nd, attackTime: 0.012, peakAmp: 0.072, releaseTime: 0.46)
 		}
-		ctx.addReverbTail(gain: 0.1, decay: 0.54)
+		ctx.addReverbTail(delay: 0.065, gain: 0.17, decay: 0.66, taps: 6)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -264,7 +267,7 @@ final class AudioEngine {
 					   filter: FilterSpec(kind: .bandpass, frequency: freq * 2, q: 5))
 		}
 		ctx.addNoise(start: 0.02, duration: 0.08, amplitude: 0.07, highpass: false, bandpass: true)
-		ctx.addReverbTail(gain: 0.1, decay: 0.54)
+		ctx.addReverbTail(delay: 0.065, gain: 0.17, decay: 0.66, taps: 6)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -280,7 +283,7 @@ final class AudioEngine {
 					   peakAmp: 0.035, releaseTime: 0.7, settleRatio: 0.3, settleTime: 0.14)
 		}
 		ctx.addOscWithFreqSlide(freq: 523.25, endFreq: 783.99, start: 0.18, duration: 0.38, peakAmp: 0.055)
-		ctx.addReverbTail(gain: 0.12, decay: 0.58)
+		ctx.addReverbTail(delay: 0.07, gain: 0.2, decay: 0.7, taps: 7)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -324,7 +327,7 @@ final class AudioEngine {
 			ctx.addOsc(type: .triangle, freq: freq * 2,   start: nd, attackTime: 0.01, peakAmp: 0.088, releaseTime: 0.7)
 			ctx.addOsc(type: .sine,     freq: freq * 0.5, start: nd, attackTime: 0.01, peakAmp: 0.106, releaseTime: 0.7)
 		}
-		ctx.addReverbTail(gain: 0.13, decay: 0.6)
+		ctx.addReverbTail(delay: 0.07, gain: 0.23, decay: 0.72, taps: 7)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -384,14 +387,14 @@ final class AudioEngine {
 			ctx.addOsc(type: .triangle, freq: frequency * 2, start: start, attackTime: 0.008,
 					   peakAmp: 0.055, releaseTime: 0.32, settleRatio: 0.3, settleTime: 0.06)
 		}
-		ctx.addReverbTail(gain: 0.09, decay: 0.52)
+		ctx.addReverbTail(delay: 0.065, gain: 0.16, decay: 0.66, taps: 6)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
 	private func addSparkle(to ctx: inout SynthContext, rootFrequency: Double, step: Int, masterGain: Double) {
 		let progress = min(1.0, Double(step - 3) / 7.0)
-		let glowGain = (0.028 + progress * 0.062) * masterGain
-		let glowRelease = 0.42 + progress * 0.22
+		let glowGain = (0.034 + progress * 0.078) * masterGain
+		let glowRelease = 0.58 + progress * 0.38
 		let octaveFrequency = min(rootFrequency * 2.0, 4186.01)
 		let fifthFrequency = min(rootFrequency * 3.0, 5274.04)
 		let shimmerFrequency = min(rootFrequency * 4.0, 6271.93)
