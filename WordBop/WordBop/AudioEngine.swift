@@ -75,10 +75,6 @@ final class AudioEngine {
 		// Sparkle for 4th letter onward
 		if step >= 3 {
 			addSparkle(to: &ctx, rootFrequency: freq, step: step, masterGain: 1.0)
-			ctx.addReverbTail(delay: 0.07,
-							  gain: 0.14 + min(0.08, Double(step - 3) * 0.01),
-							  decay: 0.72,
-							  taps: 7)
 		}
 		play(ctx.toBuffer(), priority: .transient)
 	}
@@ -100,14 +96,15 @@ final class AudioEngine {
 		let masterVol = wordLength >= 7 ? 1.0 : wordLength >= 5 ? 0.82 : 0.65
 		let spacing = wordLength >= 7 ? 0.055 : wordLength >= 5 ? 0.065 : 0.075
 		let notes = Array(baseNotes.prefix(noteCount))
-		let duration = spacing * Double(notes.count) + 0.9
+		let rewardRelease = wordLength >= 7 ? 1.18 : wordLength >= 5 ? 1.05 : 0.92
+		let duration = spacing * Double(notes.count) + rewardRelease + 0.25
 
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		for (i, freq) in notes.enumerated() {
 			let nd = Double(i) * spacing
-			ctx.addOsc(type: .sine,     freq: freq,       start: nd, attackTime: 0.012, peakAmp: 0.38 * masterVol, releaseTime: 0.85, settleRatio: 0.45, settleTime: 0.1)
-			ctx.addOsc(type: .triangle, freq: freq * 2,   start: nd, attackTime: 0.012, peakAmp: 0.12 * masterVol, releaseTime: 0.85, settleRatio: 0.45, settleTime: 0.1)
-			ctx.addOsc(type: .sine,     freq: freq * 0.5, start: nd, attackTime: 0.012, peakAmp: 0.18 * masterVol, releaseTime: 0.85, settleRatio: 0.45, settleTime: 0.1)
+			ctx.addOsc(type: .sine,     freq: freq,       start: nd, attackTime: 0.012, peakAmp: 0.38 * masterVol, releaseTime: rewardRelease, settleRatio: 0.45, settleTime: 0.1)
+			ctx.addOsc(type: .triangle, freq: freq * 2,   start: nd, attackTime: 0.012, peakAmp: 0.12 * masterVol, releaseTime: rewardRelease, settleRatio: 0.45, settleTime: 0.1)
+			ctx.addOsc(type: .sine,     freq: freq * 0.5, start: nd, attackTime: 0.012, peakAmp: 0.18 * masterVol, releaseTime: rewardRelease, settleRatio: 0.45, settleTime: 0.1)
 		}
 		// Sub thump
 		let subFreq = wordLength >= 5 ? 130.0 : 110.0
@@ -117,7 +114,6 @@ final class AudioEngine {
 		if wordLength >= 5 {
 			ctx.addNoise(start: 0, duration: 0.045, amplitude: wordLength >= 7 ? 0.4 : 0.22, highpass: false, bandpass: true)
 		}
-		ctx.addReverbTail(delay: 0.065, gain: wordLength >= 7 ? 0.24 : 0.18, decay: 0.68, taps: 6)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -137,7 +133,6 @@ final class AudioEngine {
 			ctx.addOsc(type: .sine,     freq: freq,     start: delay, attackTime: 0.01, peakAmp: 0.42, releaseTime: 0.28)
 			ctx.addOsc(type: .triangle, freq: freq * 2, start: delay, attackTime: 0.001, peakAmp: 0.12, releaseTime: 0.2)
 		}
-		ctx.addReverbTail(delay: 0.065, gain: 0.14, decay: 0.62, taps: 5)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -146,16 +141,20 @@ final class AudioEngine {
 		let shimmerVol = wordLength >= 7 ? 0.26 : wordLength >= 5 ? 0.2 : 0.14
 		let allNotes: [Double] = [1046.5, 1318.51, 1567.98, 2093.0, 2637.02, 3135.96, 4186.01, 5274.04]
 		let notes = Array(allNotes.prefix(noteCount))
-		let duration = Double(noteCount) * 0.045 + 0.55
+		let spacing = 0.05
+		let duration = Double(noteCount) * spacing + 0.9
 
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		for (i, freq) in notes.enumerated() {
-			let t = Double(i) * 0.045
+			let t = Double(i) * spacing
 			let type: OscType = i % 2 == 0 ? .sine : .triangle
 			ctx.addOsc(type: type, freq: freq, start: t, attackTime: 0.01, peakAmp: shimmerVol,
-					   releaseTime: 0.5, filter: FilterSpec(kind: .bandpass, frequency: freq, q: 8))
+					   releaseTime: 0.75, filter: FilterSpec(kind: .bandpass, frequency: freq, q: 8))
 		}
-		ctx.addReverbTail(delay: 0.065, gain: 0.18, decay: 0.68, taps: 6)
+		let finishStart = Double(noteCount) * spacing
+		ctx.addOsc(type: .sine, freq: 2093.0, start: finishStart, attackTime: 0.018,
+				   peakAmp: shimmerVol * 0.42, releaseTime: 0.72,
+				   filter: FilterSpec(kind: .bandpass, frequency: 2093.0, q: 7))
 		play(ctx.toBuffer(), priority: .connected)
 	}
 
@@ -167,7 +166,6 @@ final class AudioEngine {
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 		ctx.addOsc(type: .sine,     freq: root,  start: 0, attackTime: 0.012, peakAmp: 0.1, releaseTime: 0.42)
 		ctx.addOsc(type: .triangle, freq: fifth, start: 0, attackTime: 0.012, peakAmp: 0.08, releaseTime: 0.42)
-		ctx.addReverbTail(delay: 0.06, gain: 0.13, decay: 0.62, taps: 5)
 		play(ctx.toBuffer(), priority: .connected)
 	}
 
@@ -216,8 +214,6 @@ final class AudioEngine {
 		}
 		ctx.addNoise(start: 0.03, duration: 0.18, amplitude: 0.16 * masterVol, highpass: true)
 		ctx.addNoise(start: finishStart, duration: 0.09, amplitude: 0.09 * masterVol, highpass: false, bandpass: true)
-		ctx.addReverbTail(delay: 0.07, gain: 0.23, decay: 0.72, taps: 7)
-
 		play(ctx.toBuffer(), priority: .connected)
 	}
 
@@ -248,7 +244,6 @@ final class AudioEngine {
 			ctx.addOsc(type: .sine,     freq: freq,     start: nd, attackTime: 0.012, peakAmp: 0.27, releaseTime: 0.46)
 			ctx.addOsc(type: .triangle, freq: freq * 2, start: nd, attackTime: 0.012, peakAmp: 0.072, releaseTime: 0.46)
 		}
-		ctx.addReverbTail(delay: 0.065, gain: 0.17, decay: 0.66, taps: 6)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -267,7 +262,6 @@ final class AudioEngine {
 					   filter: FilterSpec(kind: .bandpass, frequency: freq * 2, q: 5))
 		}
 		ctx.addNoise(start: 0.02, duration: 0.08, amplitude: 0.07, highpass: false, bandpass: true)
-		ctx.addReverbTail(delay: 0.065, gain: 0.17, decay: 0.66, taps: 6)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -283,7 +277,6 @@ final class AudioEngine {
 					   peakAmp: 0.035, releaseTime: 0.7, settleRatio: 0.3, settleTime: 0.14)
 		}
 		ctx.addOscWithFreqSlide(freq: 523.25, endFreq: 783.99, start: 0.18, duration: 0.38, peakAmp: 0.055)
-		ctx.addReverbTail(delay: 0.07, gain: 0.2, decay: 0.7, taps: 7)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -313,10 +306,18 @@ final class AudioEngine {
 		let chordTones: [Double] = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]
 		var noteIndex = Int.random(in: 0...4)
 		var notes: [Double] = []
+		var usedIndexes = Set<Int>()
 		for _ in 0..<6 {
 			notes.append(chordTones[noteIndex])
-			let turn = [-2, -1, 1, 2, 3].randomElement() ?? 1
-			noteIndex = min(max(noteIndex + turn, 0), chordTones.count - 1)
+			usedIndexes.insert(noteIndex)
+			let turnCandidates = [-3, -2, -1, 1, 2, 3]
+				.map { noteIndex + $0 }
+				.filter { chordTones.indices.contains($0) && $0 != noteIndex && !usedIndexes.contains($0) }
+			if let nextIndex = turnCandidates.randomElement() {
+				noteIndex = nextIndex
+			} else {
+				noteIndex = chordTones.indices.filter { $0 != noteIndex && !usedIndexes.contains($0) }.randomElement() ?? noteIndex
+			}
 		}
 		notes.append(2093.00)
 		let duration = Double(notes.count) * 0.085 + 0.75
@@ -327,7 +328,6 @@ final class AudioEngine {
 			ctx.addOsc(type: .triangle, freq: freq * 2,   start: nd, attackTime: 0.01, peakAmp: 0.088, releaseTime: 0.7)
 			ctx.addOsc(type: .sine,     freq: freq * 0.5, start: nd, attackTime: 0.01, peakAmp: 0.106, releaseTime: 0.7)
 		}
-		ctx.addReverbTail(delay: 0.07, gain: 0.23, decay: 0.72, taps: 7)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
@@ -387,32 +387,33 @@ final class AudioEngine {
 			ctx.addOsc(type: .triangle, freq: frequency * 2, start: start, attackTime: 0.008,
 					   peakAmp: 0.055, releaseTime: 0.32, settleRatio: 0.3, settleTime: 0.06)
 		}
-		ctx.addReverbTail(delay: 0.065, gain: 0.16, decay: 0.66, taps: 6)
 		play(ctx.toBuffer(), priority: .score)
 	}
 
 	private func addSparkle(to ctx: inout SynthContext, rootFrequency: Double, step: Int, masterGain: Double) {
-		let progress = min(1.0, Double(step - 3) / 7.0)
-		let glowGain = (0.034 + progress * 0.078) * masterGain
-		let glowRelease = 0.58 + progress * 0.38
+		let sparkleGain = min(0.064, 0.018 + Double(step - 3) * 0.005) * masterGain
 		let octaveFrequency = min(rootFrequency * 2.0, 4186.01)
 		let fifthFrequency = min(rootFrequency * 3.0, 5274.04)
 		let shimmerFrequency = min(rootFrequency * 4.0, 6271.93)
 
-		ctx.addOsc(type: .sine, freq: octaveFrequency, start: 0.045, attackTime: 0.02,
-				   peakAmp: glowGain, releaseTime: glowRelease,
+		ctx.addOsc(type: .sine, freq: octaveFrequency, start: 0.06, attackTime: 0.008,
+				   peakAmp: sparkleGain, releaseTime: 0.26,
 				   filter: FilterSpec(kind: .bandpass, frequency: octaveFrequency, q: 7))
 
 		if step >= 5 {
-			ctx.addOsc(type: .triangle, freq: fifthFrequency, start: 0.1, attackTime: 0.018,
-					   peakAmp: glowGain * 0.54, releaseTime: glowRelease * 0.92,
+			ctx.addOsc(type: .triangle, freq: fifthFrequency, start: 0.108, attackTime: 0.007,
+					   peakAmp: sparkleGain * 0.48, releaseTime: 0.24,
 					   filter: FilterSpec(kind: .bandpass, frequency: fifthFrequency, q: 6))
 		}
 
 		if step >= 7 {
-			ctx.addOsc(type: .sine, freq: shimmerFrequency, start: 0.155, attackTime: 0.016,
-					   peakAmp: glowGain * 0.32, releaseTime: glowRelease * 0.78,
+			ctx.addOsc(type: .sine, freq: shimmerFrequency, start: 0.156, attackTime: 0.006,
+					   peakAmp: sparkleGain * 0.24, releaseTime: 0.2,
 					   filter: FilterSpec(kind: .bandpass, frequency: shimmerFrequency, q: 8))
+		}
+
+		if step >= 9 {
+			ctx.addNoise(start: 0.04, duration: 0.035, amplitude: 0.028 * masterGain, highpass: false, bandpass: true)
 		}
 	}
 
@@ -660,21 +661,6 @@ private struct SynthContext {
 			let progress = Double(i - startSample) / Double(max(noiseSamples, 1))
 			let gain = amplitude * exp(-progress * 5.0)
 			samples[i] += Float(filtered * gain)
-		}
-	}
-
-	mutating func addReverbTail(delay: Double = 0.055, gain: Double, decay: Double, taps: Int = 4) {
-		let dry = samples
-		let delaySamples = max(1, Int(delay * sampleRate))
-		guard taps > 0, delaySamples < dry.count else { return }
-
-		for tap in 1...taps {
-			let offset = delaySamples * tap
-			guard offset < dry.count else { break }
-			let tapGain = Float(gain * pow(decay, Double(tap - 1)))
-			for index in 0..<(dry.count - offset) {
-				samples[index + offset] += dry[index] * tapGain
-			}
 		}
 	}
 
