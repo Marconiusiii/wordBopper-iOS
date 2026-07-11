@@ -381,38 +381,30 @@ final class AudioEngine {
 			[880.00, 783.99, 1046.50, 880.00],
 			[659.25, 880.00, 783.99, 659.25, 523.25]
 		]
-		let bassProgression: [Double] = [783.99, 523.25, 739.99, 659.25]
-		let barDuration = 1.0
+		let bassProgression: [Double] = [783.99, 523.25, 659.25, 739.99]
+		let lowBassProgression: [Double] = [130.81, 164.81, 130.81, 146.83]
+		let barDuration = 0.9
 		let duration = 45.0
-		let finishStart = 43.55
+		let finishStart = 43.2
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 
 		for loop in 0..<3 {
 			let transpose = pow(2.0, Double(loop * 2) / 12.0)
 			for bar in 0..<16 {
 				let barStart = Double(loop * 16 + bar) * barDuration
-				guard barStart < finishStart - barDuration else { continue }
+				guard barStart + barDuration <= finishStart + 0.0001 else { continue }
 				let bassNote = bassProgression[bar % bassProgression.count]
+				let lowBassNote = lowBassProgression[bar % lowBassProgression.count]
 				let treble = trebleBars[bar]
 
 				ctx.addLongOsc(type: .sine, freq: bassNote * 0.5 * transpose, start: barStart, attackTime: 0.018,
 							   peakAmp: 0.058, releaseTime: 0.88, settleRatio: 0.42, settleTime: 0.16)
-
-				ctx.addNoise(start: barStart + 0.04, duration: 0.012, amplitude: 0.034, highpass: true)
-				ctx.addNoise(start: barStart + 0.5, duration: 0.012, amplitude: 0.022, highpass: true)
+				ctx.addLongOsc(type: .sine, freq: lowBassNote * transpose, start: barStart, attackTime: 0.02,
+							   peakAmp: 0.032, releaseTime: 0.9, settleRatio: 0.45, settleTime: 0.18)
 
 				let mainNoteStarts = [0.12, 0.34, 0.58, 0.82]
 				let mainNotes = treble.count == 5 ? Array(treble.dropFirst()) : treble
 				let emphasisIndex = 2
-
-				if treble.count == 5, let pickupNote = treble.first {
-					ctx.addLongOsc(type: .sine,
-								   freq: pickupNote * transpose,
-								   start: barStart + 0.055,
-								   attackTime: 0.006,
-								   peakAmp: 0.026,
-								   releaseTime: 0.09)
-				}
 
 				for (index, freq) in mainNotes.enumerated() {
 					let start = barStart + mainNoteStarts[index]
