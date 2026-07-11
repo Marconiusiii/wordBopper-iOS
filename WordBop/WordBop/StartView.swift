@@ -34,6 +34,8 @@ struct StartView: View {
 
 					startScreenTopRow
 
+					dailyBopAnthemPreviewButton
+
 					startGameButton
 						.layoutPriority(3)
 
@@ -113,6 +115,23 @@ struct StartView: View {
 			.contentShape(Rectangle())
 		}
 		.keyboardShortcut(.defaultAction)
+	}
+
+	private var dailyBopAnthemPreviewButton: some View {
+		Button {
+			vm.audio.playDailyBopAnthemPreview()
+		} label: {
+			Text("Play Daily Bop Anthem")
+				.font(.footnote.weight(.semibold))
+				.foregroundStyle(Color.wbAccent5)
+				.multilineTextAlignment(.center)
+				.lineLimit(2)
+				.frame(maxWidth: .infinity)
+				.frame(minHeight: 58)
+				.background(Color.wbSurface)
+				.contentShape(Rectangle())
+		}
+		.buttonStyle(.plain)
 	}
 
 	private var howToPlayButton: some View {

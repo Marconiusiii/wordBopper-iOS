@@ -302,6 +302,63 @@ final class AudioEngine {
 		playPauseResumeMotif(notes: (motifs.randomElement() ?? motifs[0]).map { scale[$0] })
 	}
 
+	func playDailyBopAnthemPreview() {
+		let bassRoots: [Double] = [261.63, 392.00, 440.00, 349.23]
+		let melodyShapes: [[Double]] = [
+			[783.99, 880.00, 1046.50, 987.77, 880.00, 1174.66],
+			[659.25, 783.99, 880.00, 1046.50, 1174.66, 1046.50],
+			[880.00, 987.77, 1174.66, 1318.51, 1174.66, 1046.50],
+			[783.99, 1046.50, 987.77, 880.00, 783.99, 1046.50]
+		]
+		let duration = 7.6
+		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
+
+		for bar in 0..<8 {
+			let barStart = Double(bar) * 0.9
+			let root = bassRoots[bar % bassRoots.count]
+			ctx.addOsc(type: .sine, freq: root * 0.5, start: barStart, attackTime: 0.012,
+					   peakAmp: 0.11, releaseTime: 0.24,
+					   filter: FilterSpec(kind: .lowpass, frequency: 360, q: 0.7))
+			ctx.addOsc(type: .triangle, freq: root, start: barStart + 0.45, attackTime: 0.01,
+					   peakAmp: 0.055, releaseTime: 0.18,
+					   filter: FilterSpec(kind: .lowpass, frequency: 900, q: 0.8))
+			ctx.addNoise(start: barStart + 0.22, duration: 0.028, amplitude: 0.055, highpass: true)
+			ctx.addNoise(start: barStart + 0.66, duration: 0.022, amplitude: 0.038, highpass: true)
+
+			var melody = melodyShapes[bar % melodyShapes.count]
+			if bar >= 4 {
+				let last = melody.removeLast()
+				melody.shuffle()
+				melody.append(last)
+			}
+			for (index, freq) in melody.enumerated() {
+				let start = barStart + 0.055 + Double(index) * 0.115 + Double.random(in: 0..<0.018)
+				let amp = index == melody.count - 1 ? 0.13 : 0.085
+				ctx.addOsc(type: index.isMultiple(of: 2) ? .sine : .triangle,
+						   freq: freq,
+						   start: start,
+						   attackTime: 0.01,
+						   peakAmp: amp,
+						   releaseTime: 0.34,
+						   filter: FilterSpec(kind: .bandpass, frequency: freq, q: 7))
+				ctx.addOsc(type: .sine,
+						   freq: freq * 2,
+						   start: start + 0.006,
+						   attackTime: 0.008,
+						   peakAmp: amp * 0.22,
+						   releaseTime: 0.22,
+						   filter: FilterSpec(kind: .bandpass, frequency: freq * 2, q: 8))
+			}
+		}
+
+		let finishStart = 7.2
+		for freq in [523.25, 659.25, 783.99, 1046.50] {
+			ctx.addOsc(type: .sine, freq: freq, start: finishStart, attackTime: 0.024,
+					   peakAmp: 0.105, releaseTime: 0.62, settleRatio: 0.42, settleTime: 0.12)
+		}
+		play(ctx.toBuffer(), priority: .score)
+	}
+
 	func playRoundEndSound() {
 		let chordTones: [Double] = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]
 		var noteIndex = Int.random(in: 0...4)
