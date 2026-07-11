@@ -595,6 +595,17 @@ private struct GameSettingsSheet: View {
 
 							SettingsDescriptionRow("Choose the language you want to Bop in. The rest of the app stays in English for now.")
 
+							SettingsSectionHeading("Daily Bop")
+
+							ForEach(DictionaryLanguage.allCases) { language in
+								SettingsLanguageToggleRow(title: language.label, isOn: Binding(
+									get: { vm.isDailyBopLanguageEnabled(language) },
+									set: { vm.setDailyBopLanguage(language, enabled: $0) }
+								))
+							}
+
+							SettingsDescriptionRow("Choose which languages get a Daily Bop word each day. Fewer languages make Daily Bop load faster.")
+
 						SettingsPickerBlock(title: "Letter Positions", namespace: letterPositionNamespace, pairID: "letterPositions") {
 							Picker("Letter Positions", selection: Binding(
 								get: { vm.letterPositionMode },
@@ -819,6 +830,24 @@ private struct SettingsLinkButtonRow: View {
 
 private struct SettingsToggleRow: View {
 	let title: LocalizedStringKey
+	@Binding var isOn: Bool
+
+	var body: some View {
+		ZStack {
+			Color.wbBackground
+			Toggle(title, isOn: $isOn)
+				.font(.body)
+				.foregroundStyle(Color.wbText)
+				.tint(Color.wbAccent5)
+				.padding(.horizontal, 24)
+		}
+		.frame(maxWidth: .infinity, minHeight: 64)
+		.contentShape(Rectangle())
+	}
+}
+
+private struct SettingsLanguageToggleRow: View {
+	let title: String
 	@Binding var isOn: Bool
 
 	var body: some View {

@@ -449,6 +449,7 @@ final class GameViewModel {
 		didSet {
 			saveDictionaryLanguage()
 			dictionary.preload(dictionaryLanguage)
+			ensureDailyBopLanguageEnabled(dictionaryLanguage)
 		}
 	}
 	var bubbles: [Bubble] = []
@@ -473,6 +474,7 @@ final class GameViewModel {
 	var dailyBopEntries: [DailyBopEntry] = []
 	var dailyBopEntriesReady = false
 	var dailyBopEntriesLoading = false
+	var dailyBopEnabledLanguages: [DictionaryLanguage] = []
 	private var consumedBopAwayBubbleIds = Set<UUID>()
 
 	// MARK: - Best game
@@ -487,6 +489,7 @@ final class GameViewModel {
 	private var powerUpAudioResumeWorkItem: DispatchWorkItem?
 	private var dailyBopBoostTimer: Timer?
 	private var announcementWorkItem: DispatchWorkItem?
+	private var dailyBopEntriesGeneration = UUID()
 
 	// MARK: - Computed
 	var currentWord: String { selected.map(\.letter).joined() }
@@ -553,6 +556,33 @@ final class GameViewModel {
 		}
 	}
 
+	private func normalizedDailyBopLanguages() -> [DictionaryLanguage] {
+		let saved = dailyBopEnabledLanguages.filter { DictionaryLanguage.allCases.contains($0) }
+		let languages = saved.isEmpty ? [dictionaryLanguage] : saved
+		return sortedDailyBopLanguages(languages)
+	}
+
+	private func sortedDailyBopLanguages(_ languages: [DictionaryLanguage]) -> [DictionaryLanguage] {
+		DictionaryLanguage.allCases.filter { languages.contains($0) }
+	}
+
+	private func ensureDailyBopLanguageEnabled(_ language: DictionaryLanguage) {
+		var languages = normalizedDailyBopLanguages()
+		guard !languages.contains(language) else { return }
+		languages.append(language)
+		dailyBopEnabledLanguages = sortedDailyBopLanguages(languages)
+		saveDailyBopEnabledLanguages()
+		reloadDailyBopEntries()
+	}
+
+	private func reloadDailyBopEntries() {
+		dailyBopEntriesGeneration = UUID()
+		dailyBopEntriesReady = false
+		dailyBopEntriesLoading = false
+		dailyBopEntries = []
+		prepareDailyBopEntries()
+	}
+
 	var showsTimer: Bool {
 		switch gameMode {
 		case .timed:
@@ -599,7 +629,9 @@ final class GameViewModel {
 		gameVolume = loadGameVolume()
 		audio.volume = Float(gameVolume)
 		leftHandedMode = loadLeftHandedMode()
-		dictionaryLanguage = loadDictionaryLanguage()
+		let savedDictionaryLanguage = loadDictionaryLanguage()
+		dailyBopEnabledLanguages = loadDailyBopEnabledLanguages(fallback: savedDictionaryLanguage)
+		dictionaryLanguage = savedDictionaryLanguage
 		dictionary.preload(dictionaryLanguage)
 		prepareDailyBopEntries()
 	}
@@ -607,17 +639,42 @@ final class GameViewModel {
 	func prepareDailyBopEntries() {
 		guard !dailyBopEntriesReady else { return }
 		guard !dailyBopEntriesLoading else { return }
+		let languages = normalizedDailyBopLanguages()
+		let generation = UUID()
+		dailyBopEntriesGeneration = generation
 		dailyBopEntriesLoading = true
 		DispatchQueue.global(qos: .utility).async { [dictionary] in
-			let entries = DictionaryLanguage.allCases.map { language in
-				DailyBopEntry(language: language, word: dictionary.dailyWord(for: language))
+			let entries = languages.compactMap { language -> DailyBopEntry? in
+				let word = dictionary.dailyWord(for: language)
+				guard !word.isEmpty else { return nil }
+				return DailyBopEntry(language: language, word: word)
 			}
 			DispatchQueue.main.async {
+				guard self.dailyBopEntriesGeneration == generation else { return }
 				self.dailyBopEntries = entries
 				self.dailyBopEntriesLoading = false
 				self.dailyBopEntriesReady = true
 			}
 		}
+	}
+
+	func isDailyBopLanguageEnabled(_ language: DictionaryLanguage) -> Bool {
+		normalizedDailyBopLanguages().contains(language)
+	}
+
+	func setDailyBopLanguage(_ language: DictionaryLanguage, enabled: Bool) {
+		var languages = normalizedDailyBopLanguages()
+		if enabled {
+			if !languages.contains(language) {
+				languages.append(language)
+			}
+		} else {
+			guard languages.count > 1 else { return }
+			languages.removeAll { $0 == language }
+		}
+		dailyBopEnabledLanguages = sortedDailyBopLanguages(languages)
+		saveDailyBopEnabledLanguages()
+		reloadDailyBopEntries()
 	}
 
 	// MARK: - Game lifecycle
@@ -1346,6 +1403,14 @@ final class GameViewModel {
 		return DictionaryLanguage(rawValue: saved) ?? .english
 	}
 
+	private func loadDailyBopEnabledLanguages(fallback: DictionaryLanguage) -> [DictionaryLanguage] {
+		guard let saved = UserDefaults.standard.array(forKey: "wordBopDailyBopEnabledLanguages") as? [String] else {
+			return sortedDailyBopLanguages([.english, fallback])
+		}
+		let languages = saved.compactMap { DictionaryLanguage(rawValue: $0) }
+		return sortedDailyBopLanguages(languages.isEmpty ? [fallback] : languages)
+	}
+
 	private func saveGameMode() {
 		UserDefaults.standard.set(gameMode.rawValue, forKey: "wordBopGameMode")
 		UserDefaults.standard.set(gameMode == .nonStop, forKey: "wordBopNonStopMode")
@@ -1402,6 +1467,10 @@ final class GameViewModel {
 
 	private func saveDictionaryLanguage() {
 		UserDefaults.standard.set(dictionaryLanguage.rawValue, forKey: "wordBopDictionaryLanguage")
+	}
+
+	private func saveDailyBopEnabledLanguages() {
+		UserDefaults.standard.set(dailyBopEnabledLanguages.map(\.rawValue), forKey: "wordBopDailyBopEnabledLanguages")
 	}
 
 	private func saveBestGame() {

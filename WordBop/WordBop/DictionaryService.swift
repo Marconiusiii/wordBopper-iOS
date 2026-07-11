@@ -328,7 +328,7 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable, Codable {
 final class DictionaryService {
 	static let shared = DictionaryService()
 	private var cachedWords: [DictionaryLanguage: Set<String>] = [:]
-	private var cachedDailyCandidates: [DictionaryLanguage: [String]] = [:]
+	private var cachedDailyWords: [String: String] = [:]
 	private let queue = DispatchQueue(label: "com.marconius.WordBop.DictionaryService", qos: .userInitiated)
 
 	private init() {}
@@ -355,23 +355,29 @@ final class DictionaryService {
 	func dailyWord(for language: DictionaryLanguage, date: Date = Date(), calendar: Calendar = .current) -> String {
 		let dateKey = dailyDateKey(for: date, calendar: calendar)
 		return queue.sync {
-			let candidates = dailyCandidatesOnQueue(for: language)
-			guard !candidates.isEmpty else { return "" }
-			let seed = stableSeed("\(language.rawValue)-\(dateKey)")
-			return candidates[seed % candidates.count]
+			dailyWordOnQueue(for: language, dateKey: dateKey)
 		}
 	}
 
-	private func dailyCandidatesOnQueue(for language: DictionaryLanguage) -> [String] {
-		if let candidates = cachedDailyCandidates[language] { return candidates }
+	private func dailyWordOnQueue(for language: DictionaryLanguage, dateKey: String) -> String {
+		let cacheKey = "\(language.rawValue)-\(dateKey)"
+		if let word = cachedDailyWords[cacheKey] { return word }
 		let words = wordsOnQueue(for: language)
-		let candidates = words.filter { word in
-			guard (6...10).contains(word.count) else { return false }
-			return word.allSatisfy { $0.isLetter }
+		let word = words.reduce(into: (word: "", score: Int.max)) { best, word in
+			guard isDailyCandidate(word) else { return }
+			let score = stableSeed("\(language.rawValue)-\(dateKey)-\(word)")
+			if score < best.score {
+				best = (word, score)
+			}
 		}
-		.sorted()
-		cachedDailyCandidates[language] = candidates
-		return candidates
+		.word
+		cachedDailyWords[cacheKey] = word
+		return word
+	}
+
+	private func isDailyCandidate(_ word: String) -> Bool {
+		guard (6...10).contains(word.count) else { return false }
+		return word.allSatisfy { $0.isLetter }
 	}
 
 	private func wordsOnQueue(for language: DictionaryLanguage) -> Set<String> {
