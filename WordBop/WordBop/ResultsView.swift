@@ -6,6 +6,7 @@ struct ResultsView: View {
 	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 	@State private var lookupRequest: DictionaryLookupRequest?
 	@State private var unavailableLookup: DictionaryLookupRequest?
+	@AccessibilityFocusState private var isDailyBopWordFocused: Bool
 
 	var body: some View {
 		GeometryReader { geo in
@@ -58,7 +59,8 @@ struct ResultsView: View {
 							if vm.dailyBopFoundThisRound, let dailyBopWord = vm.dailyBopTargetWord, !dailyBopWord.isEmpty {
 								DailyWordBoppedSection(
 									word: dailyBopWord,
-									language: vm.dailyBopTargetLanguage ?? vm.dictionaryLanguage
+									language: vm.dailyBopTargetLanguage ?? vm.dictionaryLanguage,
+									isWordFocused: $isDailyBopWordFocused
 								) {
 									let request = DictionaryLookupRequest(
 										word: dailyBopWord,
@@ -120,11 +122,11 @@ struct ResultsView: View {
 		.onAppear {
 			UIAccessibility.post(notification: .screenChanged, argument: "Round Complete")
 		}
-		.sheet(item: $lookupRequest) { request in
+		.sheet(item: $lookupRequest, onDismiss: refocusDailyBopWord) { request in
 			DictionaryLookupView(word: request.word)
 				.ignoresSafeArea()
 		}
-		.sheet(item: $unavailableLookup) { request in
+		.sheet(item: $unavailableLookup, onDismiss: refocusDailyBopWord) { request in
 			DictionaryLookupUnavailableView(request: request)
 		}
 	}
@@ -149,6 +151,13 @@ struct ResultsView: View {
 	private func isLandscape(in geo: GeometryProxy) -> Bool {
 		geo.size.width > geo.size.height
 	}
+
+	private func refocusDailyBopWord() {
+		isDailyBopWordFocused = false
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+			isDailyBopWordFocused = true
+		}
+	}
 }
 
 private struct DictionaryLookupRequest: Identifiable {
@@ -161,6 +170,7 @@ private struct DictionaryLookupRequest: Identifiable {
 private struct DailyWordBoppedSection: View {
 	let word: String
 	let language: DictionaryLanguage
+	let isWordFocused: AccessibilityFocusState<Bool>.Binding
 	let action: () -> Void
 
 	var body: some View {
@@ -186,6 +196,7 @@ private struct DailyWordBoppedSection: View {
 			}
 			.buttonStyle(.plain)
 			.accessibilityHint(Text("Looks up \(spokenWord) in Dictionary if available"))
+			.accessibilityFocused(isWordFocused)
 		}
 		.frame(maxWidth: .infinity, alignment: .leading)
 	}

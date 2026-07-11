@@ -2925,9 +2925,6 @@
     "Daily Bop Dynamo" : {
 
     },
-    "Daily Bop Found!" : {
-
-    },
     "Daily Bop found! 3 times boost active!" : {
 
     },
@@ -2935,6 +2932,9 @@
 
     },
     "Daily Bops found" : {
+
+    },
+    "Daily Word Bopped!" : {
 
     },
     "Dark Text" : {
@@ -2977,6 +2977,12 @@
           }
         }
       }
+    },
+    "Dictionary does not have a lookup result for " : {
+
+    },
+    "Dictionary Lookup" : {
+
     },
     "Dutch" : {
       "comment" : "Bubble Language name",
@@ -4005,6 +4011,9 @@
           }
         }
       }
+    },
+    "Looks up %@ in Dictionary if available" : {
+
     },
     "Low" : {
       "extractionState" : "manual",
@@ -6114,6 +6123,9 @@
           }
         }
       }
+    },
+    "Word List" : {
+
     },
     "Word tray" : {
       "extractionState" : "manual",
