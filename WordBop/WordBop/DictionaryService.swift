@@ -328,6 +328,7 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable, Codable {
 final class DictionaryService {
 	static let shared = DictionaryService()
 	private var cachedWords: [DictionaryLanguage: Set<String>] = [:]
+	private var cachedDailyCandidates: [DictionaryLanguage: [String]] = [:]
 	private let queue = DispatchQueue(label: "com.marconius.WordBop.DictionaryService", qos: .userInitiated)
 
 	private init() {}
@@ -349,6 +350,28 @@ final class DictionaryService {
 		queue.sync {
 			_ = wordsOnQueue(for: language)
 		}
+	}
+
+	func dailyWord(for language: DictionaryLanguage, date: Date = Date(), calendar: Calendar = .current) -> String {
+		let dateKey = dailyDateKey(for: date, calendar: calendar)
+		return queue.sync {
+			let candidates = dailyCandidatesOnQueue(for: language)
+			guard !candidates.isEmpty else { return "" }
+			let seed = stableSeed("\(language.rawValue)-\(dateKey)")
+			return candidates[seed % candidates.count]
+		}
+	}
+
+	private func dailyCandidatesOnQueue(for language: DictionaryLanguage) -> [String] {
+		if let candidates = cachedDailyCandidates[language] { return candidates }
+		let words = wordsOnQueue(for: language)
+		let candidates = words.filter { word in
+			guard (6...10).contains(word.count) else { return false }
+			return word.allSatisfy { $0.isLetter }
+		}
+		.sorted()
+		cachedDailyCandidates[language] = candidates
+		return candidates
 	}
 
 	private func wordsOnQueue(for language: DictionaryLanguage) -> Set<String> {
@@ -388,5 +411,22 @@ final class DictionaryService {
 			normalizedWord = normalizedWord.replacingOccurrences(of: token, with: String(character))
 		}
 		return normalizedWord
+	}
+
+	private func dailyDateKey(for date: Date, calendar: Calendar) -> String {
+		let components = calendar.dateComponents([.year, .month, .day], from: date)
+		let year = components.year ?? 0
+		let month = components.month ?? 0
+		let day = components.day ?? 0
+		return String(format: "%04d%02d%02d", year, month, day)
+	}
+
+	private func stableSeed(_ string: String) -> Int {
+		var hash: UInt64 = 14_695_981_039_346_656_037
+		for byte in string.utf8 {
+			hash ^= UInt64(byte)
+			hash &*= 1_099_511_628_211
+		}
+		return Int(hash % UInt64(Int.max))
 	}
 }

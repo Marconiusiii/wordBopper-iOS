@@ -625,6 +625,10 @@ private struct ChainMeterBar: View {
 	}
 
 	private var chainGradient: LinearGradient {
+		if vm.dailyBopBoostActive {
+			return LinearGradient(colors: [.wbAccent4, .wbAccent5, .wbAccent1, .wbAccent3],
+								  startPoint: .leading, endPoint: .trailing)
+		}
 		if vm.chainPowerUpActive {
 			return LinearGradient(colors: [.wbAccent1, .wbAccent5, .wbAccent4],
 								  startPoint: .leading, endPoint: .trailing)
@@ -634,7 +638,8 @@ private struct ChainMeterBar: View {
 	}
 
 	private var chainDisplayText: String {
-		vm.chainPowerUpActive ? "3x \(vm.chainPowerUpSecondsLeft)s" : "\(vm.connectedWordStreak)/3"
+		if vm.dailyBopBoostActive { return "Daily 3x \(vm.dailyBopBoostSecondsLeft)s" }
+		return vm.chainPowerUpActive ? "3x \(vm.chainPowerUpSecondsLeft)s" : "\(vm.connectedWordStreak)/3"
 	}
 }
 

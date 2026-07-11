@@ -6,6 +6,7 @@ struct StartView: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 	@State private var showingInstructions = false
+	@State private var showingDailyBop = false
 	@State private var showingGameSettings = false
 
 	var body: some View {
@@ -34,12 +35,14 @@ struct StartView: View {
 
 					startScreenTopRow
 
+					dailyBopButton
+
 					dailyBopAnthemPreviewButton
 
 					startGameButton
 						.layoutPriority(3)
 
-					BestGameCard(bestGame: vm.bestGame)
+					BestGameCard(bestGame: vm.bestGame, dailyBopRank: vm.currentDailyBopRank)
 						.layoutPriority(2)
 				}
 				.frame(width: contentWidth)
@@ -50,11 +53,18 @@ struct StartView: View {
 			.frame(width: contentWidth)
 			.ignoresSafeArea(edges: horizontalSafeAreaEdges(in: geo))
 		}
-			.onAppear {
+		.onAppear {
 			UIAccessibility.post(notification: .screenChanged, argument: "WordBopper")
+			vm.audio.prepareDailyBopAnthemPreview()
+			vm.prepareDailyBopEntries()
 		}
 		.sheet(isPresented: $showingInstructions) {
 			InstructionsSheet()
+				.presentationDragIndicator(.hidden)
+		}
+		.sheet(isPresented: $showingDailyBop) {
+			DailyBopSheet()
+				.environment(vm)
 				.presentationDragIndicator(.hidden)
 		}
 			.sheet(isPresented: $showingGameSettings) {
@@ -92,6 +102,29 @@ struct StartView: View {
 		}
 		.frame(maxWidth: .infinity)
 		.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 116 : 58)
+	}
+
+	private var dailyBopButton: some View {
+		Button {
+			showingDailyBop = true
+		} label: {
+			Text("Daily Bop")
+				.font(.headline.weight(.black))
+				.foregroundStyle(Color.black)
+				.multilineTextAlignment(.center)
+				.lineLimit(2)
+				.frame(maxWidth: .infinity)
+				.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 82 : 66)
+				.background(
+					LinearGradient(
+						colors: [.wbAccent5, .wbAccent4],
+						startPoint: .topLeading,
+						endPoint: .bottomTrailing
+					)
+				)
+				.contentShape(Rectangle())
+		}
+		.buttonStyle(.plain)
 	}
 
 	private var startGameButton: some View {
@@ -170,6 +203,113 @@ struct StartView: View {
 
 }
 
+private struct DailyBopSheet: View {
+	@Environment(GameViewModel.self) private var vm
+	@Environment(\.dismiss) private var dismiss
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+	var body: some View {
+		NavigationStack {
+			GeometryReader { geo in
+				let contentWidth = sheetContentWidth(in: geo)
+				ScrollView {
+					VStack(spacing: 0) {
+						Text("Daily Bop")
+							.font(.title2.weight(.black))
+							.foregroundStyle(Color.wbText)
+							.accessibilityAddTraits(.isHeader)
+							.frame(maxWidth: .infinity, minHeight: 72)
+							.contentShape(Rectangle())
+
+						Text("Find one special word each day in any language. Bop it during a Timed game to kick off a 45-second 3x boost.")
+							.font(.body)
+							.foregroundStyle(Color.wbText)
+							.fixedSize(horizontal: false, vertical: true)
+							.frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+							.padding(.horizontal, 24)
+							.contentShape(Rectangle())
+
+						if vm.dailyBopEntries.isEmpty {
+							Text("Loading today's Daily Bops...")
+								.font(.body)
+								.foregroundStyle(Color.wbMuted)
+								.frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+								.padding(.horizontal, 24)
+								.contentShape(Rectangle())
+						} else {
+							VStack(spacing: 0) {
+								ForEach(vm.dailyBopEntries) { entry in
+									Button {
+										dismiss()
+										vm.startGame(dailyBopEntry: entry)
+									} label: {
+										DailyBopEntryLabel(entry: entry)
+											.frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 74 : 58)
+											.contentShape(Rectangle())
+									}
+									.buttonStyle(.plain)
+								}
+							}
+							.frame(maxWidth: .infinity)
+						}
+					}
+					.frame(width: contentWidth)
+					.frame(minHeight: geo.size.height, alignment: .top)
+				}
+				.frame(width: contentWidth)
+			}
+			.ignoresSafeArea(edges: .horizontal)
+			.background(Color.wbBackground)
+			.toolbar {
+				ToolbarItem(placement: .topBarTrailing) {
+					Button("Close") {
+						dismiss()
+					}
+				}
+			}
+		}
+		.preferredColorScheme(.dark)
+	}
+
+	private func sheetContentWidth(in geo: GeometryProxy) -> CGFloat {
+		geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
+	}
+}
+
+private struct DailyBopEntryLabel: View {
+	let entry: DailyBopEntry
+
+	var body: some View {
+		HStack(spacing: 12) {
+			Text(entry.language.label)
+				.font(.body.weight(.semibold))
+				.foregroundStyle(Color.wbText)
+				.frame(maxWidth: .infinity, alignment: .leading)
+
+			Text(spokenWord)
+				.font(.system(.body, design: .rounded).weight(.black))
+				.foregroundStyle(Color.wbAccent5)
+				.frame(maxWidth: .infinity, alignment: .trailing)
+		}
+		.padding(.horizontal, 24)
+		.background(Color.wbBackground)
+		.accessibilityElement(children: .ignore)
+		.accessibilityLabel(Text(accessibilityLabel))
+	}
+
+	private var spokenWord: AttributedString {
+		var word = AttributedString(entry.word)
+		word.languageIdentifier = entry.language.speechLanguage
+		return word
+	}
+
+	private var accessibilityLabel: AttributedString {
+		var label = AttributedString(entry.language.label + ": ")
+		label += spokenWord
+		return label
+	}
+}
+
 private struct InstructionsSheet: View {
 	@Environment(\.dismiss) private var dismiss
 
@@ -187,6 +327,12 @@ private struct InstructionsSheet: View {
 		"Each word only counts once per Bopple round, so keep hunting for new ones.",
 		"3 or 4 letter words score 1 point, 5 letters score 2, 6 letters score 3, 7 letters score 5, and 8 or more letters score 11.",
 		"Play together with friends at the same time to see who can Bopple the best! All on their own devices, of course."
+	]
+	private let dailyBopInstructions = [
+		"Daily Bop gives each language one special word from midnight to 11:59 PM in your local time zone.",
+		"Choose a Daily Bop word to start a Timed game in that language.",
+		"Find the Daily Bop word during the round to launch a 45-second 3x boost.",
+		"Each Daily Bop word you find adds to your rank on the home screen."
 	]
 
 	private var keyboardHeading: String {
@@ -251,6 +397,21 @@ private struct InstructionsSheet: View {
 
 				VStack(alignment: .leading, spacing: 0) {
 					ForEach(boppleInstructions, id: \.self) { item in
+						InstructionRow(item)
+					}
+				}
+				.frame(maxWidth: .infinity, alignment: .leading)
+
+				Text("Daily Bop")
+					.font(.headline.weight(.black))
+					.foregroundStyle(Color.wbText)
+					.frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+					.padding(.horizontal, 24)
+					.contentShape(Rectangle())
+					.accessibilityAddTraits(.isHeader)
+
+				VStack(alignment: .leading, spacing: 0) {
+					ForEach(dailyBopInstructions, id: \.self) { item in
 						InstructionRow(item)
 					}
 				}
@@ -1235,6 +1396,7 @@ private enum AcknowledgmentItem: Identifiable {
 private struct BestGameCard: View {
 	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 	let bestGame: BestGame
+	let dailyBopRank: String
 	@State private var isExpanded = true
 
 	var body: some View {
@@ -1289,6 +1451,8 @@ private struct BestGameCard: View {
 			ForEach(languageModeBestGames) { record in
 				languageModeSection(record)
 			}
+
+			dailyBopSection
 		}
 		.frame(maxWidth: .infinity, alignment: .leading)
 	}
@@ -1349,6 +1513,34 @@ private struct BestGameCard: View {
 				BestStat(label: String(localized: "Largest chain"), value: "\(record.largestLetterChain)")
 			)
 		}
+	}
+
+	private var dailyBopSection: some View {
+		Group {
+			sectionHeading(String(localized: "Daily Bop"))
+
+			statPair(
+				BestStat(label: String(localized: "Rank"), value: dailyBopRank),
+				BestStat(label: String(localized: "Daily Bops found"), value: "\(totalDailyBopsFound)")
+			)
+
+			ForEach(dailyBopLanguageStats) { stat in
+				BestStat(
+					label: String(localized: "\(stat.language.label) Daily Bops", comment: "Daily Bop language count label"),
+					value: "\(stat.foundCount)"
+				)
+			}
+		}
+	}
+
+	private var totalDailyBopsFound: Int {
+		bestGame.dailyBopLanguageStats.reduce(0) { $0 + $1.foundCount }
+	}
+
+	private var dailyBopLanguageStats: [DailyBopLanguageStat] {
+		bestGame.dailyBopLanguageStats
+			.filter { $0.foundCount > 0 }
+			.sorted { $0.language.label < $1.language.label }
 	}
 
 	private func sectionHeading(_ title: String) -> some View {

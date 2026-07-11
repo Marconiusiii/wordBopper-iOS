@@ -304,6 +304,21 @@ struct LanguageModeBestGame: Codable, Identifiable {
 	}
 }
 
+struct DailyBopLanguageStat: Codable, Identifiable {
+	var language: DictionaryLanguage
+	var foundCount: Int = 0
+	var lastFoundDateKey: String = ""
+
+	var id: String { language.rawValue }
+}
+
+struct DailyBopEntry: Identifiable {
+	let language: DictionaryLanguage
+	let word: String
+
+	var id: String { language.rawValue }
+}
+
 struct BestGame: Codable {
 	var highestScore: Int = 0
 	var highestBoppleScore: Int = 0
@@ -318,6 +333,7 @@ struct BestGame: Codable {
 	var largestBoppleLetterChain: Int = 0
 	var largestNonStopLetterChain: Int = 0
 	var languageModeBestGames: [LanguageModeBestGame] = []
+	var dailyBopLanguageStats: [DailyBopLanguageStat] = []
 
 	init() {}
 
@@ -336,6 +352,7 @@ struct BestGame: Codable {
 		largestBoppleLetterChain = try container.decodeIfPresent(Int.self, forKey: .largestBoppleLetterChain) ?? 0
 		largestNonStopLetterChain = try container.decodeIfPresent(Int.self, forKey: .largestNonStopLetterChain) ?? 0
 		languageModeBestGames = try container.decodeIfPresent([LanguageModeBestGame].self, forKey: .languageModeBestGames) ?? []
+		dailyBopLanguageStats = try container.decodeIfPresent([DailyBopLanguageStat].self, forKey: .dailyBopLanguageStats) ?? []
 	}
 }
 
@@ -446,8 +463,14 @@ final class GameViewModel {
 	var connectedWordStreak = 0
 	var chainPowerUpActive = false
 	var chainPowerUpSecondsLeft = 0
+	var dailyBopTargetWord: String?
+	var dailyBopTargetLanguage: DictionaryLanguage?
+	var dailyBopFoundThisRound = false
+	var dailyBopBoostActive = false
+	var dailyBopBoostSecondsLeft = 0
 	var largestLetterChain = 0
 	var gameplayHeading = GameViewModel.gameplayHeadingPhrases[0]
+	var dailyBopEntries: [DailyBopEntry] = []
 	private var consumedBopAwayBubbleIds = Set<UUID>()
 
 	// MARK: - Best game
@@ -460,6 +483,7 @@ final class GameViewModel {
 	private var gameTimer: Timer?
 	private var powerUpTimer: Timer?
 	private var powerUpAudioResumeWorkItem: DispatchWorkItem?
+	private var dailyBopBoostTimer: Timer?
 	private var announcementWorkItem: DispatchWorkItem?
 
 	// MARK: - Computed
@@ -476,6 +500,9 @@ final class GameViewModel {
 	}
 
 	var chainMeterValue: String {
+		if dailyBopBoostActive {
+			return String(localized: "Daily Bop 3 times boost active, \(dailyBopBoostSecondsLeft) seconds left")
+		}
 		if chainPowerUpActive {
 			return String(localized: "3 times chain bop active, \(chainPowerUpSecondsLeft) seconds left")
 		}
@@ -483,6 +510,9 @@ final class GameViewModel {
 	}
 
 	var chainMeterProgress: Double {
+		if dailyBopBoostActive {
+			return (Double(dailyBopBoostSecondsLeft) / 45.0) * 3.0
+		}
 		if chainPowerUpActive {
 			return (Double(chainPowerUpSecondsLeft) / 15.0) * 3.0
 		}
@@ -500,6 +530,20 @@ final class GameViewModel {
 	var makeWordEnabled: Bool { selected.count >= 3 }
 
 	var gridSize: Int { gridSizeOption.dimension }
+
+	var totalDailyBopsFound: Int {
+		bestGame.dailyBopLanguageStats.reduce(0) { $0 + $1.foundCount }
+	}
+
+	var currentDailyBopRank: String {
+		dailyBopRank(for: totalDailyBopsFound)
+	}
+
+	var dailyBopLanguageStats: [DailyBopLanguageStat] {
+		bestGame.dailyBopLanguageStats
+			.filter { $0.foundCount > 0 }
+			.sorted { $0.language.label < $1.language.label }
+	}
 
 	var showsTimer: Bool {
 		switch gameMode {
@@ -549,11 +593,27 @@ final class GameViewModel {
 		leftHandedMode = loadLeftHandedMode()
 		dictionaryLanguage = loadDictionaryLanguage()
 		dictionary.preload(dictionaryLanguage)
+		prepareDailyBopEntries()
+	}
+
+	func prepareDailyBopEntries() {
+		DispatchQueue.global(qos: .utility).async { [dictionary] in
+			let entries = DictionaryLanguage.allCases.map { language in
+				DailyBopEntry(language: language, word: dictionary.dailyWord(for: language))
+			}
+			DispatchQueue.main.async {
+				self.dailyBopEntries = entries
+			}
+		}
 	}
 
 	// MARK: - Game lifecycle
 
-	func startGame() {
+	func startGame(dailyBopEntry: DailyBopEntry? = nil) {
+		if let dailyBopEntry {
+			dictionaryLanguage = dailyBopEntry.language
+			gameMode = .timed
+		}
 		bubbles = []
 		selected = []
 		score = 0
@@ -567,6 +627,11 @@ final class GameViewModel {
 		connectedWordStreak = 0
 		chainPowerUpActive = false
 		chainPowerUpSecondsLeft = 0
+		dailyBopTargetWord = dailyBopEntry?.word
+		dailyBopTargetLanguage = dailyBopEntry?.language
+		dailyBopFoundThisRound = false
+		dailyBopBoostActive = false
+		dailyBopBoostSecondsLeft = 0
 		largestLetterChain = 0
 		gameplayHeading = randomGameplayHeading()
 		dictionary.ensureLoaded(dictionaryLanguage)
@@ -588,6 +653,7 @@ final class GameViewModel {
 		gamePaused = true
 		stopTimer()
 		pausePowerUpCountdown()
+		pauseDailyBopBoost()
 		if playSound { audio.playPauseSound() }
 	}
 
@@ -596,6 +662,7 @@ final class GameViewModel {
 		gamePaused = false
 		audio.playResumeSound()
 		if showsTimer { startTimer() }
+		if dailyBopBoostActive { resumeDailyBopBoost(audioDelay: 0.55) }
 		if chainPowerUpActive { startPowerUpCountdown(audioDelay: 0.55) }
 	}
 
@@ -605,6 +672,7 @@ final class GameViewModel {
 		gameActive = false
 		stopTimer()
 		stopPowerUp()
+		stopDailyBopBoost()
 		audio.playRoundEndSound()
 		haptics.roundEnded()
 		DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) { [weak self] in
@@ -721,8 +789,9 @@ final class GameViewModel {
 
 		let chainBonus = gameMode == .bopple ? 0 : calcChainBonus()
 		let basePoints = calcScore(word) + chainBonus
-		let multiplier = gameMode == .bopple ? 1 : (chainPowerUpActive ? 3 : 1)
+		let multiplier = gameMode == .bopple ? 1 : (dailyBopBoostActive || chainPowerUpActive ? 3 : 1)
 		let points = basePoints * multiplier
+		let dailyBopWasFound = isDailyBopWord(word)
 
 		let scoredIds = selected.map(\.bubbleId)
 		selected.removeAll()
@@ -738,7 +807,10 @@ final class GameViewModel {
 		madeWords.append(word)
 		if gameMode != .bopple, chainBonus > largestLetterChain { largestLetterChain = chainBonus }
 
-		if multiplier > 1 {
+		if dailyBopBoostActive || dailyBopWasFound {
+			audio.playChainMultiplierScoreSound(wordLength: word.count)
+			haptics.powerUpScored()
+		} else if multiplier > 1 {
 			stopPowerUp()
 			audio.playChainMultiplierScoreSound(wordLength: word.count)
 			haptics.powerUpScored()
@@ -748,6 +820,7 @@ final class GameViewModel {
 		}
 
 		let powerUpActivated = gameMode == .bopple ? false : updateChainStreak(chainBonus: chainBonus)
+		let dailyBopActivated = dailyBopWasFound && activateDailyBopBoostIfNeeded()
 
 		announce(GameplayAnnouncements.scoredWord(
 			word: word,
@@ -756,6 +829,7 @@ final class GameViewModel {
 			chainBonus: chainBonus,
 			multiplier: multiplier,
 			powerUpActivated: powerUpActivated,
+			dailyBopActivated: dailyBopActivated,
 			verbosity: gameAnnouncementVerbosity
 		), includeInLowVerbosity: true)
 	}
@@ -852,6 +926,7 @@ final class GameViewModel {
 
 	private func startPowerUpCountdown(audioDelay: TimeInterval = 0) {
 		guard chainPowerUpActive, chainPowerUpSecondsLeft > 0 else { return }
+		guard !dailyBopBoostActive else { return }
 		powerUpAudioResumeWorkItem?.cancel()
 		if audioDelay > 0 {
 			let workItem = DispatchWorkItem { [weak self] in
@@ -888,6 +963,117 @@ final class GameViewModel {
 		powerUpAudioResumeWorkItem?.cancel()
 		powerUpAudioResumeWorkItem = nil
 		audio.stopPowerUpChimes()
+	}
+
+	// MARK: - Daily Bop
+
+	private func isDailyBopWord(_ word: String) -> Bool {
+		guard let dailyBopTargetWord, let dailyBopTargetLanguage else { return false }
+		guard dailyBopTargetLanguage == dictionaryLanguage else { return false }
+		return word == dailyBopTargetWord
+	}
+
+	private func activateDailyBopBoostIfNeeded() -> Bool {
+		guard !dailyBopFoundThisRound else { return false }
+		guard let language = dailyBopTargetLanguage else { return false }
+		dailyBopFoundThisRound = true
+		recordDailyBopFound(language: language)
+		pausePowerUpCountdown()
+		dailyBopBoostActive = true
+		dailyBopBoostSecondsLeft = 45
+		audio.playDailyBopAnthem()
+		dailyBopBoostTimer?.invalidate()
+		dailyBopBoostTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+			guard let self else { return }
+			self.dailyBopBoostSecondsLeft -= 1
+			if self.dailyBopBoostSecondsLeft <= 0 {
+				self.stopDailyBopBoost()
+			}
+		}
+		return true
+	}
+
+	private func stopDailyBopBoost() {
+		dailyBopBoostActive = false
+		dailyBopBoostSecondsLeft = 0
+		dailyBopBoostTimer?.invalidate()
+		dailyBopBoostTimer = nil
+		audio.stopDailyBopAnthem()
+		if chainPowerUpActive, !gamePaused {
+			startPowerUpCountdown(audioDelay: 0.2)
+		}
+	}
+
+	private func pauseDailyBopBoost() {
+		dailyBopBoostTimer?.invalidate()
+		dailyBopBoostTimer = nil
+		audio.stopDailyBopAnthem()
+	}
+
+	private func resumeDailyBopBoost(audioDelay: TimeInterval = 0) {
+		guard dailyBopBoostActive, dailyBopBoostSecondsLeft > 0 else { return }
+		if audioDelay > 0 {
+			DispatchQueue.main.asyncAfter(deadline: .now() + audioDelay) { [weak self] in
+				guard let self, self.dailyBopBoostActive, !self.gamePaused else { return }
+				self.audio.playDailyBopAnthem()
+			}
+		} else {
+			audio.playDailyBopAnthem()
+		}
+		dailyBopBoostTimer?.invalidate()
+		dailyBopBoostTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+			guard let self else { return }
+			self.dailyBopBoostSecondsLeft -= 1
+			if self.dailyBopBoostSecondsLeft <= 0 {
+				self.stopDailyBopBoost()
+			}
+		}
+	}
+
+	private func recordDailyBopFound(language: DictionaryLanguage) {
+		let dateKey = dailyBopDateKey()
+		let index = bestGame.dailyBopLanguageStats.firstIndex { $0.language == language }
+		if let index {
+			if bestGame.dailyBopLanguageStats[index].lastFoundDateKey == dateKey { return }
+			bestGame.dailyBopLanguageStats[index].foundCount += 1
+			bestGame.dailyBopLanguageStats[index].lastFoundDateKey = dateKey
+		} else {
+			bestGame.dailyBopLanguageStats.append(DailyBopLanguageStat(
+				language: language,
+				foundCount: 1,
+				lastFoundDateKey: dateKey
+			))
+		}
+		saveBestGame()
+	}
+
+	private func dailyBopDateKey(date: Date = Date(), calendar: Calendar = .current) -> String {
+		let components = calendar.dateComponents([.year, .month, .day], from: date)
+		let year = components.year ?? 0
+		let month = components.month ?? 0
+		let day = components.day ?? 0
+		return String(format: "%04d%02d%02d", year, month, day)
+	}
+
+	private func dailyBopRank(for count: Int) -> String {
+		let ranks = [
+			String(localized: "WordBopper Newbie"),
+			String(localized: "Bubble Scout"),
+			String(localized: "Bop Cadet"),
+			String(localized: "Word Wrangler"),
+			String(localized: "Bopologist"),
+			String(localized: "Bubble Captain"),
+			String(localized: "Grid Maestro"),
+			String(localized: "Daily Bop Dynamo"),
+			String(localized: "Word Wizard"),
+			String(localized: "Bop Commander"),
+			String(localized: "Letter Legend"),
+			String(localized: "Bop Supreme"),
+			String(localized: "Vocabulary Virtuoso"),
+			String(localized: "Daily Bop Champion"),
+			String(localized: "Grand Bopmaster")
+		]
+		return ranks[min(count / 10, ranks.count - 1)]
 	}
 
 	// MARK: - Bubble management

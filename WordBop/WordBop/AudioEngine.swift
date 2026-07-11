@@ -12,6 +12,10 @@ final class AudioEngine {
 	private var powerUpStartedAt: Date?
 	private var powerUpDuration: Double = 15
 	private var powerUpChimeStep = 0
+	private let dailyBopAnthemQueue = DispatchQueue(label: "com.wordbopper.dailyBopAnthem", qos: .utility)
+	private var dailyBopAnthemBuffer: AVAudioPCMBuffer?
+	private var isPreparingDailyBopAnthem = false
+	private var shouldPlayDailyBopAnthemWhenReady = false
 
 	var volume: Float = 0.82 {
 		didSet {
@@ -302,72 +306,139 @@ final class AudioEngine {
 		playPauseResumeMotif(notes: (motifs.randomElement() ?? motifs[0]).map { scale[$0] })
 	}
 
+	func prepareDailyBopAnthemPreview() {
+		prepareDailyBopAnthem(playWhenReady: false)
+	}
+
 	func playDailyBopAnthemPreview() {
+		if let dailyBopAnthemBuffer {
+			play(dailyBopAnthemBuffer, priority: .ambient)
+			return
+		}
+
+		prepareDailyBopAnthem(playWhenReady: true)
+	}
+
+	func playDailyBopAnthem() {
+		playDailyBopAnthemPreview()
+	}
+
+	func stopDailyBopAnthem() {
+		for index in voices.indices where voices[index].priority == .ambient {
+			voices[index].player.stop()
+			voices[index].reservedUntil = .distantPast
+		}
+	}
+
+	private func prepareDailyBopAnthem(playWhenReady: Bool) {
+		if let dailyBopAnthemBuffer {
+			if playWhenReady {
+				play(dailyBopAnthemBuffer, priority: .ambient)
+			}
+			return
+		}
+
+		if isPreparingDailyBopAnthem {
+			shouldPlayDailyBopAnthemWhenReady = shouldPlayDailyBopAnthemWhenReady || playWhenReady
+			return
+		}
+
+		isPreparingDailyBopAnthem = true
+		shouldPlayDailyBopAnthemWhenReady = playWhenReady
+
+		dailyBopAnthemQueue.async { [weak self] in
+			guard let self else { return }
+			let buffer = self.makeDailyBopAnthemBuffer()
+			DispatchQueue.main.async { [weak self] in
+				guard let self else { return }
+				self.dailyBopAnthemBuffer = buffer
+				self.isPreparingDailyBopAnthem = false
+				let shouldPlay = self.shouldPlayDailyBopAnthemWhenReady
+				self.shouldPlayDailyBopAnthemWhenReady = false
+				if shouldPlay {
+					self.play(buffer, priority: .ambient)
+				}
+			}
+		}
+	}
+
+	private func makeDailyBopAnthemBuffer() -> AVAudioPCMBuffer? {
 		let trebleBars: [[Double]] = [
 			[783.99, 880.00, 1046.50, 880.00],
-			[783.99, 880.00, 523.25, 783.99],
+			[783.99, 880.00, 659.25, 783.99],
 			[783.99, 880.00, 1046.50, 880.00],
-			[1318.51, 1174.66, 1046.50, 880.00]
+			[1318.51, 1174.66, 1046.50, 880.00],
+			[783.99, 880.00, 1046.50, 880.00],
+			[783.99, 880.00, 659.25, 783.99],
+			[880.00, 783.99, 1046.50, 880.00],
+			[880.00, 783.99, 659.25, 523.25],
+			[783.99, 880.00, 1046.50, 880.00],
+			[659.25, 783.99, 880.00, 659.25, 783.99],
+			[783.99, 880.00, 1046.50, 880.00],
+			[1318.51, 1174.66, 1046.50, 880.00],
+			[783.99, 880.00, 1046.50, 880.00],
+			[783.99, 880.00, 659.25, 783.99],
+			[880.00, 783.99, 1046.50, 880.00],
+			[659.25, 880.00, 783.99, 659.25, 523.25]
 		]
-		let bassBars: [(root: Double, fifth: Double, color: Double)] = [
-			(261.63, 392.00, 329.63),
-			(349.23, 523.25, 440.00),
-			(261.63, 392.00, 329.63),
-			(392.00, 293.66, 329.63)
-		]
-		let duration = 7.55
+		let bassProgression: [Double] = [783.99, 523.25, 739.99, 659.25]
+		let barDuration = 1.0
+		let duration = 45.0
+		let finishStart = 43.55
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 
-		for phrase in 0..<2 {
-			for bar in 0..<4 {
-				let barStart = Double(phrase * 4 + bar) * 0.9
-				let bass = bassBars[bar]
+		for loop in 0..<3 {
+			let transpose = pow(2.0, Double(loop * 2) / 12.0)
+			for bar in 0..<16 {
+				let barStart = Double(loop * 16 + bar) * barDuration
+				guard barStart < finishStart - barDuration else { continue }
+				let bassNote = bassProgression[bar % bassProgression.count]
 				let treble = trebleBars[bar]
-				let phraseLift = phrase == 0 ? 1.0 : 1.08
 
-				ctx.addOsc(type: .sine, freq: bass.root * 0.5, start: barStart, attackTime: 0.012,
-					   peakAmp: 0.082, releaseTime: 0.26,
-					   filter: FilterSpec(kind: .lowpass, frequency: 360, q: 0.7))
-				ctx.addOsc(type: .triangle, freq: bass.fifth * 0.5, start: barStart + 0.25, attackTime: 0.01,
-						   peakAmp: 0.042, releaseTime: 0.2,
-						   filter: FilterSpec(kind: .lowpass, frequency: 720, q: 0.8))
-				ctx.addOsc(type: .triangle, freq: bass.color, start: barStart + 0.52, attackTime: 0.012,
-						   peakAmp: 0.032, releaseTime: 0.22,
-						   filter: FilterSpec(kind: .lowpass, frequency: 1000, q: 0.8))
+				ctx.addLongOsc(type: .sine, freq: bassNote * 0.5 * transpose, start: barStart, attackTime: 0.018,
+							   peakAmp: 0.058, releaseTime: 0.88, settleRatio: 0.42, settleTime: 0.16)
 
-				ctx.addNoise(start: barStart + 0.18, duration: 0.018, amplitude: 0.028, highpass: true)
-				ctx.addNoise(start: barStart + 0.43, duration: 0.014, amplitude: 0.018, highpass: true)
-				ctx.addNoise(start: barStart + 0.68, duration: 0.018, amplitude: 0.026, highpass: true)
+				ctx.addNoise(start: barStart + 0.04, duration: 0.012, amplitude: 0.034, highpass: true)
+				ctx.addNoise(start: barStart + 0.5, duration: 0.012, amplitude: 0.022, highpass: true)
 
-				for (index, freq) in treble.enumerated() {
-					let start = barStart + 0.07 + Double(index) * 0.18
-					let amp = (index == treble.count - 1 ? 0.076 : 0.055) * phraseLift
-					ctx.addOsc(type: .sine,
-							   freq: freq,
-							   start: start,
-							   attackTime: 0.014,
-							   peakAmp: amp,
-							   releaseTime: 0.3,
-							   filter: FilterSpec(kind: .bandpass, frequency: freq, q: 6))
-					if index == 2 && freq > 700 {
-						ctx.addOsc(type: .sine,
-								   freq: freq * 2,
-								   start: start + 0.01,
-								   attackTime: 0.01,
-								   peakAmp: amp * 0.16,
-								   releaseTime: 0.2,
-								   filter: FilterSpec(kind: .bandpass, frequency: freq * 2, q: 7))
-					}
+				let mainNoteStarts = [0.12, 0.34, 0.58, 0.82]
+				let mainNotes = treble.count == 5 ? Array(treble.dropFirst()) : treble
+				let emphasisIndex = 2
+
+				if treble.count == 5, let pickupNote = treble.first {
+					ctx.addLongOsc(type: .sine,
+								   freq: pickupNote * transpose,
+								   start: barStart + 0.055,
+								   attackTime: 0.006,
+								   peakAmp: 0.026,
+								   releaseTime: 0.09)
+				}
+
+				for (index, freq) in mainNotes.enumerated() {
+					let start = barStart + mainNoteStarts[index]
+					let isEmphasized = index == emphasisIndex
+					let amp = isEmphasized ? 0.046 : 0.036
+					let release = isEmphasized ? 0.34 : 0.28
+					ctx.addLongOsc(type: .sine,
+								   freq: freq * transpose,
+								   start: start,
+								   attackTime: 0.014,
+								   peakAmp: amp,
+								   releaseTime: release)
 				}
 			}
 		}
 
-		let finishStart = 7.2
-		for freq in [523.25, 659.25, 783.99, 1046.50] {
-			ctx.addOsc(type: .sine, freq: freq, start: finishStart, attackTime: 0.024,
-					   peakAmp: 0.06, releaseTime: 0.48, settleRatio: 0.42, settleTime: 0.12)
+		let finishNotes: [Double] = [493.88, 659.25, 830.61, 987.77, 1318.51]
+		for (index, freq) in finishNotes.enumerated() {
+			let start = finishStart + Double(index) * 0.16
+			ctx.addLongOsc(type: .sine, freq: freq, start: start, attackTime: 0.018,
+						   peakAmp: index == finishNotes.count - 1 ? 0.075 : 0.052,
+						   releaseTime: 1.05, settleRatio: 0.44, settleTime: 0.14)
+			ctx.addLongOsc(type: .triangle, freq: freq * 2, start: start + 0.012, attackTime: 0.012,
+						   peakAmp: 0.012, releaseTime: 0.72, settleRatio: 0.34, settleTime: 0.12)
 		}
-		play(ctx.toBuffer(), priority: .score)
+		return ctx.toBuffer()
 	}
 
 	func playRoundEndSound() {
@@ -641,6 +712,98 @@ private struct SynthContext {
 		}
 	}
 
+	mutating func addLongOsc(
+		type: OscType,
+		freq: Double,
+		start: Double,
+		attackTime: Double,
+		peakAmp: Double,
+		releaseTime: Double,
+		settleRatio: Double = 1.0,
+		settleTime: Double? = nil
+	) {
+		let startSample = max(0, Int(start * sampleRate))
+		let attackSamples = max(1, Int(attackTime * sampleRate))
+		let releaseSamples = max(attackSamples + 1, Int(releaseTime * sampleRate))
+		let settleSamples = settleTime.map { max(attackSamples + 1, Int($0 * sampleRate)) }
+		let count = samples.count
+		guard startSample < count else { return }
+
+		for i in startSample..<min(count, startSample + releaseSamples) {
+			let t = Double(i) / sampleRate
+			let raw: Double
+			switch type {
+			case .sine:
+				raw = sin(2.0 * .pi * freq * t)
+			case .triangle:
+				let p = t * freq
+				raw = 2.0 * abs(2.0 * (p - floor(p + 0.5))) - 1.0
+			case .sawtooth:
+				let p = t * freq
+				raw = 2.0 * (p - floor(p + 0.5))
+			}
+
+			let elapsed = i - startSample
+			let gain: Double
+			if elapsed < attackSamples {
+				gain = peakAmp * Double(elapsed) / Double(attackSamples)
+			} else if let settleSamples, elapsed < settleSamples {
+				let progress = Double(elapsed - attackSamples) / Double(max(1, settleSamples - attackSamples))
+				gain = exponentialRamp(from: peakAmp, to: peakAmp * settleRatio, progress: progress)
+			} else {
+				let releaseStart = settleSamples ?? attackSamples
+				let startGain = peakAmp * settleRatio
+				let progress = Double(elapsed - releaseStart) / Double(max(1, releaseSamples - releaseStart))
+				gain = exponentialRamp(from: startGain, to: 0.001, progress: progress)
+			}
+			samples[i] += Float(raw * gain)
+		}
+	}
+
+	mutating func addSlideOsc(
+		type: OscType,
+		freq: Double,
+		endFreq: Double,
+		start: Double,
+		attackTime: Double,
+		peakAmp: Double,
+		releaseTime: Double
+	) {
+		let startSample = max(0, Int(start * sampleRate))
+		let attackSamples = max(1, Int(attackTime * sampleRate))
+		let releaseSamples = max(attackSamples + 1, Int(releaseTime * sampleRate))
+		let count = samples.count
+		guard startSample < count else { return }
+
+		var phase = 0.0
+		for i in startSample..<min(count, startSample + releaseSamples) {
+			let elapsed = i - startSample
+			let progress = Double(elapsed) / Double(max(1, releaseSamples - 1))
+			let currentFreq = freq * pow(endFreq / freq, progress)
+			phase += 2.0 * .pi * currentFreq / sampleRate
+			let raw: Double
+			switch type {
+			case .sine:
+				raw = sin(phase)
+			case .triangle:
+				let p = phase / (2.0 * .pi)
+				raw = 2.0 * abs(2.0 * (p - floor(p + 0.5))) - 1.0
+			case .sawtooth:
+				let p = phase / (2.0 * .pi)
+				raw = 2.0 * (p - floor(p + 0.5))
+			}
+
+			let gain: Double
+			if elapsed < attackSamples {
+				gain = peakAmp * Double(elapsed) / Double(attackSamples)
+			} else {
+				let fadeProgress = Double(elapsed - attackSamples) / Double(max(1, releaseSamples - attackSamples))
+				gain = peakAmp * pow(1 - fadeProgress, 1.8)
+			}
+			samples[i] += Float(raw * gain)
+		}
+	}
+
 	mutating func addOscWithFreqSlide(freq: Double, endFreq: Double, start: Double, duration: Double, peakAmp: Double) {
 		let startSample = Int(start * sampleRate)
 		let endSample = min(samples.count, Int((start + duration) * sampleRate))
@@ -717,6 +880,7 @@ private struct SynthContext {
 		let startSample = Int(start * sampleRate)
 		let noiseSamples = Int(duration * sampleRate)
 		let endSample = min(samples.count, startSample + noiseSamples)
+		guard startSample >= 0, startSample < endSample else { return }
 
 		// Simple one-pole filter state
 		var filterState: Double = 0

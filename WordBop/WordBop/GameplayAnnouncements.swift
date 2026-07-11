@@ -22,13 +22,19 @@ enum GameplayAnnouncements {
 		chainBonus: Int,
 		multiplier: Int,
 		powerUpActivated: Bool,
+		dailyBopActivated: Bool = false,
 		verbosity: GameAnnouncementVerbosity
 	) -> AttributedString {
 		let pointText = String(localized: "\(points) points", comment: "Score points spoken aloud; supports plural rules, e.g. 1 point / 5 points")
 
 		if verbosity == .low {
+			if dailyBopActivated { return AttributedString(String(localized: "Daily Bop found! 3 times boost active!")) }
 			if powerUpActivated { return AttributedString(String(localized: "3 times active!")) }
 			return AttributedString(String(localized: "\(pointText).", comment: "Low-verbosity score readout: the point count followed by a period"))
+		}
+
+		if dailyBopActivated {
+			return spokenWord(word, language: language) + AttributedString(String(localized: ", Daily Bop found! 3 times boost active!", comment: "Spoken after the daily word is found; leading comma joins it to the word"))
 		}
 
 		if powerUpActivated {
