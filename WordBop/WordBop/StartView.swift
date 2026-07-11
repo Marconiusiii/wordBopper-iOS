@@ -165,6 +165,7 @@ private struct InstructionsSheet: View {
 	private let boppleInstructions = [
 		"Words must be made up of letters that are next to each other in the grid.",
 		"Letters stay in place after you make words.",
+		"Each word only counts once per Bopple round, so keep hunting for new ones.",
 		"3 or 4 letter words score 1 point, 5 letters score 2, 6 letters score 3, 7 letters score 5, and 8 or more letters score 11.",
 		"Play together with friends at the same time to see who can Bopple the best! All on their own devices, of course."
 	]
