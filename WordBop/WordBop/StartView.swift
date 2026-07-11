@@ -358,6 +358,7 @@ private struct InstructionsSheet: View {
 		"Daily Bop gives each language one special word from midnight to 11:59 PM in your local time zone.",
 		"Choose a Daily Bop word to start a Timed game in that language.",
 		"Find the Daily Bop word during the round to launch a 45-second 3x boost.",
+		"You can earn that boost once per language each day.",
 		"Each Daily Bop word you find adds to your rank on the home screen."
 	]
 

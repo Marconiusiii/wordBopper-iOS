@@ -472,6 +472,7 @@ final class GameViewModel {
 	var gameplayHeading = GameViewModel.gameplayHeadingPhrases[0]
 	var dailyBopEntries: [DailyBopEntry] = []
 	var dailyBopEntriesReady = false
+	var dailyBopEntriesLoading = false
 	private var consumedBopAwayBubbleIds = Set<UUID>()
 
 	// MARK: - Best game
@@ -605,12 +606,15 @@ final class GameViewModel {
 
 	func prepareDailyBopEntries() {
 		guard !dailyBopEntriesReady else { return }
+		guard !dailyBopEntriesLoading else { return }
+		dailyBopEntriesLoading = true
 		DispatchQueue.global(qos: .utility).async { [dictionary] in
 			let entries = DictionaryLanguage.allCases.map { language in
 				DailyBopEntry(language: language, word: dictionary.dailyWord(for: language))
 			}
 			DispatchQueue.main.async {
 				self.dailyBopEntries = entries
+				self.dailyBopEntriesLoading = false
 				self.dailyBopEntriesReady = true
 			}
 		}
@@ -801,6 +805,7 @@ final class GameViewModel {
 		let multiplier = gameMode == .bopple ? 1 : (dailyBopBoostActive || chainPowerUpActive ? 3 : 1)
 		let points = basePoints * multiplier
 		let dailyBopWasFound = isDailyBopWord(word)
+		let dailyBopCanActivate = dailyBopWasFound && canActivateDailyBopBoostToday()
 
 		let scoredIds = selected.map(\.bubbleId)
 		selected.removeAll()
@@ -816,7 +821,7 @@ final class GameViewModel {
 		madeWords.append(word)
 		if gameMode != .bopple, chainBonus > largestLetterChain { largestLetterChain = chainBonus }
 
-		if dailyBopBoostActive || dailyBopWasFound {
+		if dailyBopBoostActive || dailyBopCanActivate {
 			audio.playChainMultiplierScoreSound(wordLength: word.count)
 			haptics.powerUpScored()
 		} else if multiplier > 1 {
@@ -829,7 +834,7 @@ final class GameViewModel {
 		}
 
 		let powerUpActivated = gameMode == .bopple ? false : updateChainStreak(chainBonus: chainBonus)
-		let dailyBopActivated = dailyBopWasFound && activateDailyBopBoostIfNeeded()
+		let dailyBopActivated = dailyBopCanActivate && activateDailyBopBoostIfNeeded()
 
 		announce(GameplayAnnouncements.scoredWord(
 			word: word,
@@ -985,6 +990,7 @@ final class GameViewModel {
 	private func activateDailyBopBoostIfNeeded() -> Bool {
 		guard !dailyBopFoundThisRound else { return false }
 		guard let language = dailyBopTargetLanguage else { return false }
+		guard !dailyBopWasFoundToday(language: language) else { return false }
 		dailyBopFoundThisRound = true
 		recordDailyBopFound(language: language)
 		pausePowerUpCountdown()
@@ -1000,6 +1006,12 @@ final class GameViewModel {
 			}
 		}
 		return true
+	}
+
+	private func canActivateDailyBopBoostToday() -> Bool {
+		guard !dailyBopFoundThisRound else { return false }
+		guard let language = dailyBopTargetLanguage else { return false }
+		return !dailyBopWasFoundToday(language: language)
 	}
 
 	private func stopDailyBopBoost() {
