@@ -4,6 +4,8 @@ import UIKit
 struct ResultsView: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
+	@State private var lookupRequest: DictionaryLookupRequest?
+	@State private var unavailableLookup: DictionaryLookupRequest?
 
 	var body: some View {
 		GeometryReader { geo in
@@ -31,13 +33,6 @@ struct ResultsView: View {
 						.accessibilityElement(children: .ignore)
 						.accessibilityLabel("\(vm.score) points")
 
-						if vm.dailyBopFoundThisRound {
-							DailyBopResultBadge(
-								word: vm.dailyBopTargetWord,
-								language: vm.dailyBopTargetLanguage ?? vm.dictionaryLanguage
-							)
-						}
-
 						VStack(spacing: 10) {
 							if dynamicTypeSize.isAccessibilitySize {
 								ResultStat(value: "\(vm.wordCount)", label: String(localized: "Words made"), color: .wbAccent4)
@@ -60,7 +55,24 @@ struct ResultsView: View {
 							.contentShape(Rectangle())
 
 						VStack(alignment: .leading, spacing: 10) {
-							Text("Your words")
+							if vm.dailyBopFoundThisRound, let dailyBopWord = vm.dailyBopTargetWord, !dailyBopWord.isEmpty {
+								DailyWordBoppedSection(
+									word: dailyBopWord,
+									language: vm.dailyBopTargetLanguage ?? vm.dictionaryLanguage
+								) {
+									let request = DictionaryLookupRequest(
+										word: dailyBopWord,
+										language: vm.dailyBopTargetLanguage ?? vm.dictionaryLanguage
+									)
+									if UIReferenceLibraryViewController.dictionaryHasDefinition(forTerm: dailyBopWord) {
+										lookupRequest = request
+									} else {
+										unavailableLookup = request
+									}
+								}
+							}
+
+							Text("Word List")
 								.font(.headline.weight(.black))
 								.foregroundStyle(Color.wbText)
 								.accessibilityAddTraits(.isHeader)
@@ -108,6 +120,13 @@ struct ResultsView: View {
 		.onAppear {
 			UIAccessibility.post(notification: .screenChanged, argument: "Round Complete")
 		}
+		.sheet(item: $lookupRequest) { request in
+			DictionaryLookupView(word: request.word)
+				.ignoresSafeArea()
+		}
+		.sheet(item: $unavailableLookup) { request in
+			DictionaryLookupUnavailableView(request: request)
+		}
 	}
 
 	private var averageLength: String {
@@ -132,48 +151,100 @@ struct ResultsView: View {
 	}
 }
 
-private struct DailyBopResultBadge: View {
-	let word: String?
+private struct DictionaryLookupRequest: Identifiable {
+	let word: String
 	let language: DictionaryLanguage
 
+	var id: String { "\(language.rawValue)-\(word)" }
+}
+
+private struct DailyWordBoppedSection: View {
+	let word: String
+	let language: DictionaryLanguage
+	let action: () -> Void
+
 	var body: some View {
-		VStack(spacing: 4) {
-			Text("Daily Bop Found!")
+		VStack(alignment: .leading, spacing: 6) {
+			Text("Daily Word Bopped!")
 				.font(.headline.weight(.black))
-				.foregroundStyle(Color.black)
-				.multilineTextAlignment(.center)
-			if let word, !word.isEmpty {
+				.foregroundStyle(Color.wbText)
+				.accessibilityAddTraits(.isHeader)
+
+			Button(action: action) {
 				Text(spokenWord)
-					.font(.system(.body, design: .monospaced).weight(.bold))
-					.foregroundStyle(Color.black.opacity(0.82))
-					.multilineTextAlignment(.center)
+					.font(.system(.title3, design: .monospaced).weight(.black))
+					.foregroundStyle(Color.black)
 					.environment(\.locale, language.locale)
+					.frame(maxWidth: .infinity, minHeight: 58)
+					.padding(.horizontal, 12)
+					.background(
+						LinearGradient(colors: [.wbAccent2, .wbAccent5],
+									   startPoint: .topLeading, endPoint: .bottomTrailing)
+					)
+					.clipShape(RoundedRectangle(cornerRadius: 14))
+					.contentShape(Rectangle())
 			}
+			.buttonStyle(.plain)
+			.accessibilityHint(Text("Looks up \(spokenWord) in Dictionary if available"))
 		}
-		.frame(maxWidth: .infinity)
-		.padding(.vertical, 12)
-		.padding(.horizontal, 14)
-		.background(
-			LinearGradient(colors: [.wbAccent2, .wbAccent5],
-						   startPoint: .topLeading, endPoint: .bottomTrailing)
-		)
-		.contentShape(Rectangle())
-		.accessibilityElement(children: .ignore)
-		.accessibilityLabel(Text(accessibilityLabel))
+		.frame(maxWidth: .infinity, alignment: .leading)
 	}
 
 	private var spokenWord: AttributedString {
-		var text = AttributedString(word ?? "")
+		var text = AttributedString(word)
 		text.languageIdentifier = language.speechLanguage
 		return text
 	}
+}
 
-	private var accessibilityLabel: AttributedString {
-		var text = AttributedString(String(localized: "Daily Bop Found!"))
-		if let word, !word.isEmpty {
-			text += AttributedString(" ")
-			text += spokenWord
+private struct DictionaryLookupView: UIViewControllerRepresentable {
+	let word: String
+
+	func makeUIViewController(context: Context) -> UIReferenceLibraryViewController {
+		UIReferenceLibraryViewController(term: word)
+	}
+
+	func updateUIViewController(_ uiViewController: UIReferenceLibraryViewController, context: Context) {}
+}
+
+private struct DictionaryLookupUnavailableView: View {
+	@Environment(\.dismiss) private var dismiss
+	let request: DictionaryLookupRequest
+
+	var body: some View {
+		NavigationStack {
+			VStack(spacing: 16) {
+				Text("Dictionary Lookup")
+					.font(.title2.weight(.black))
+					.foregroundStyle(Color.wbText)
+					.accessibilityAddTraits(.isHeader)
+
+				Text(unavailableMessage)
+					.font(.body)
+					.foregroundStyle(Color.wbText)
+					.multilineTextAlignment(.center)
+					.fixedSize(horizontal: false, vertical: true)
+			}
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
+			.padding(24)
+			.background(Color.wbBackground)
+			.toolbar {
+				ToolbarItem(placement: .topBarTrailing) {
+					Button("Close") {
+						dismiss()
+					}
+				}
+			}
 		}
+		.preferredColorScheme(.dark)
+	}
+
+	private var unavailableMessage: AttributedString {
+		var text = AttributedString(String(localized: "Dictionary does not have a lookup result for "))
+		var word = AttributedString(request.word)
+		word.languageIdentifier = request.language.speechLanguage
+		text += word
+		text += AttributedString(".")
 		return text
 	}
 }
