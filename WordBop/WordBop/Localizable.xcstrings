@@ -172,6 +172,9 @@
     ", Daily Bop found! 3 times boost active!" : {
       "comment" : "Spoken after the daily word is found; leading comma joins it to the word"
     },
+    ", Found" : {
+
+    },
     ", not valid." : {
       "comment" : "Spoken after an invalid word",
       "extractionState" : "manual",
@@ -2919,7 +2922,13 @@
     "Daily Bop Dynamo" : {
 
     },
+    "Daily Bop Found!" : {
+
+    },
     "Daily Bop found! 3 times boost active!" : {
+
+    },
+    "Daily Bop: " : {
 
     },
     "Daily Bops found" : {
@@ -3221,6 +3230,9 @@
       }
     },
     "Forest" : {
+
+    },
+    "Found" : {
 
     },
     "French" : {
@@ -4872,9 +4884,6 @@
           }
         }
       }
-    },
-    "Play Daily Bop Anthem" : {
-
     },
     "Playful" : {
       "extractionState" : "manual",

@@ -37,8 +37,6 @@ struct StartView: View {
 
 					dailyBopButton
 
-					dailyBopAnthemPreviewButton
-
 					startGameButton
 						.layoutPriority(3)
 
@@ -150,23 +148,6 @@ struct StartView: View {
 		.keyboardShortcut(.defaultAction)
 	}
 
-	private var dailyBopAnthemPreviewButton: some View {
-		Button {
-			vm.audio.playDailyBopAnthemPreview()
-		} label: {
-			Text("Play Daily Bop Anthem")
-				.font(.footnote.weight(.semibold))
-				.foregroundStyle(Color.wbAccent5)
-				.multilineTextAlignment(.center)
-				.lineLimit(2)
-				.frame(maxWidth: .infinity)
-				.frame(minHeight: 58)
-				.background(Color.wbSurface)
-				.contentShape(Rectangle())
-		}
-		.buttonStyle(.plain)
-	}
-
 	private var howToPlayButton: some View {
 		Button {
 			showingInstructions = true
@@ -207,6 +188,8 @@ private struct DailyBopSheet: View {
 	@Environment(GameViewModel.self) private var vm
 	@Environment(\.dismiss) private var dismiss
 	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
+	@AccessibilityFocusState private var focusedEntryID: String?
+	@State private var showedLoadingState = false
 
 	var body: some View {
 		NavigationStack {
@@ -229,28 +212,27 @@ private struct DailyBopSheet: View {
 							.padding(.horizontal, 24)
 							.contentShape(Rectangle())
 
-						if vm.dailyBopEntries.isEmpty {
-							Text("Loading today's Daily Bops...")
-								.font(.body)
-								.foregroundStyle(Color.wbMuted)
-								.frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-								.padding(.horizontal, 24)
-								.contentShape(Rectangle())
-						} else {
+						if vm.dailyBopEntriesReady {
 							VStack(spacing: 0) {
 								ForEach(vm.dailyBopEntries) { entry in
 									Button {
 										dismiss()
 										vm.startGame(dailyBopEntry: entry)
 									} label: {
-										DailyBopEntryLabel(entry: entry)
+										DailyBopEntryLabel(
+											entry: entry,
+											foundToday: vm.dailyBopWasFoundToday(language: entry.language)
+										)
 											.frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 74 : 58)
 											.contentShape(Rectangle())
 									}
 									.buttonStyle(.plain)
+									.accessibilityFocused($focusedEntryID, equals: entry.id)
 								}
 							}
 							.frame(maxWidth: .infinity)
+						} else {
+							DailyBopLoadingView()
 						}
 					}
 					.frame(width: contentWidth)
@@ -269,6 +251,19 @@ private struct DailyBopSheet: View {
 			}
 		}
 		.preferredColorScheme(.dark)
+		.onAppear {
+			if !vm.dailyBopEntriesReady {
+				showedLoadingState = true
+				vm.prepareDailyBopEntries()
+				UIAccessibility.post(notification: .announcement, argument: String(localized: "Loading Daily Bops..."))
+			}
+		}
+		.onChange(of: vm.dailyBopEntriesReady) { _, isReady in
+			guard isReady, showedLoadingState, let firstEntry = vm.dailyBopEntries.first else { return }
+			DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+				focusedEntryID = firstEntry.id
+			}
+		}
 	}
 
 	private func sheetContentWidth(in geo: GeometryProxy) -> CGFloat {
@@ -276,8 +271,26 @@ private struct DailyBopSheet: View {
 	}
 }
 
+private struct DailyBopLoadingView: View {
+	var body: some View {
+		ProgressView {
+			Text("Loading Daily Bops...")
+				.font(.body.weight(.semibold))
+				.foregroundStyle(Color.wbText)
+		}
+		.progressViewStyle(.circular)
+		.tint(Color.wbAccent5)
+		.frame(maxWidth: .infinity, minHeight: 96)
+		.padding(.horizontal, 24)
+		.contentShape(Rectangle())
+		.accessibilityElement(children: .ignore)
+		.accessibilityLabel("Loading Daily Bops...")
+	}
+}
+
 private struct DailyBopEntryLabel: View {
 	let entry: DailyBopEntry
+	let foundToday: Bool
 
 	var body: some View {
 		HStack(spacing: 12) {
@@ -290,6 +303,16 @@ private struct DailyBopEntryLabel: View {
 				.font(.system(.body, design: .rounded).weight(.black))
 				.foregroundStyle(Color.wbAccent5)
 				.frame(maxWidth: .infinity, alignment: .trailing)
+
+			if foundToday {
+				Text("Found")
+					.font(.caption.weight(.black))
+					.foregroundStyle(Color.black)
+					.padding(.vertical, 5)
+					.padding(.horizontal, 8)
+					.background(Color.wbAccent1)
+					.clipShape(Capsule())
+			}
 		}
 		.padding(.horizontal, 24)
 		.background(Color.wbBackground)
@@ -306,6 +329,9 @@ private struct DailyBopEntryLabel: View {
 	private var accessibilityLabel: AttributedString {
 		var label = AttributedString(entry.language.label + ": ")
 		label += spokenWord
+		if foundToday {
+			label += AttributedString(String(localized: ", Found"))
+		}
 		return label
 	}
 }

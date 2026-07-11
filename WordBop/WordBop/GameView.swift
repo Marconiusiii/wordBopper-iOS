@@ -440,6 +440,10 @@ private struct GamePauseCover: View {
 						.contentShape(Rectangle())
 						.accessibilityAddTraits(.isHeader)
 
+					if let dailyBopWord = vm.dailyBopTargetWord, let dailyBopLanguage = vm.dailyBopTargetLanguage {
+						DailyBopPauseRow(word: dailyBopWord, language: dailyBopLanguage)
+					}
+
 					pauseActionButton(
 						title: String(localized: "Resume Game"),
 						foregroundColor: .black,
@@ -532,6 +536,45 @@ private struct GamePauseCover: View {
 		DispatchQueue.main.async {
 			UIAccessibility.post(notification: .screenChanged, argument: heading)
 		}
+	}
+}
+
+private struct DailyBopPauseRow: View {
+	let word: String
+	let language: DictionaryLanguage
+
+	var body: some View {
+		VStack(spacing: 4) {
+			Text("Daily Bop")
+				.font(.caption.weight(.black))
+				.foregroundStyle(Color.wbMuted)
+				.frame(maxWidth: .infinity)
+			Text(spokenWord)
+				.font(.system(.title3, design: .rounded).weight(.black))
+				.foregroundStyle(Color.wbAccent5)
+				.frame(maxWidth: .infinity)
+				.environment(\.locale, language.locale)
+		}
+		.multilineTextAlignment(.center)
+		.frame(maxWidth: .infinity)
+		.frame(minHeight: 72)
+		.padding(.horizontal, 20)
+		.background(Color.wbSurface)
+		.contentShape(Rectangle())
+		.accessibilityElement(children: .ignore)
+		.accessibilityLabel(Text(accessibilityLabel))
+	}
+
+	private var spokenWord: AttributedString {
+		var text = AttributedString(word)
+		text.languageIdentifier = language.speechLanguage
+		return text
+	}
+
+	private var accessibilityLabel: AttributedString {
+		var text = AttributedString(String(localized: "Daily Bop: "))
+		text += spokenWord
+		return text
 	}
 }
 

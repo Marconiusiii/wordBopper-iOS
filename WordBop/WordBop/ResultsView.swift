@@ -31,6 +31,13 @@ struct ResultsView: View {
 						.accessibilityElement(children: .ignore)
 						.accessibilityLabel("\(vm.score) points")
 
+						if vm.dailyBopFoundThisRound {
+							DailyBopResultBadge(
+								word: vm.dailyBopTargetWord,
+								language: vm.dailyBopTargetLanguage ?? vm.dictionaryLanguage
+							)
+						}
+
 						VStack(spacing: 10) {
 							if dynamicTypeSize.isAccessibilitySize {
 								ResultStat(value: "\(vm.wordCount)", label: String(localized: "Words made"), color: .wbAccent4)
@@ -122,6 +129,52 @@ struct ResultsView: View {
 
 	private func isLandscape(in geo: GeometryProxy) -> Bool {
 		geo.size.width > geo.size.height
+	}
+}
+
+private struct DailyBopResultBadge: View {
+	let word: String?
+	let language: DictionaryLanguage
+
+	var body: some View {
+		VStack(spacing: 4) {
+			Text("Daily Bop Found!")
+				.font(.headline.weight(.black))
+				.foregroundStyle(Color.black)
+				.multilineTextAlignment(.center)
+			if let word, !word.isEmpty {
+				Text(spokenWord)
+					.font(.system(.body, design: .monospaced).weight(.bold))
+					.foregroundStyle(Color.black.opacity(0.82))
+					.multilineTextAlignment(.center)
+					.environment(\.locale, language.locale)
+			}
+		}
+		.frame(maxWidth: .infinity)
+		.padding(.vertical, 12)
+		.padding(.horizontal, 14)
+		.background(
+			LinearGradient(colors: [.wbAccent2, .wbAccent5],
+						   startPoint: .topLeading, endPoint: .bottomTrailing)
+		)
+		.contentShape(Rectangle())
+		.accessibilityElement(children: .ignore)
+		.accessibilityLabel(Text(accessibilityLabel))
+	}
+
+	private var spokenWord: AttributedString {
+		var text = AttributedString(word ?? "")
+		text.languageIdentifier = language.speechLanguage
+		return text
+	}
+
+	private var accessibilityLabel: AttributedString {
+		var text = AttributedString(String(localized: "Daily Bop Found!"))
+		if let word, !word.isEmpty {
+			text += AttributedString(" ")
+			text += spokenWord
+		}
+		return text
 	}
 }
 

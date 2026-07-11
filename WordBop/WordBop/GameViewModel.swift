@@ -471,6 +471,7 @@ final class GameViewModel {
 	var largestLetterChain = 0
 	var gameplayHeading = GameViewModel.gameplayHeadingPhrases[0]
 	var dailyBopEntries: [DailyBopEntry] = []
+	var dailyBopEntriesReady = false
 	private var consumedBopAwayBubbleIds = Set<UUID>()
 
 	// MARK: - Best game
@@ -545,6 +546,12 @@ final class GameViewModel {
 			.sorted { $0.language.label < $1.language.label }
 	}
 
+	func dailyBopWasFoundToday(language: DictionaryLanguage) -> Bool {
+		bestGame.dailyBopLanguageStats.contains {
+			$0.language == language && $0.lastFoundDateKey == dailyBopDateKey()
+		}
+	}
+
 	var showsTimer: Bool {
 		switch gameMode {
 		case .timed:
@@ -597,12 +604,14 @@ final class GameViewModel {
 	}
 
 	func prepareDailyBopEntries() {
+		guard !dailyBopEntriesReady else { return }
 		DispatchQueue.global(qos: .utility).async { [dictionary] in
 			let entries = DictionaryLanguage.allCases.map { language in
 				DailyBopEntry(language: language, word: dictionary.dailyWord(for: language))
 			}
 			DispatchQueue.main.async {
 				self.dailyBopEntries = entries
+				self.dailyBopEntriesReady = true
 			}
 		}
 	}
