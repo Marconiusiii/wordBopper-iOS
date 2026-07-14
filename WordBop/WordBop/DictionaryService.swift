@@ -328,6 +328,7 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable, Codable {
 final class DictionaryService {
 	static let shared = DictionaryService()
 	private var cachedWords: [DictionaryLanguage: Set<String>] = [:]
+	private var cachedDailyCandidates: [DictionaryLanguage: [String]] = [:]
 	private var cachedDailyWords: [String: String] = [:]
 	private let queue = DispatchQueue(label: "com.marconius.WordBop.DictionaryService", qos: .userInitiated)
 
@@ -343,6 +344,12 @@ final class DictionaryService {
 	func preload(_ language: DictionaryLanguage) {
 		queue.async {
 			_ = self.wordsOnQueue(for: language)
+		}
+	}
+
+	func preloadDailyBopCandidates(for language: DictionaryLanguage) {
+		queue.async {
+			_ = self.dailyCandidatesOnQueue(for: language)
 		}
 	}
 
@@ -362,9 +369,8 @@ final class DictionaryService {
 	private func dailyWordOnQueue(for language: DictionaryLanguage, dateKey: String) -> String {
 		let cacheKey = "\(language.rawValue)-\(dateKey)"
 		if let word = cachedDailyWords[cacheKey] { return word }
-		let words = wordsOnQueue(for: language)
-		let word = words.reduce(into: (word: "", score: Int.max)) { best, word in
-			guard isDailyCandidate(word) else { return }
+		let candidates = dailyCandidatesOnQueue(for: language)
+		let word = candidates.reduce(into: (word: "", score: Int.max)) { best, word in
 			let score = stableSeed("\(language.rawValue)-\(dateKey)-\(word)")
 			if score < best.score {
 				best = (word, score)
@@ -373,6 +379,20 @@ final class DictionaryService {
 		.word
 		cachedDailyWords[cacheKey] = word
 		return word
+	}
+
+	private func dailyCandidatesOnQueue(for language: DictionaryLanguage) -> [String] {
+		if let candidates = cachedDailyCandidates[language] { return candidates }
+		guard let url = Bundle.main.url(forResource: language.resourceName, withExtension: "txt"),
+			  let content = try? String(contentsOf: url, encoding: .utf8) else {
+			cachedDailyCandidates[language] = []
+			return []
+		}
+		let candidates = Array(Set(content.components(separatedBy: .newlines)
+			.map { normalized($0, for: language) }
+			.filter { isDailyCandidate($0) }))
+		cachedDailyCandidates[language] = candidates
+		return candidates
 	}
 
 	private func isDailyCandidate(_ word: String) -> Bool {

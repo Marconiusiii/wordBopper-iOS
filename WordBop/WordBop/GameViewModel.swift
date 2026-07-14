@@ -566,6 +566,12 @@ final class GameViewModel {
 		DictionaryLanguage.allCases.filter { languages.contains($0) }
 	}
 
+	private func preloadDailyBopCandidates(for languages: [DictionaryLanguage]? = nil) {
+		for language in languages ?? normalizedDailyBopLanguages() {
+			dictionary.preloadDailyBopCandidates(for: language)
+		}
+	}
+
 	private func ensureDailyBopLanguageEnabled(_ language: DictionaryLanguage) {
 		var languages = normalizedDailyBopLanguages()
 		guard !languages.contains(language) else { return }
@@ -633,6 +639,7 @@ final class GameViewModel {
 		dailyBopEnabledLanguages = loadDailyBopEnabledLanguages(fallback: savedDictionaryLanguage)
 		dictionaryLanguage = savedDictionaryLanguage
 		dictionary.preload(dictionaryLanguage)
+		preloadDailyBopCandidates()
 		prepareDailyBopEntries()
 	}
 
@@ -640,6 +647,7 @@ final class GameViewModel {
 		guard !dailyBopEntriesReady else { return }
 		guard !dailyBopEntriesLoading else { return }
 		let languages = normalizedDailyBopLanguages()
+		preloadDailyBopCandidates(for: languages)
 		let generation = UUID()
 		dailyBopEntriesGeneration = generation
 		dailyBopEntriesLoading = true
@@ -674,6 +682,7 @@ final class GameViewModel {
 		}
 		dailyBopEnabledLanguages = sortedDailyBopLanguages(languages)
 		saveDailyBopEnabledLanguages()
+		preloadDailyBopCandidates(for: dailyBopEnabledLanguages)
 		reloadDailyBopEntries()
 	}
 
@@ -1173,11 +1182,11 @@ final class GameViewModel {
 
 	private func randomLetter(forRow row: Int, col: Int, replacingIndex: Int? = nil) -> String {
 		let pool = dictionaryLanguage.letterPool
-		var bestCandidate = pool[Int.random(in: 0..<pool.count)]
+		var bestCandidate = randomLetterCandidate(from: pool)
 		var bestPenalty = letterPlacementPenalty(for: bestCandidate, row: row, col: col, replacingIndex: replacingIndex)
 
 		for _ in 0..<24 {
-			let candidate = pool[Int.random(in: 0..<pool.count)]
+			let candidate = randomLetterCandidate(from: pool)
 			let penalty = letterPlacementPenalty(for: candidate, row: row, col: col, replacingIndex: replacingIndex)
 			if penalty == 0 { return candidate }
 			if penalty < bestPenalty {
@@ -1186,6 +1195,20 @@ final class GameViewModel {
 			}
 		}
 		return bestCandidate
+	}
+
+	private func randomLetterCandidate(from pool: [String]) -> String {
+		if let dailyBopLetter = randomDailyBopLetter(), Int.random(in: 0..<100) < 16 {
+			return dailyBopLetter
+		}
+		return pool[Int.random(in: 0..<pool.count)]
+	}
+
+	private func randomDailyBopLetter() -> String? {
+		guard let dailyBopTargetWord, dailyBopTargetLanguage == dictionaryLanguage else { return nil }
+		let letters = dailyBopTargetWord.map { String($0) }.filter { !$0.isEmpty }
+		guard !letters.isEmpty else { return nil }
+		return letters[Int.random(in: 0..<letters.count)]
 	}
 
 	private func letterPlacementPenalty(for letter: String, row: Int, col: Int, replacingIndex: Int?) -> Int {
