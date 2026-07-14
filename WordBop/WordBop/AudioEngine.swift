@@ -239,7 +239,7 @@ final class AudioEngine {
 	func playDailyBopIntroSound() {
 		let motif: [Double] = [783.99, 783.99, 587.33]
 		let harmony: [Double] = [392.0, 493.88, 392.0]
-		let starts: [Double] = [0.0, 0.18, 0.39]
+		let starts: [Double] = [0.0, 0.22, 0.43]
 		let duration = 1.05
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
 
@@ -259,13 +259,13 @@ final class AudioEngine {
 					   settleRatio: 0.42, settleTime: 0.1)
 		}
 
-		ctx.addOsc(type: .sine, freq: 1174.66, start: 0.41, attackTime: 0.006,
+		ctx.addOsc(type: .sine, freq: 1174.66, start: 0.45, attackTime: 0.006,
 				   peakAmp: 0.07, releaseTime: 0.28,
 				   filter: FilterSpec(kind: .bandpass, frequency: 1174.66, q: 8))
-		ctx.addOsc(type: .sine, freq: 1567.98, start: 0.46, attackTime: 0.006,
+		ctx.addOsc(type: .sine, freq: 1567.98, start: 0.5, attackTime: 0.006,
 				   peakAmp: 0.055, releaseTime: 0.24,
 				   filter: FilterSpec(kind: .bandpass, frequency: 1567.98, q: 8))
-		ctx.addNoise(start: 0.38, duration: 0.08, amplitude: 0.08, highpass: false, bandpass: true)
+		ctx.addNoise(start: 0.42, duration: 0.08, amplitude: 0.08, highpass: false, bandpass: true)
 		play(ctx.toBuffer(), priority: .score)
 	}
 

@@ -557,9 +557,11 @@ private struct DailyBopPauseWord: View {
 	}
 
 	private var spokenWord: AttributedString {
-		var text = AttributedString(word)
-		text.languageIdentifier = language.speechLanguage
-		return text
+		var label = AttributedString(String(localized: "Daily Bop Word: "))
+		var targetWord = AttributedString(word)
+		targetWord.languageIdentifier = language.speechLanguage
+		label += targetWord
+		return label
 	}
 }
 
