@@ -714,7 +714,11 @@ final class GameViewModel {
 		}
 
 		screen = .game
-		audio.playRoundStartSound(for: gameMode)
+		if dailyBopEntry != nil {
+			audio.playDailyBopIntroSound()
+		} else {
+			audio.playRoundStartSound(for: gameMode)
+		}
 		if showsTimer { startTimer() }
 	}
 

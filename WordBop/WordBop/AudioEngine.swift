@@ -236,6 +236,39 @@ final class AudioEngine {
 		}
 	}
 
+	func playDailyBopIntroSound() {
+		let motif: [Double] = [783.99, 783.99, 587.33]
+		let harmony: [Double] = [392.0, 493.88, 392.0]
+		let starts: [Double] = [0.0, 0.18, 0.39]
+		let duration = 1.05
+		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
+
+		for index in motif.indices {
+			let start = starts[index]
+			let freq = motif[index]
+			let isLanding = index == motif.count - 1
+			ctx.addOsc(type: .sine, freq: freq, start: start, attackTime: 0.018,
+					   peakAmp: isLanding ? 0.34 : 0.28, releaseTime: isLanding ? 0.58 : 0.32,
+					   settleRatio: 0.5, settleTime: 0.09)
+			ctx.addOsc(type: .triangle, freq: freq * 2, start: start + 0.006, attackTime: 0.012,
+					   peakAmp: isLanding ? 0.085 : 0.07, releaseTime: isLanding ? 0.44 : 0.26,
+					   settleRatio: 0.36, settleTime: 0.07,
+					   filter: FilterSpec(kind: .bandpass, frequency: freq * 2, q: 5.5))
+			ctx.addOsc(type: .sine, freq: harmony[index], start: start + 0.012, attackTime: 0.02,
+					   peakAmp: isLanding ? 0.13 : 0.09, releaseTime: isLanding ? 0.62 : 0.34,
+					   settleRatio: 0.42, settleTime: 0.1)
+		}
+
+		ctx.addOsc(type: .sine, freq: 1174.66, start: 0.41, attackTime: 0.006,
+				   peakAmp: 0.07, releaseTime: 0.28,
+				   filter: FilterSpec(kind: .bandpass, frequency: 1174.66, q: 8))
+		ctx.addOsc(type: .sine, freq: 1567.98, start: 0.46, attackTime: 0.006,
+				   peakAmp: 0.055, releaseTime: 0.24,
+				   filter: FilterSpec(kind: .bandpass, frequency: 1567.98, q: 8))
+		ctx.addNoise(start: 0.38, duration: 0.08, amplitude: 0.08, highpass: false, bandpass: true)
+		play(ctx.toBuffer(), priority: .score)
+	}
+
 	private func playTimedRoundStartSound() {
 		let chordNotes: [Double] = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]
 		let shapes = [[0,1,2,3],[2,1,3,0],[1,3,2,4],[3,2,4,5],[4,2,3,1]]
