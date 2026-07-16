@@ -268,7 +268,7 @@ private struct ResultsActionBar: View {
 	var body: some View {
 		HStack(spacing: 0) {
 			Button {
-				vm.startGame()
+				vm.playAgain()
 			} label: {
 				BottomButtonZone(bottomInset: bottomInset) {
 					Text("Play Again")

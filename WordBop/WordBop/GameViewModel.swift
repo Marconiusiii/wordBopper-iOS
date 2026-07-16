@@ -731,6 +731,14 @@ final class GameViewModel {
 		if showsTimer { startTimer() }
 	}
 
+	func playAgain() {
+		if let dailyBopTargetWord, let dailyBopTargetLanguage {
+			startGame(dailyBopEntry: DailyBopEntry(language: dailyBopTargetLanguage, word: dailyBopTargetWord))
+		} else {
+			startGame()
+		}
+	}
+
 	func pauseGame(playSound: Bool = true) {
 		guard gameActive, !gamePaused else { return }
 		gamePaused = true
