@@ -660,43 +660,43 @@
         }
       }
     },
-    "© 2026, %@" : {
+    "© 2026 Chancey Fleet and Marco Salsiccia, %@" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "© 2026, %@"
+            "value" : "© 2026 Chancey Fleet and Marco Salsiccia, %@"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "© 2026, %@"
+            "value" : "© 2026 Chancey Fleet and Marco Salsiccia, %@"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "© 2026, %@"
+            "value" : "© 2026 Chancey Fleet and Marco Salsiccia, %@"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "© 2026, %@"
+            "value" : "© 2026 Chancey Fleet and Marco Salsiccia, %@"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "© 2026, %@"
+            "value" : "© 2026 Chancey Fleet and Marco Salsiccia, %@"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "© 2026, %@"
+            "value" : "© 2026 Chancey Fleet and Marco Salsiccia, %@"
           }
         }
       }

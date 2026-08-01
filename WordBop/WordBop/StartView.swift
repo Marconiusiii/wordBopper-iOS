@@ -1162,7 +1162,7 @@ private struct AboutWordBopperSheet: View {
 								.buttonStyle(.plain)
 								.accessibilityHint("Opens word list credits and license acknowledgments.")
 
-								Text("© 2026, \(versionText)")
+								Text("© 2026 Chancey Fleet and Marco Salsiccia, \(versionText)")
 									.frame(maxWidth: .infinity, minHeight: 44)
 									.contentShape(Rectangle())
 							}
