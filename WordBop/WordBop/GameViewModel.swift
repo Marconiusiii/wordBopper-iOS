@@ -739,6 +739,7 @@ final class GameViewModel {
 				bubbles.append(Bubble(letter: randomLetter(forRow: row, col: col), colorIndex: randomColor(), row: row, col: col))
 			}
 		}
+		enforceCompactGridVowelMinimum()
 
 		screen = .game
 		if dailyBopEntry != nil {
@@ -1207,12 +1208,13 @@ final class GameViewModel {
 	}
 
 	private func randomLetter(forRow row: Int, col: Int, replacingIndex: Int? = nil) -> String {
-		let pool = dictionaryLanguage.letterPool
-		var bestCandidate = randomLetterCandidate(from: pool)
+		let forceVowel = shouldForceVowel(replacingIndex: replacingIndex)
+		let pool = forceVowel ? vowelPool : dictionaryLanguage.letterPool
+		var bestCandidate = randomLetterCandidate(from: pool, allowDailyBopNudge: !forceVowel)
 		var bestPenalty = letterPlacementPenalty(for: bestCandidate, row: row, col: col, replacingIndex: replacingIndex)
 
 		for _ in 0..<24 {
-			let candidate = randomLetterCandidate(from: pool)
+			let candidate = randomLetterCandidate(from: pool, allowDailyBopNudge: !forceVowel)
 			let penalty = letterPlacementPenalty(for: candidate, row: row, col: col, replacingIndex: replacingIndex)
 			if penalty == 0 { return candidate }
 			if penalty < bestPenalty {
@@ -1223,8 +1225,34 @@ final class GameViewModel {
 		return bestCandidate
 	}
 
-	private func randomLetterCandidate(from pool: [String]) -> String {
-		if let dailyBopLetter = randomDailyBopLetter(), Int.random(in: 0..<100) < 16 {
+	private func enforceCompactGridVowelMinimum() {
+		let minimumVowels = compactGridMinimumVowels
+		guard minimumVowels > 0 else { return }
+		while vowelCount() < minimumVowels, let index = bubbles.indices.filter({ !isVowel(bubbles[$0].letter) }).randomElement() {
+			let old = bubbles[index]
+			bubbles[index] = Bubble(letter: randomLetter(forRow: old.row, col: old.col, replacingIndex: index, forceVowel: true), colorIndex: old.colorIndex, row: old.row, col: old.col)
+		}
+	}
+
+	private func randomLetter(forRow row: Int, col: Int, replacingIndex: Int?, forceVowel: Bool) -> String {
+		let pool = forceVowel ? vowelPool : dictionaryLanguage.letterPool
+		var bestCandidate = randomLetterCandidate(from: pool, allowDailyBopNudge: !forceVowel)
+		var bestPenalty = letterPlacementPenalty(for: bestCandidate, row: row, col: col, replacingIndex: replacingIndex)
+
+		for _ in 0..<24 {
+			let candidate = randomLetterCandidate(from: pool, allowDailyBopNudge: !forceVowel)
+			let penalty = letterPlacementPenalty(for: candidate, row: row, col: col, replacingIndex: replacingIndex)
+			if penalty == 0 { return candidate }
+			if penalty < bestPenalty {
+				bestCandidate = candidate
+				bestPenalty = penalty
+			}
+		}
+		return bestCandidate
+	}
+
+	private func randomLetterCandidate(from pool: [String], allowDailyBopNudge: Bool = true) -> String {
+		if allowDailyBopNudge, let dailyBopLetter = randomDailyBopLetter(), Int.random(in: 0..<100) < 16 {
 			return dailyBopLetter
 		}
 		return pool[Int.random(in: 0..<pool.count)]
@@ -1235,6 +1263,37 @@ final class GameViewModel {
 		let letters = dailyBopTargetWord.map { String($0) }.filter { !$0.isEmpty }
 		guard !letters.isEmpty else { return nil }
 		return letters[Int.random(in: 0..<letters.count)]
+	}
+
+	private var compactGridMinimumVowels: Int {
+		switch gridSize {
+		case 3:
+			2
+		case 4:
+			3
+		default:
+			0
+		}
+	}
+
+	private var vowelPool: [String] {
+		dictionaryLanguage.letterPool.filter { isVowel($0) }
+	}
+
+	private func shouldForceVowel(replacingIndex: Int?) -> Bool {
+		guard compactGridMinimumVowels > 0, let replacingIndex else { return false }
+		return vowelCount(excluding: replacingIndex) < compactGridMinimumVowels
+	}
+
+	private func vowelCount(excluding excludedIndex: Int? = nil) -> Int {
+		bubbles.indices.reduce(0) { count, index in
+			guard index != excludedIndex else { return count }
+			return isVowel(bubbles[index].letter) ? count + 1 : count
+		}
+	}
+
+	private func isVowel(_ letter: String) -> Bool {
+		["a", "e", "i", "o", "u"].contains(letter.lowercased())
 	}
 
 	private func letterPlacementPenalty(for letter: String, row: Int, col: Int, replacingIndex: Int?) -> Int {
