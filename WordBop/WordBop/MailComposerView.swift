@@ -1,5 +1,6 @@
 import SwiftUI
 import MessageUI
+import UIKit
 
 enum WordBopMailDraft {
 	case feedback
@@ -14,19 +15,42 @@ enum WordBopMailDraft {
 		}
 	}
 
+    private static func osString() -> String {
+        #if os(iOS)
+        return "iOS " + UIDevice.current.systemVersion
+        #elseif os(macOS)
+        let version = ProcessInfo.processInfo.operatingSystemVersion
+        let versionString = [version.majorVersion, version.minorVersion, version.patchVersion].map(String.init).joined(separator: ".")
+        return "macOS " + versionString
+        #else
+        return "Unknown OS"
+        #endif
+    }
+
 	var body: String? {
 		switch self {
 		case .feedback:
-			nil
+		    let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+		    let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+		    let system = Self.osString()
+		    return String(localized: """
+		    App Version: \(version) (\(build))
+		    OS: \(system)
+		    
+		    Please describe your feedback below:
+		    
+		    """, comment: "Prefilled email body for general feedback including app and device details")
 		case let .missingWord(language, mode):
-			String(localized: """
+			let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+			let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+			return String(localized: """
 			Missing word:
 
 			Bubble Language: \(language.label)
-			Game Mode: \(mode.label)
+			App Version: \(version) (\(build))
 
 			Please include the missing word above. If you know the language or regional spelling details, feel free to add those too.
-			""", comment: "Prefilled email body for reporting a missing word")
+			""", comment: "Prefilled email body for reporting a missing word, including app version")
 		}
 	}
 

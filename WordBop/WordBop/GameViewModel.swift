@@ -385,6 +385,24 @@ final class GameViewModel {
 		String(localized: "The Bopple Exquisite"),
 		String(localized: "The Bopple Bops Back")
 	]
+	static let dailyBopGameplayHeadingPhrases = [
+		String(localized: "Bop of the Day"),
+		String(localized: "Today’s Word Wants You"),
+		String(localized: "Daily Bop, Daily Glory"),
+		String(localized: "The Word Is Out There"),
+		String(localized: "Hunt the Daily Bop"),
+		String(localized: "Bop It Before Midnight"),
+		String(localized: "Today’s Bop Begins"),
+		String(localized: "Chase the Daily Bop"),
+		String(localized: "Bop the Day Away"),
+		String(localized: "The Daily Word Beckons"),
+		String(localized: "Find It, Bop It"),
+		String(localized: "Your Daily Bop Awaits"),
+		String(localized: "Bop on the Daily"),
+		String(localized: "A Good Day to Bop"),
+		String(localized: "Get the Big Bopper"),
+		String(localized: "Boppin’ 24/7")
+	]
 
 	// MARK: - Navigation
 	var screen: GameScreen = .start
@@ -1283,6 +1301,9 @@ final class GameViewModel {
 	}
 
 	private func randomGameplayHeading() -> String {
+		if dailyBopTargetWord != nil {
+			return GameViewModel.dailyBopGameplayHeadingPhrases.randomElement() ?? GameViewModel.dailyBopGameplayHeadingPhrases[0]
+		}
 		if gameMode == .bopple {
 			return GameViewModel.boppleGameplayHeadingPhrases.randomElement() ?? GameViewModel.boppleGameplayHeadingPhrases[0]
 		}

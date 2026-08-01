@@ -947,6 +947,9 @@
         }
       }
     },
+    "A Good Day to Bop" : {
+
+    },
     "About WordBopper" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1111,6 +1114,17 @@
         }
       }
     },
+    "App Version: %@ (%@)\nOS: %@\n\nPlease describe your feedback below:\n" : {
+      "comment" : "Prefilled email body for general feedback including app and device details",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "App Version: %1$@ (%2$@)\nOS: %3$@\n\nPlease describe your feedback below:\n"
+          }
+        }
+      }
+    },
     "Average length" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1240,6 +1254,15 @@
     "Bop Commander" : {
 
     },
+    "Bop It Before Midnight" : {
+
+    },
+    "Bop of the Day" : {
+
+    },
+    "Bop on the Daily" : {
+
+    },
     "Bop out some words!" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1282,6 +1305,9 @@
       }
     },
     "Bop Supreme" : {
+
+    },
+    "Bop the Day Away" : {
 
     },
     "Bop those letters!" : {
@@ -1655,6 +1681,9 @@
           }
         }
       }
+    },
+    "Boppin’ 24/7" : {
+
     },
     "Bopple" : {
       "comment" : "Game mode name, brand term kept untranslated",
@@ -2203,6 +2232,9 @@
           }
         }
       }
+    },
+    "Chase the Daily Bop" : {
+
     },
     "Choose a bubble color set that feels good to play with. Every theme keeps the letter contrast strong." : {
 
@@ -2931,6 +2963,9 @@
     "Daily Bop Word: " : {
 
     },
+    "Daily Bop, Daily Glory" : {
+
+    },
     "Daily Bops found" : {
 
     },
@@ -3193,6 +3228,9 @@
           }
         }
       }
+    },
+    "Find It, Bop It" : {
+
     },
     "Find one special word each day in any language. Bop it during a Timed game to kick off a 45-second 3x boost." : {
 
@@ -3507,6 +3545,9 @@
         }
       }
     },
+    "Get the Big Bopper" : {
+
+    },
     "Grand Bopmaster" : {
 
     },
@@ -3635,6 +3676,9 @@
           }
         }
       }
+    },
+    "Hunt the Daily Bop" : {
+
     },
     "If you enjoy this game, try out our other game on the App Store:" : {
       "extractionState" : "manual",
@@ -4216,6 +4260,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Espelha os controles do jogo para facilitar o jogo com a mão esquerda."
+          }
+        }
+      }
+    },
+    "Missing word:\n\nBubble Language: %@\nApp Version: %@ (%@)\n\nPlease include the missing word above. If you know the language or regional spelling details, feel free to add those too." : {
+      "comment" : "Prefilled email body for reporting a missing word, including app version",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Missing word:\n\nBubble Language: %1$@\nApp Version: %2$@ (%3$@)\n\nPlease include the missing word above. If you know the language or regional spelling details, feel free to add those too."
           }
         }
       }
@@ -5789,6 +5844,12 @@
         }
       }
     },
+    "The Daily Word Beckons" : {
+
+    },
+    "The Word Is Out There" : {
+
+    },
     "Time" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5952,6 +6013,12 @@
           }
         }
       }
+    },
+    "Today’s Bop Begins" : {
+
+    },
+    "Today’s Word Wants You" : {
+
     },
     "Typewriter" : {
       "extractionState" : "manual",
@@ -6507,6 +6574,9 @@
           }
         }
       }
+    },
+    "Your Daily Bop Awaits" : {
+
     },
     "Your word appears here as you bop letters." : {
       "extractionState" : "manual",
