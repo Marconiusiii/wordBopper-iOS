@@ -87,6 +87,10 @@ enum DictionaryLanguage: String, CaseIterable, Identifiable, Codable {
 		}
 	}
 
+	var dailyResourceName: String {
+		"daily-\(resourceName)"
+	}
+
 	var letterPool: [String] {
 		Array(tunedLetterDistribution).map { String($0) }
 	}
@@ -383,15 +387,24 @@ final class DictionaryService {
 
 	private func dailyCandidatesOnQueue(for language: DictionaryLanguage) -> [String] {
 		if let candidates = cachedDailyCandidates[language] { return candidates }
-		guard let url = Bundle.main.url(forResource: language.resourceName, withExtension: "txt"),
-			  let content = try? String(contentsOf: url, encoding: .utf8) else {
-			cachedDailyCandidates[language] = []
-			return []
+		if let url = Bundle.main.url(forResource: language.dailyResourceName, withExtension: "txt"),
+		   let content = try? String(contentsOf: url, encoding: .utf8) {
+			let candidates = content.components(separatedBy: .newlines).filter { !$0.isEmpty }
+			cachedDailyCandidates[language] = candidates
+			return candidates
 		}
+
+		let candidates = dailyCandidatesFromFullDictionaryOnQueue(for: language)
+		cachedDailyCandidates[language] = candidates
+		return candidates
+	}
+
+	private func dailyCandidatesFromFullDictionaryOnQueue(for language: DictionaryLanguage) -> [String] {
+		guard let url = Bundle.main.url(forResource: language.resourceName, withExtension: "txt"),
+			  let content = try? String(contentsOf: url, encoding: .utf8) else { return [] }
 		let candidates = Array(Set(content.components(separatedBy: .newlines)
 			.map { normalized($0, for: language) }
 			.filter { isDailyCandidate($0) }))
-		cachedDailyCandidates[language] = candidates
 		return candidates
 	}
 
@@ -412,7 +425,7 @@ final class DictionaryService {
 		return words
 	}
 
-	private func normalized(_ word: String, for language: DictionaryLanguage) -> String {
+	func normalized(_ word: String, for language: DictionaryLanguage) -> String {
 		let protectedCharacters: [Character: String]
 		switch language {
 		case .english, .dutch, .italian:
