@@ -9,6 +9,7 @@ struct StartView: View {
 	@State private var showingDailyBop = false
 	@State private var showingBopHunt = false
 	@State private var showingGameSettings = false
+	@State private var announcedInitialScreen = false
 
 	var body: some View {
 		GeometryReader { geo in
@@ -55,7 +56,10 @@ struct StartView: View {
 			.ignoresSafeArea(edges: horizontalSafeAreaEdges(in: geo))
 		}
 		.onAppear {
-			UIAccessibility.post(notification: .screenChanged, argument: "WordBopper")
+			if !announcedInitialScreen {
+				UIAccessibility.post(notification: .screenChanged, argument: "WordBopper")
+				announcedInitialScreen = true
+			}
 			vm.refreshActiveBopHunt()
 			vm.audio.prepareDailyBopAnthemPreview()
 			vm.prepareDailyBopEntries()
