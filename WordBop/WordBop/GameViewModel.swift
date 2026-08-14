@@ -500,6 +500,7 @@ final class GameViewModel {
 			saveDictionaryLanguage()
 			dictionary.preload(dictionaryLanguage)
 			ensureDailyBopLanguageEnabled(dictionaryLanguage)
+			refreshActiveBopHunt()
 		}
 	}
 	var bubbles: [Bubble] = []
@@ -597,6 +598,9 @@ final class GameViewModel {
 	}
 
 	var activeBopHuntIsAvailableForCurrentLanguage: Bool {
+		if activeBopHunt == nil {
+			refreshActiveBopHunt()
+		}
 		guard let activeBopHunt else { return false }
 		return !activeBopHunt.words(for: dictionaryLanguage).isEmpty
 	}
