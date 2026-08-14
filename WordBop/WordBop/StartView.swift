@@ -36,14 +36,12 @@ struct StartView: View {
 
 					startScreenTopRow
 
-					dailyBopButton
-
-					if vm.activeBopHuntIsAvailableForCurrentLanguage {
-						bopHuntButton
-					}
-
 					startGameButton
 						.layoutPriority(3)
+
+					dailyBopButton
+
+					bopHuntButton
 
 					BestGameCard(bestGame: vm.bestGame, dailyBopRank: vm.currentDailyBopRank)
 						.layoutPriority(2)
@@ -396,20 +394,31 @@ struct BopHuntSheet: View {
 							.padding(.horizontal, 24)
 							.contentShape(Rectangle())
 
-						Text(vm.activeBopHuntProgressText)
-							.font(.headline.weight(.black))
-							.foregroundStyle(Color.wbAccent5)
-							.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
-							.padding(.horizontal, 24)
-							.contentShape(Rectangle())
+						if vm.activeBopHuntIsAvailableForCurrentLanguage {
+							Text(vm.activeBopHuntProgressText)
+								.font(.headline.weight(.black))
+								.foregroundStyle(Color.wbAccent5)
+								.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+								.padding(.horizontal, 24)
+								.contentShape(Rectangle())
 
-						VStack(spacing: 0) {
-							ForEach(vm.activeBopHuntWords) { item in
-								BopHuntWordRow(item: item)
-									.frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 72 : 56)
+							VStack(spacing: 0) {
+								let words = vm.activeBopHuntWords
+								ForEach(Array(words.enumerated()), id: \.element.id) { index, item in
+									BopHuntWordRow(item: item, index: index + 1, total: words.count)
+										.frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 72 : 56)
+								}
 							}
+							.frame(maxWidth: .infinity)
+						} else {
+							Text("There is no active Bop Hunt for the selected language right now.")
+								.font(.headline.weight(.semibold))
+								.foregroundStyle(Color.wbText)
+								.fixedSize(horizontal: false, vertical: true)
+								.frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
+								.padding(.horizontal, 24)
+								.contentShape(Rectangle())
 						}
-						.frame(maxWidth: .infinity)
 					}
 					.frame(width: contentWidth)
 					.frame(minHeight: geo.size.height, alignment: .top)
@@ -436,6 +445,8 @@ struct BopHuntSheet: View {
 
 private struct BopHuntWordRow: View {
 	let item: BopHuntWord
+	let index: Int
+	let total: Int
 
 	var body: some View {
 		HStack(spacing: 12) {
@@ -457,6 +468,16 @@ private struct BopHuntWordRow: View {
 		.padding(.horizontal, 24)
 		.background(Color.wbBackground)
 		.contentShape(Rectangle())
+		.accessibilityElement(children: .ignore)
+		.accessibilityLabel(accessibilityLabel)
+	}
+
+	private var accessibilityLabel: Text {
+		if item.found {
+			Text("\(item.word), found, \(index) of \(total)", comment: "Bop Hunt word row accessibility label for a found word")
+		} else {
+			Text("\(item.word), \(index) of \(total)", comment: "Bop Hunt word row accessibility label")
+		}
 	}
 }
 

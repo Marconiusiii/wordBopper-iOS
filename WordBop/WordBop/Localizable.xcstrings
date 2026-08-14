@@ -265,6 +265,28 @@
     "%@ Daily Bops" : {
       "comment" : "Daily Bop language count label"
     },
+    "%@, %lld of %lld" : {
+      "comment" : "Bop Hunt word row accessibility label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$lld of %3$lld"
+          }
+        }
+      }
+    },
+    "%@, found, %lld of %lld" : {
+      "comment" : "Bop Hunt word row accessibility label for a found word",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, found, %2$lld of %3$lld"
+          }
+        }
+      }
+    },
     "%@." : {
       "comment" : "Low-verbosity score readout",
       "extractionState" : "manual",
@@ -5877,6 +5899,9 @@
 
     },
     "The Word Is Out There" : {
+
+    },
+    "There is no active Bop Hunt for the selected language right now." : {
 
     },
     "Time" : {
