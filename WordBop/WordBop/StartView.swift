@@ -154,7 +154,7 @@ struct StartView: View {
 			sheetTrigger = .bopHunt
 			showingBopHunt = true
 		} label: {
-			Text("Bop Hunt")
+			Text("BopQuest")
 				.font(.headline.weight(.black))
 				.foregroundStyle(Color.black)
 				.multilineTextAlignment(.center)
@@ -409,7 +409,7 @@ struct BopHuntSheet: View {
 				let contentWidth = sheetContentWidth(in: geo)
 				ScrollView {
 					VStack(spacing: 0) {
-						Text(vm.activeBopHunt?.title ?? String(localized: "Bop Hunt"))
+						Text(vm.activeBopHunt?.title ?? String(localized: "BopQuest"))
 							.font(.title2.weight(.black))
 							.foregroundStyle(Color.wbText)
 							.accessibilityAddTraits(.isHeader)
@@ -441,7 +441,7 @@ struct BopHuntSheet: View {
 							}
 							.frame(maxWidth: .infinity)
 						} else {
-							Text("There is no active Bop Hunt for the selected language right now.")
+							Text("There is no active BopQuest for the selected language right now.")
 								.font(.headline.weight(.semibold))
 								.foregroundStyle(Color.wbText)
 								.fixedSize(horizontal: false, vertical: true)
@@ -504,9 +504,9 @@ private struct BopHuntWordRow: View {
 
 	private var accessibilityLabel: Text {
 		if item.found {
-			Text("\(item.word), found, \(index) of \(total)", comment: "Bop Hunt word row accessibility label for a found word")
+			Text("\(item.word), found, \(index) of \(total)", comment: "BopQuest word row accessibility label for a found word")
 		} else {
-			Text("\(item.word), \(index) of \(total)", comment: "Bop Hunt word row accessibility label")
+			Text("\(item.word), \(index) of \(total)", comment: "BopQuest word row accessibility label")
 		}
 	}
 }
@@ -538,10 +538,10 @@ private struct InstructionsSheet: View {
 		"Each Daily Bop word you find adds to your rank on the home screen."
 	]
 	private let bopHuntInstructions = [
-		"Bop Hunt gives you a themed list of words to find before the hunt ends.",
-		"Any game mode counts, so you can find Bop Hunt words while playing Timed, Bopple, Non-Stop, or Daily Bop.",
-		"Each Bop Hunt word adds to your rank the first time you find it.",
-		"Open Bop Hunt from the home screen or pause menu to review your progress."
+		"BopQuest gives you a themed list of words to find before the quest ends.",
+		"Any game mode counts, so you can find BopQuest words while playing Timed, Bopple, Non-Stop, or Daily Bop.",
+		"Each BopQuest word adds to your rank the first time you find it.",
+		"Open BopQuest from the home screen or pause menu to review your progress."
 	]
 
 	private var keyboardHeading: String {
@@ -626,7 +626,7 @@ private struct InstructionsSheet: View {
 				}
 				.frame(maxWidth: .infinity, alignment: .leading)
 
-				Text("Bop Hunt")
+				Text("BopQuest")
 					.font(.headline.weight(.black))
 					.foregroundStyle(Color.wbText)
 					.frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
@@ -1778,7 +1778,7 @@ private struct BestGameCard: View {
 			)
 
 			if bestGame.bopHuntRankPoints > 0 {
-				BestStat(label: String(localized: "Bop Hunt points"), value: "\(bestGame.bopHuntRankPoints)")
+				BestStat(label: String(localized: "BopQuest points"), value: "\(bestGame.bopHuntRankPoints)")
 			}
 
 			ForEach(dailyBopLanguageStats) { stat in

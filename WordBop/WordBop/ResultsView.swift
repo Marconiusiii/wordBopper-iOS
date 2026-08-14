@@ -176,7 +176,7 @@ private struct BopHuntFoundSection: View {
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 8) {
-			Text("Bop Hunt Words Found")
+			Text("BopQuest Words Found")
 				.font(.headline.weight(.black))
 				.foregroundStyle(Color.wbText)
 				.accessibilityAddTraits(.isHeader)

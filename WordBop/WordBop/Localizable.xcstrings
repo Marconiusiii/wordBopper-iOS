@@ -127,8 +127,8 @@
         }
       }
     },
-    ", Bop Hunt word found" : {
-      "comment" : "Spoken suffix when a monthly Bop Hunt word is found"
+    ", BopQuest word found" : {
+      "comment" : "Spoken suffix when a monthly BopQuest word is found"
     },
     ", chain bonus" : {
       "comment" : "Spoken suffix when a chain bonus is earned",
@@ -266,7 +266,7 @@
       "comment" : "Daily Bop language count label"
     },
     "%@, %lld of %lld" : {
-      "comment" : "Bop Hunt word row accessibility label",
+      "comment" : "BopQuest word row accessibility label",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -277,7 +277,7 @@
       }
     },
     "%@, found, %lld of %lld" : {
-      "comment" : "Bop Hunt word row accessibility label for a found word",
+      "comment" : "BopQuest word row accessibility label for a found word",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -413,7 +413,7 @@
       }
     },
     "%lld of %lld words found" : {
-      "comment" : "Bop Hunt progress summary",
+      "comment" : "BopQuest progress summary",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1290,16 +1290,16 @@
     "Bop Commander" : {
 
     },
-    "Bop Hunt" : {
+    "BopQuest" : {
 
     },
-    "Bop Hunt points" : {
+    "BopQuest points" : {
 
     },
-    "Bop Hunt word found!" : {
+    "BopQuest word found!" : {
 
     },
-    "Bop Hunt Words Found" : {
+    "BopQuest Words Found" : {
 
     },
     "Bop It Before Midnight" : {
@@ -5901,7 +5901,7 @@
     "The Word Is Out There" : {
 
     },
-    "There is no active Bop Hunt for the selected language right now." : {
+    "There is no active BopQuest for the selected language right now." : {
 
     },
     "Time" : {

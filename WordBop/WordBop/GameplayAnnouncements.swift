@@ -30,7 +30,7 @@ enum GameplayAnnouncements {
 
 		if verbosity == .low {
 			if dailyBopActivated { return AttributedString(String(localized: "Daily Bop found! 3 times boost active!")) }
-			if bopHuntFound { return AttributedString(String(localized: "Bop Hunt word found!")) }
+			if bopHuntFound { return AttributedString(String(localized: "BopQuest word found!")) }
 			if powerUpActivated { return AttributedString(String(localized: "3 times active!")) }
 			return AttributedString(String(localized: "\(pointText).", comment: "Low-verbosity score readout: the point count followed by a period"))
 		}
@@ -52,7 +52,7 @@ enum GameplayAnnouncements {
 		}
 
 		if bopHuntFound {
-			announcement += AttributedString(String(localized: ", Bop Hunt word found", comment: "Spoken suffix when a monthly Bop Hunt word is found"))
+			announcement += AttributedString(String(localized: ", BopQuest word found", comment: "Spoken suffix when a monthly BopQuest word is found"))
 		}
 
 		return announcement + AttributedString(".")

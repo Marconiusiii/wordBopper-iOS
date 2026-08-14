@@ -1,4 +1,0 @@
-# Add one Bop Hunt event folder name per line.
-2026-08-01-LateSummer
-2026-09-01-BackToSchool
-

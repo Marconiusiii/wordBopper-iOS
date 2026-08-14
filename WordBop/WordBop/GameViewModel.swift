@@ -609,7 +609,7 @@ final class GameViewModel {
 		guard let activeBopHunt else { return "" }
 		let foundCount = foundBopHuntWords(language: dictionaryLanguage).count
 		let totalCount = activeBopHunt.words(for: dictionaryLanguage).count
-		return String(localized: "\(foundCount) of \(totalCount) words found", comment: "Bop Hunt progress summary")
+		return String(localized: "\(foundCount) of \(totalCount) words found", comment: "BopQuest progress summary")
 	}
 
 	var activeBopHuntWords: [BopHuntWord] {
@@ -1143,7 +1143,7 @@ final class GameViewModel {
 		audio.stopPowerUpChimes()
 	}
 
-	// MARK: - Bop Hunt
+	// MARK: - BopQuest
 
 	private func recordBopHuntWordIfNeeded(_ word: String) -> Bool {
 		guard let activeBopHunt else { return false }
@@ -1235,7 +1235,7 @@ final class GameViewModel {
 	}
 
 	private func bopHuntResourceURL(name: String, eventID: String?) -> URL? {
-		let sourceSubdirectory = eventID.map { "BopHunts/\($0)" } ?? "BopHunts"
+		let sourceSubdirectory = eventID.map { "BopQuests/\($0)" } ?? "BopQuests"
 		return Bundle.main.url(forResource: name, withExtension: "txt", subdirectory: sourceSubdirectory)
 		?? Bundle.main.url(forResource: name, withExtension: "txt")
 	}

@@ -456,7 +456,7 @@ private struct GamePauseCover: View {
 
 					if vm.activeBopHuntIsAvailableForCurrentLanguage {
 						pauseActionButton(
-							title: String(localized: "Bop Hunt"),
+							title: String(localized: "BopQuest"),
 							foregroundColor: .black,
 							backgroundColor: .wbAccent1
 						) {
