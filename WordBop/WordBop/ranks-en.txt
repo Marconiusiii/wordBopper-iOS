@@ -34,7 +34,7 @@
 430	Bubble Trailblazer
 455	Vocabulary Virtuoso
 480	Daily Bop Champion
-505	Word Cartographer
+505	Boppleopolist
 530	BopQuest Champion
 555	Grid Grandmaster
 585	Verbivore
