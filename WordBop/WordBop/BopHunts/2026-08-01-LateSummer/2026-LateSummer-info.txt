@@ -1,0 +1,5 @@
+title: Late Summer Bop Hunt
+starts: 2026-08-01
+ends: 2026-08-31
+bonus: 10
+

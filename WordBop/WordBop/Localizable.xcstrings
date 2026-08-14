@@ -127,6 +127,9 @@
         }
       }
     },
+    ", Bop Hunt word found" : {
+      "comment" : "Spoken suffix when a monthly Bop Hunt word is found"
+    },
     ", chain bonus" : {
       "comment" : "Spoken suffix when a chain bonus is earned",
       "extractionState" : "manual",
@@ -383,6 +386,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld por %2$lld"
+          }
+        }
+      }
+    },
+    "%lld of %lld words found" : {
+      "comment" : "Bop Hunt progress summary",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld words found"
           }
         }
       }
@@ -1252,6 +1266,18 @@
 
     },
     "Bop Commander" : {
+
+    },
+    "Bop Hunt" : {
+
+    },
+    "Bop Hunt points" : {
+
+    },
+    "Bop Hunt word found!" : {
+
+    },
+    "Bop Hunt Words Found" : {
 
     },
     "Bop It Before Midnight" : {
@@ -3228,6 +3254,9 @@
           }
         }
       }
+    },
+    "Find as many themed words as you can before the hunt ends. Any game mode counts." : {
+
     },
     "Find It, Bop It" : {
 

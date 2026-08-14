@@ -1,0 +1,17 @@
+# One word per line. Blank lines and comments are ignored.
+beach
+berry
+breeze
+canoe
+garden
+melon
+picnic
+shade
+splash
+sunny
+sunset
+swim
+trail
+vacation
+water
+

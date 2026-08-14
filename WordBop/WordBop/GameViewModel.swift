@@ -1190,7 +1190,8 @@ final class GameViewModel {
 	}
 
 	private func loadBopHuntEvent(id: String) -> BopHuntEvent? {
-		guard let infoURL = bopHuntResourceURL(name: "bop-hunt-\(id)-info"),
+		let resourceStem = bopHuntResourceStem(for: id)
+		guard let infoURL = bopHuntResourceURL(name: "\(resourceStem)-info", eventID: id),
 			  let infoText = try? String(contentsOf: infoURL, encoding: .utf8) else {
 			return nil
 		}
@@ -1205,7 +1206,7 @@ final class GameViewModel {
 		let completionBonus = Int(info["bonus"] ?? "") ?? 0
 		var wordsByLanguage: [DictionaryLanguage: [String]] = [:]
 		for language in DictionaryLanguage.allCases {
-			guard let wordsURL = bopHuntResourceURL(name: "bop-hunt-\(id)-\(bopHuntLanguageResourceName(for: language))"),
+			guard let wordsURL = bopHuntResourceURL(name: "\(resourceStem)-\(bopHuntLanguageResourceName(for: language))", eventID: id),
 				  let wordsText = try? String(contentsOf: wordsURL, encoding: .utf8) else {
 				continue
 			}
@@ -1219,7 +1220,7 @@ final class GameViewModel {
 	}
 
 	private func loadBopHuntEventIDs() -> [String] {
-		guard let url = bopHuntResourceURL(name: "bop-hunt-events"),
+		guard let url = bopHuntResourceURL(name: "events", eventID: nil),
 			  let text = try? String(contentsOf: url, encoding: .utf8) else {
 			return []
 		}
@@ -1229,9 +1230,16 @@ final class GameViewModel {
 		}
 	}
 
-	private func bopHuntResourceURL(name: String) -> URL? {
-		Bundle.main.url(forResource: name, withExtension: "txt", subdirectory: "BopHunts")
+	private func bopHuntResourceURL(name: String, eventID: String?) -> URL? {
+		let sourceSubdirectory = eventID.map { "BopHunts/\($0)" } ?? "BopHunts"
+		return Bundle.main.url(forResource: name, withExtension: "txt", subdirectory: sourceSubdirectory)
 		?? Bundle.main.url(forResource: name, withExtension: "txt")
+	}
+
+	private func bopHuntResourceStem(for eventID: String) -> String {
+		let parts = eventID.split(separator: "-", maxSplits: 3).map(String.init)
+		guard parts.count == 4 else { return eventID }
+		return "\(parts[0])-\(parts[3])"
 	}
 
 	private func parseBopHuntInfo(_ text: String) -> [String: String] {
