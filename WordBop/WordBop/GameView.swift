@@ -421,6 +421,7 @@ private struct GamePauseCover: View {
 	@Environment(\.scenePhase) private var scenePhase
 	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 	@State private var isShowingMailComposer = false
+	@State private var isShowingBopHunt = false
 
 	private let mailRecipient = "marco@marconius.com"
 
@@ -452,6 +453,16 @@ private struct GamePauseCover: View {
 						vm.resumeGame()
 					}
 					.keyboardShortcut(.defaultAction)
+
+					if vm.activeBopHuntIsAvailableForCurrentLanguage {
+						pauseActionButton(
+							title: String(localized: "Bop Hunt"),
+							foregroundColor: .black,
+							backgroundColor: .wbAccent1
+						) {
+							isShowingBopHunt = true
+						}
+					}
 
 					pauseActionButton(
 						title: String(localized: "End Game"),
@@ -490,6 +501,11 @@ private struct GamePauseCover: View {
 				body: missingWordDraft.body,
 				onFinish: { _ in }
 			)
+		}
+		.sheet(isPresented: $isShowingBopHunt, onDismiss: announcePausedScreen) {
+			BopHuntSheet()
+				.environment(vm)
+				.presentationDragIndicator(.hidden)
 		}
 	}
 

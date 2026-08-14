@@ -23,12 +23,14 @@ enum GameplayAnnouncements {
 		multiplier: Int,
 		powerUpActivated: Bool,
 		dailyBopActivated: Bool = false,
+		bopHuntFound: Bool = false,
 		verbosity: GameAnnouncementVerbosity
 	) -> AttributedString {
 		let pointText = String(localized: "\(points) points", comment: "Score points spoken aloud; supports plural rules, e.g. 1 point / 5 points")
 
 		if verbosity == .low {
 			if dailyBopActivated { return AttributedString(String(localized: "Daily Bop found! 3 times boost active!")) }
+			if bopHuntFound { return AttributedString(String(localized: "Bop Hunt word found!")) }
 			if powerUpActivated { return AttributedString(String(localized: "3 times active!")) }
 			return AttributedString(String(localized: "\(pointText).", comment: "Low-verbosity score readout: the point count followed by a period"))
 		}
@@ -47,6 +49,10 @@ enum GameplayAnnouncements {
 			announcement += AttributedString(String(localized: ", 3 times", comment: "Spoken suffix when a 3x multiplier is active"))
 		} else if chainBonus > 0 {
 			announcement += AttributedString(String(localized: ", chain bonus", comment: "Spoken suffix when a chain bonus is earned"))
+		}
+
+		if bopHuntFound {
+			announcement += AttributedString(String(localized: ", Bop Hunt word found", comment: "Spoken suffix when a monthly Bop Hunt word is found"))
 		}
 
 		return announcement + AttributedString(".")

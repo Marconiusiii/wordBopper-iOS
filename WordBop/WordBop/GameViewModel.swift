@@ -319,6 +319,34 @@ struct DailyBopEntry: Identifiable {
 	var id: String { language.rawValue }
 }
 
+struct BopHuntWord: Identifiable {
+	let word: String
+	let found: Bool
+
+	var id: String { word }
+}
+
+struct BopHuntEvent: Identifiable {
+	let id: String
+	let title: String
+	let starts: Date
+	let ends: Date
+	let completionBonus: Int
+	let wordsByLanguage: [DictionaryLanguage: [String]]
+
+	func words(for language: DictionaryLanguage) -> [String] {
+		wordsByLanguage[language] ?? []
+	}
+}
+
+struct BopHuntProgress: Codable, Identifiable {
+	let huntID: String
+	var foundWordsByLanguage: [DictionaryLanguage: [String]] = [:]
+	var awardedCompletionBonusLanguages: [DictionaryLanguage] = []
+
+	var id: String { huntID }
+}
+
 struct BestGame: Codable {
 	var highestScore: Int = 0
 	var highestBoppleScore: Int = 0
@@ -334,6 +362,8 @@ struct BestGame: Codable {
 	var largestNonStopLetterChain: Int = 0
 	var languageModeBestGames: [LanguageModeBestGame] = []
 	var dailyBopLanguageStats: [DailyBopLanguageStat] = []
+	var bopHuntRankPoints: Int = 0
+	var bopHuntProgress: [BopHuntProgress] = []
 
 	init() {}
 
@@ -353,6 +383,8 @@ struct BestGame: Codable {
 		largestNonStopLetterChain = try container.decodeIfPresent(Int.self, forKey: .largestNonStopLetterChain) ?? 0
 		languageModeBestGames = try container.decodeIfPresent([LanguageModeBestGame].self, forKey: .languageModeBestGames) ?? []
 		dailyBopLanguageStats = try container.decodeIfPresent([DailyBopLanguageStat].self, forKey: .dailyBopLanguageStats) ?? []
+		bopHuntRankPoints = try container.decodeIfPresent(Int.self, forKey: .bopHuntRankPoints) ?? 0
+		bopHuntProgress = try container.decodeIfPresent([BopHuntProgress].self, forKey: .bopHuntProgress) ?? []
 	}
 }
 
@@ -493,6 +525,8 @@ final class GameViewModel {
 	var dailyBopEntriesReady = false
 	var dailyBopEntriesLoading = false
 	var dailyBopEnabledLanguages: [DictionaryLanguage] = []
+	var activeBopHunt: BopHuntEvent?
+	var bopHuntWordsFoundThisRound: [String] = []
 	private var consumedBopAwayBubbleIds = Set<UUID>()
 
 	// MARK: - Best game
@@ -559,7 +593,27 @@ final class GameViewModel {
 	}
 
 	var currentDailyBopRank: String {
-		dailyBopRank(for: totalDailyBopsFound)
+		dailyBopRank(for: totalDailyBopsFound + bestGame.bopHuntRankPoints)
+	}
+
+	var activeBopHuntIsAvailableForCurrentLanguage: Bool {
+		guard let activeBopHunt else { return false }
+		return !activeBopHunt.words(for: dictionaryLanguage).isEmpty
+	}
+
+	var activeBopHuntProgressText: String {
+		guard let activeBopHunt else { return "" }
+		let foundCount = foundBopHuntWords(language: dictionaryLanguage).count
+		let totalCount = activeBopHunt.words(for: dictionaryLanguage).count
+		return String(localized: "\(foundCount) of \(totalCount) words found", comment: "Bop Hunt progress summary")
+	}
+
+	var activeBopHuntWords: [BopHuntWord] {
+		guard let activeBopHunt else { return [] }
+		let foundWords = foundBopHuntWords(language: dictionaryLanguage)
+		return activeBopHunt.words(for: dictionaryLanguage).map { word in
+			BopHuntWord(word: word, found: foundWords.contains(word))
+		}
 	}
 
 	var dailyBopLanguageStats: [DailyBopLanguageStat] {
@@ -657,6 +711,7 @@ final class GameViewModel {
 		dailyBopEnabledLanguages = loadDailyBopEnabledLanguages(fallback: savedDictionaryLanguage)
 		dictionaryLanguage = savedDictionaryLanguage
 		dictionary.preload(dictionaryLanguage)
+		activeBopHunt = loadActiveBopHunt()
 		preloadDailyBopCandidates()
 		prepareDailyBopEntries()
 	}
@@ -684,6 +739,10 @@ final class GameViewModel {
 		}
 	}
 
+	func refreshActiveBopHunt() {
+		activeBopHunt = loadActiveBopHunt()
+	}
+
 	func isDailyBopLanguageEnabled(_ language: DictionaryLanguage) -> Bool {
 		normalizedDailyBopLanguages().contains(language)
 	}
@@ -707,6 +766,7 @@ final class GameViewModel {
 	// MARK: - Game lifecycle
 
 	func startGame(dailyBopEntry: DailyBopEntry? = nil) {
+		refreshActiveBopHunt()
 		if let dailyBopEntry {
 			dictionaryLanguage = dailyBopEntry.language
 			gameMode = .timed
@@ -729,6 +789,7 @@ final class GameViewModel {
 		dailyBopFoundThisRound = false
 		dailyBopBoostActive = false
 		dailyBopBoostSecondsLeft = 0
+		bopHuntWordsFoundThisRound = []
 		largestLetterChain = 0
 		gameplayHeading = randomGameplayHeading()
 		dictionary.ensureLoaded(dictionaryLanguage)
@@ -903,6 +964,7 @@ final class GameViewModel {
 		let points = basePoints * multiplier
 		let dailyBopWasFound = isDailyBopWord(word)
 		let dailyBopCanActivate = dailyBopWasFound && canActivateDailyBopBoostToday()
+		let bopHuntWasFound = recordBopHuntWordIfNeeded(word)
 
 		let scoredIds = selected.map(\.bubbleId)
 		selected.removeAll()
@@ -941,6 +1003,7 @@ final class GameViewModel {
 			multiplier: multiplier,
 			powerUpActivated: powerUpActivated,
 			dailyBopActivated: dailyBopActivated,
+			bopHuntFound: bopHuntWasFound,
 			verbosity: gameAnnouncementVerbosity
 		), includeInLowVerbosity: true)
 	}
@@ -1075,6 +1138,153 @@ final class GameViewModel {
 		powerUpAudioResumeWorkItem = nil
 		audio.stopPowerUpChimes()
 	}
+
+	// MARK: - Bop Hunt
+
+	private func recordBopHuntWordIfNeeded(_ word: String) -> Bool {
+		guard let activeBopHunt else { return false }
+		let huntWords = activeBopHunt.words(for: dictionaryLanguage)
+		guard huntWords.contains(word) else { return false }
+		var progress = bopHuntProgress(for: activeBopHunt.id)
+		var foundWords = Set(progress.foundWordsByLanguage[dictionaryLanguage] ?? [])
+		guard !foundWords.contains(word) else { return false }
+
+		foundWords.insert(word)
+		progress.foundWordsByLanguage[dictionaryLanguage] = huntWords.filter { foundWords.contains($0) }
+		bestGame.bopHuntRankPoints += 1
+		bopHuntWordsFoundThisRound.append(word)
+
+		if foundWords.count == huntWords.count,
+		   !progress.awardedCompletionBonusLanguages.contains(dictionaryLanguage) {
+			progress.awardedCompletionBonusLanguages.append(dictionaryLanguage)
+			bestGame.bopHuntRankPoints += activeBopHunt.completionBonus
+		}
+
+		saveBopHuntProgress(progress)
+		saveBestGame()
+		return true
+	}
+
+	private func foundBopHuntWords(language: DictionaryLanguage) -> Set<String> {
+		guard let activeBopHunt else { return [] }
+		return Set(bopHuntProgress(for: activeBopHunt.id).foundWordsByLanguage[language] ?? [])
+	}
+
+	private func bopHuntProgress(for huntID: String) -> BopHuntProgress {
+		bestGame.bopHuntProgress.first { $0.huntID == huntID } ?? BopHuntProgress(huntID: huntID)
+	}
+
+	private func saveBopHuntProgress(_ progress: BopHuntProgress) {
+		if let index = bestGame.bopHuntProgress.firstIndex(where: { $0.huntID == progress.huntID }) {
+			bestGame.bopHuntProgress[index] = progress
+		} else {
+			bestGame.bopHuntProgress.append(progress)
+		}
+	}
+
+	private func loadActiveBopHunt(date: Date = Date(), calendar: Calendar = .current) -> BopHuntEvent? {
+		loadBopHuntEventIDs().compactMap { loadBopHuntEvent(id: $0) }.first { event in
+			let startOfToday = calendar.startOfDay(for: date)
+			return startOfToday >= event.starts && startOfToday <= event.ends
+		}
+	}
+
+	private func loadBopHuntEvent(id: String) -> BopHuntEvent? {
+		guard let infoURL = bopHuntResourceURL(name: "bop-hunt-\(id)-info"),
+			  let infoText = try? String(contentsOf: infoURL, encoding: .utf8) else {
+			return nil
+		}
+		let info = parseBopHuntInfo(infoText)
+		guard let title = info["title"],
+			  let startsText = info["starts"],
+			  let endsText = info["ends"],
+			  let starts = Self.bopHuntDateFormatter.date(from: startsText),
+			  let ends = Self.bopHuntDateFormatter.date(from: endsText) else {
+			return nil
+		}
+		let completionBonus = Int(info["bonus"] ?? "") ?? 0
+		var wordsByLanguage: [DictionaryLanguage: [String]] = [:]
+		for language in DictionaryLanguage.allCases {
+			guard let wordsURL = bopHuntResourceURL(name: "bop-hunt-\(id)-\(bopHuntLanguageResourceName(for: language))"),
+				  let wordsText = try? String(contentsOf: wordsURL, encoding: .utf8) else {
+				continue
+			}
+			let words = parseBopHuntWords(wordsText)
+			if !words.isEmpty {
+				wordsByLanguage[language] = words
+			}
+		}
+		guard !wordsByLanguage.isEmpty else { return nil }
+		return BopHuntEvent(id: id, title: title, starts: starts, ends: ends, completionBonus: completionBonus, wordsByLanguage: wordsByLanguage)
+	}
+
+	private func loadBopHuntEventIDs() -> [String] {
+		guard let url = bopHuntResourceURL(name: "bop-hunt-events"),
+			  let text = try? String(contentsOf: url, encoding: .utf8) else {
+			return []
+		}
+		return text.components(separatedBy: .newlines).compactMap { line in
+			let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+			return trimmed.isEmpty || trimmed.hasPrefix("#") ? nil : trimmed
+		}
+	}
+
+	private func bopHuntResourceURL(name: String) -> URL? {
+		Bundle.main.url(forResource: name, withExtension: "txt", subdirectory: "BopHunts")
+		?? Bundle.main.url(forResource: name, withExtension: "txt")
+	}
+
+	private func parseBopHuntInfo(_ text: String) -> [String: String] {
+		var info: [String: String] = [:]
+		for line in text.components(separatedBy: .newlines) {
+			let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+			guard !trimmed.isEmpty, !trimmed.hasPrefix("#"), let separator = trimmed.firstIndex(of: ":") else { continue }
+			let key = trimmed[..<separator].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+			let value = trimmed[trimmed.index(after: separator)...].trimmingCharacters(in: .whitespacesAndNewlines)
+			info[key] = value
+		}
+		return info
+	}
+
+	private func parseBopHuntWords(_ text: String) -> [String] {
+		var seen = Set<String>()
+		var words: [String] = []
+		for line in text.components(separatedBy: .newlines) {
+			let word = line.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+			guard !word.isEmpty, !word.hasPrefix("#"), word.count >= 3, !seen.contains(word) else { continue }
+			seen.insert(word)
+			words.append(word)
+		}
+		return words
+	}
+
+	private func bopHuntLanguageResourceName(for language: DictionaryLanguage) -> String {
+		switch language {
+		case .english:
+			"en"
+		case .spanish:
+			"es"
+		case .french:
+			"fr"
+		case .german:
+			"de"
+		case .dutch:
+			"nl"
+		case .italian:
+			"it"
+		case .brazilianPortuguese:
+			"pt-BR"
+		}
+	}
+
+	private static let bopHuntDateFormatter: DateFormatter = {
+		let formatter = DateFormatter()
+		formatter.calendar = Calendar(identifier: .gregorian)
+		formatter.locale = Locale(identifier: "en_US_POSIX")
+		formatter.timeZone = .current
+		formatter.dateFormat = "yyyy-MM-dd"
+		return formatter
+	}()
 
 	// MARK: - Daily Bop
 

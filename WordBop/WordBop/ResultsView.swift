@@ -74,6 +74,10 @@ struct ResultsView: View {
 								}
 							}
 
+							if !vm.bopHuntWordsFoundThisRound.isEmpty {
+								BopHuntFoundSection(words: vm.bopHuntWordsFoundThisRound)
+							}
+
 							Text("Word List")
 								.font(.headline.weight(.black))
 								.foregroundStyle(Color.wbText)
@@ -165,6 +169,31 @@ private struct DictionaryLookupRequest: Identifiable {
 	let language: DictionaryLanguage
 
 	var id: String { "\(language.rawValue)-\(word)" }
+}
+
+private struct BopHuntFoundSection: View {
+	let words: [String]
+
+	var body: some View {
+		VStack(alignment: .leading, spacing: 8) {
+			Text("Bop Hunt Words Found")
+				.font(.headline.weight(.black))
+				.foregroundStyle(Color.wbText)
+				.accessibilityAddTraits(.isHeader)
+
+			ForEach(words, id: \.self) { word in
+				Text(word)
+					.font(.system(.callout, design: .rounded).weight(.black))
+					.foregroundStyle(Color.wbAccent5)
+					.padding(.vertical, 5)
+					.padding(.horizontal, 10)
+					.frame(maxWidth: .infinity)
+					.background(Color.wbPanel)
+					.clipShape(RoundedRectangle(cornerRadius: 12))
+					.overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.08)))
+			}
+		}
+	}
 }
 
 private struct DailyWordBoppedSection: View {

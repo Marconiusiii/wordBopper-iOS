@@ -7,6 +7,7 @@ struct StartView: View {
 	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 	@State private var showingInstructions = false
 	@State private var showingDailyBop = false
+	@State private var showingBopHunt = false
 	@State private var showingGameSettings = false
 
 	var body: some View {
@@ -37,6 +38,10 @@ struct StartView: View {
 
 					dailyBopButton
 
+					if vm.activeBopHuntIsAvailableForCurrentLanguage {
+						bopHuntButton
+					}
+
 					startGameButton
 						.layoutPriority(3)
 
@@ -53,6 +58,7 @@ struct StartView: View {
 		}
 		.onAppear {
 			UIAccessibility.post(notification: .screenChanged, argument: "WordBopper")
+			vm.refreshActiveBopHunt()
 			vm.audio.prepareDailyBopAnthemPreview()
 			vm.prepareDailyBopEntries()
 		}
@@ -62,6 +68,11 @@ struct StartView: View {
 		}
 		.sheet(isPresented: $showingDailyBop) {
 			DailyBopSheet()
+				.environment(vm)
+				.presentationDragIndicator(.hidden)
+		}
+		.sheet(isPresented: $showingBopHunt) {
+			BopHuntSheet()
 				.environment(vm)
 				.presentationDragIndicator(.hidden)
 		}
@@ -116,6 +127,29 @@ struct StartView: View {
 				.background(
 					LinearGradient(
 						colors: [.wbAccent5, .wbAccent4],
+						startPoint: .topLeading,
+						endPoint: .bottomTrailing
+					)
+				)
+				.contentShape(Rectangle())
+		}
+		.buttonStyle(.plain)
+	}
+
+	private var bopHuntButton: some View {
+		Button {
+			showingBopHunt = true
+		} label: {
+			Text("Bop Hunt")
+				.font(.headline.weight(.black))
+				.foregroundStyle(Color.black)
+				.multilineTextAlignment(.center)
+				.lineLimit(2)
+				.frame(maxWidth: .infinity)
+				.frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 82 : 66)
+				.background(
+					LinearGradient(
+						colors: [.wbAccent1, .wbAccent3],
 						startPoint: .topLeading,
 						endPoint: .bottomTrailing
 					)
@@ -336,6 +370,96 @@ private struct DailyBopEntryLabel: View {
 	}
 }
 
+struct BopHuntSheet: View {
+	@Environment(GameViewModel.self) private var vm
+	@Environment(\.dismiss) private var dismiss
+	@Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+	var body: some View {
+		NavigationStack {
+			GeometryReader { geo in
+				let contentWidth = sheetContentWidth(in: geo)
+				ScrollView {
+					VStack(spacing: 0) {
+						Text(vm.activeBopHunt?.title ?? String(localized: "Bop Hunt"))
+							.font(.title2.weight(.black))
+							.foregroundStyle(Color.wbText)
+							.accessibilityAddTraits(.isHeader)
+							.frame(maxWidth: .infinity, minHeight: 72)
+							.contentShape(Rectangle())
+
+						Text("Find as many themed words as you can before the hunt ends. Any game mode counts.")
+							.font(.body)
+							.foregroundStyle(Color.wbText)
+							.fixedSize(horizontal: false, vertical: true)
+							.frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+							.padding(.horizontal, 24)
+							.contentShape(Rectangle())
+
+						Text(vm.activeBopHuntProgressText)
+							.font(.headline.weight(.black))
+							.foregroundStyle(Color.wbAccent5)
+							.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+							.padding(.horizontal, 24)
+							.contentShape(Rectangle())
+
+						VStack(spacing: 0) {
+							ForEach(vm.activeBopHuntWords) { item in
+								BopHuntWordRow(item: item)
+									.frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 72 : 56)
+							}
+						}
+						.frame(maxWidth: .infinity)
+					}
+					.frame(width: contentWidth)
+					.frame(minHeight: geo.size.height, alignment: .top)
+				}
+				.frame(width: contentWidth)
+			}
+			.ignoresSafeArea(edges: .horizontal)
+			.background(Color.wbBackground)
+			.toolbar {
+				ToolbarItem(placement: .topBarTrailing) {
+					Button("Close") {
+						dismiss()
+					}
+				}
+			}
+		}
+		.preferredColorScheme(.dark)
+	}
+
+	private func sheetContentWidth(in geo: GeometryProxy) -> CGFloat {
+		geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
+	}
+}
+
+private struct BopHuntWordRow: View {
+	let item: BopHuntWord
+
+	var body: some View {
+		HStack(spacing: 12) {
+			Text(item.word)
+				.font(.system(.body, design: .rounded).weight(.black))
+				.foregroundStyle(item.found ? Color.wbAccent5 : Color.wbText)
+				.frame(maxWidth: .infinity, alignment: .leading)
+
+			if item.found {
+				Text("Found")
+					.font(.caption.weight(.black))
+					.foregroundStyle(Color.black)
+					.padding(.vertical, 5)
+					.padding(.horizontal, 8)
+					.background(Color.wbAccent1)
+					.clipShape(Capsule())
+			}
+		}
+		.padding(.horizontal, 24)
+		.background(Color.wbBackground)
+		.contentShape(Rectangle())
+	}
+}
+
 private struct InstructionsSheet: View {
 	@Environment(\.dismiss) private var dismiss
 
@@ -361,6 +485,12 @@ private struct InstructionsSheet: View {
 		"Find the Daily Bop word during the round to launch a 45-second 3x boost.",
 		"You can earn that boost once per language each day.",
 		"Each Daily Bop word you find adds to your rank on the home screen."
+	]
+	private let bopHuntInstructions = [
+		"Bop Hunt gives you a themed list of words to find before the hunt ends.",
+		"Any game mode counts, so you can find Bop Hunt words while playing Timed, Bopple, Non-Stop, or Daily Bop.",
+		"Each Bop Hunt word adds to your rank the first time you find it.",
+		"Open Bop Hunt from the home screen or pause menu to review your progress."
 	]
 
 	private var keyboardHeading: String {
@@ -440,6 +570,21 @@ private struct InstructionsSheet: View {
 
 				VStack(alignment: .leading, spacing: 0) {
 					ForEach(dailyBopInstructions, id: \.self) { item in
+						InstructionRow(item)
+					}
+				}
+				.frame(maxWidth: .infinity, alignment: .leading)
+
+				Text("Bop Hunt")
+					.font(.headline.weight(.black))
+					.foregroundStyle(Color.wbText)
+					.frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+					.padding(.horizontal, 24)
+					.contentShape(Rectangle())
+					.accessibilityAddTraits(.isHeader)
+
+				VStack(alignment: .leading, spacing: 0) {
+					ForEach(bopHuntInstructions, id: \.self) { item in
 						InstructionRow(item)
 					}
 				}
@@ -1580,6 +1725,10 @@ private struct BestGameCard: View {
 				BestStat(label: String(localized: "Rank"), value: dailyBopRank),
 				BestStat(label: String(localized: "Daily Bops found"), value: "\(totalDailyBopsFound)")
 			)
+
+			if bestGame.bopHuntRankPoints > 0 {
+				BestStat(label: String(localized: "Bop Hunt points"), value: "\(bestGame.bopHuntRankPoints)")
+			}
 
 			ForEach(dailyBopLanguageStats) { stat in
 				BestStat(
