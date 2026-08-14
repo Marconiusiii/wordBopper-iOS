@@ -1284,24 +1284,6 @@
         }
       }
     },
-    "Bop Cadet" : {
-
-    },
-    "Bop Commander" : {
-
-    },
-    "BopQuest" : {
-
-    },
-    "BopQuest points" : {
-
-    },
-    "BopQuest word found!" : {
-
-    },
-    "BopQuest Words Found" : {
-
-    },
     "Bop It Before Midnight" : {
 
     },
@@ -1351,9 +1333,6 @@
           }
         }
       }
-    },
-    "Bop Supreme" : {
-
     },
     "Bop the Day Away" : {
 
@@ -1686,9 +1665,6 @@
         }
       }
     },
-    "Bopologist" : {
-
-    },
     "Bopped letters will not change when you make words. Words must be made up of letters that are next to each other in the grid. How many words can you create in 3 minutes?" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1940,6 +1916,18 @@
         }
       }
     },
+    "BopQuest" : {
+
+    },
+    "BopQuest points" : {
+
+    },
+    "BopQuest word found!" : {
+
+    },
+    "BopQuest Words Found" : {
+
+    },
     "Brazilian Portuguese" : {
       "comment" : "Bubble Language name",
       "extractionState" : "manual",
@@ -1981,9 +1969,6 @@
           }
         }
       }
-    },
-    "Bubble Captain" : {
-
     },
     "Bubble Color Theme" : {
 
@@ -2069,9 +2054,6 @@
           }
         }
       }
-    },
-    "Bubble Scout" : {
-
     },
     "Bubble Text Color" : {
       "extractionState" : "manual",
@@ -2999,12 +2981,6 @@
     "Daily Bop 3 times boost active, %lld seconds left" : {
 
     },
-    "Daily Bop Champion" : {
-
-    },
-    "Daily Bop Dynamo" : {
-
-    },
     "Daily Bop found! 3 times boost active!" : {
 
     },
@@ -3599,12 +3575,6 @@
     "Get the Big Bopper" : {
 
     },
-    "Grand Bopmaster" : {
-
-    },
-    "Grid Maestro" : {
-
-    },
     "Grid Size" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3895,9 +3865,6 @@
           }
         }
       }
-    },
-    "Letter Legend" : {
-
     },
     "Letter Phonetics" : {
       "extractionState" : "manual",
@@ -6157,9 +6124,6 @@
         }
       }
     },
-    "Vocabulary Virtuoso" : {
-
-    },
     "Whack A Braille!" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6372,12 +6336,6 @@
         }
       }
     },
-    "Word Wizard" : {
-
-    },
-    "Word Wrangler" : {
-
-    },
     "WordBopper" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6502,9 +6460,6 @@
           }
         }
       }
-    },
-    "WordBopper Newbie" : {
-
     },
     "Words" : {
       "extractionState" : "manual",

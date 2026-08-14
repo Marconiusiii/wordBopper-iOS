@@ -121,6 +121,38 @@ final class AudioEngine {
 		play(ctx.toBuffer(), priority: .score)
 	}
 
+	func playBopQuestWordSound(wordLength: Int) {
+		let duration = 1.18
+		let masterVol = wordLength >= 7 ? 0.92 : wordLength >= 5 ? 0.82 : 0.72
+		let motif: [Double] = [659.25, 783.99, 987.77, 1318.51]
+		let finish: [Double] = [261.63, 392.0, 523.25, 659.25, 987.77]
+		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)
+
+		for (i, freq) in motif.enumerated() {
+			let start = Double(i) * 0.06
+			ctx.addOsc(type: .sine, freq: freq, start: start, attackTime: 0.006,
+					   peakAmp: 0.2 * masterVol, releaseTime: 0.46,
+					   filter: FilterSpec(kind: .bandpass, frequency: freq, q: 7))
+			ctx.addOsc(type: .triangle, freq: freq * 2, start: start + 0.012, attackTime: 0.004,
+					   peakAmp: 0.055 * masterVol, releaseTime: 0.34,
+					   filter: FilterSpec(kind: .bandpass, frequency: freq * 2, q: 8))
+		}
+
+		ctx.addOscWithFreqSlide(freq: 523.25, endFreq: 1567.98, start: 0.05, duration: 0.22, peakAmp: 0.06 * masterVol)
+		ctx.addNoise(start: 0.03, duration: 0.12, amplitude: 0.12 * masterVol, highpass: false, bandpass: true)
+
+		let finishStart = 0.32
+		for freq in finish {
+			ctx.addOsc(type: .sine, freq: freq, start: finishStart, attackTime: 0.016,
+					   peakAmp: 0.095 * masterVol, releaseTime: 0.76,
+					   settleRatio: 0.4, settleTime: 0.12)
+			ctx.addOsc(type: .triangle, freq: freq * 2, start: finishStart, attackTime: 0.01,
+					   peakAmp: 0.022 * masterVol, releaseTime: 0.58,
+					   settleRatio: 0.28, settleTime: 0.1)
+		}
+		play(ctx.toBuffer(), priority: .score)
+	}
+
 	func playInvalidSound() {
 		let duration = 0.3
 		var ctx = SynthContext(duration: duration, sampleRate: sampleRate)

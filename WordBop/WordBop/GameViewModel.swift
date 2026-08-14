@@ -17,6 +17,11 @@ struct SelectedLetter {
 	let col: Int
 }
 
+struct PlayerRank {
+	let threshold: Int
+	let title: String
+}
+
 enum BubbleTextColorOption: String, CaseIterable, Identifiable {
 	case dark
 	case light
@@ -543,6 +548,7 @@ final class GameViewModel {
 	private var dailyBopBoostTimer: Timer?
 	private var announcementWorkItem: DispatchWorkItem?
 	private var dailyBopEntriesGeneration = UUID()
+	private static let playerRanks = loadPlayerRanks()
 
 	// MARK: - Computed
 	var currentWord: String { selected.map(\.letter).joined() }
@@ -991,6 +997,9 @@ final class GameViewModel {
 			stopPowerUp()
 			audio.playChainMultiplierScoreSound(wordLength: word.count)
 			haptics.powerUpScored()
+		} else if bopHuntWasFound {
+			audio.playBopQuestWordSound(wordLength: word.count)
+			haptics.wordScored(wordLength: word.count)
 		} else {
 			audio.playWordSound(wordLength: word.count)
 			haptics.wordScored(wordLength: word.count)
@@ -1161,7 +1170,7 @@ final class GameViewModel {
 		if foundWords.count == huntWords.count,
 		   !progress.awardedCompletionBonusLanguages.contains(dictionaryLanguage) {
 			progress.awardedCompletionBonusLanguages.append(dictionaryLanguage)
-			bestGame.bopHuntRankPoints += activeBopHunt.completionBonus
+			bestGame.bopHuntRankPoints += huntWords.count
 		}
 
 		saveBopHuntProgress(progress)
@@ -1396,25 +1405,38 @@ final class GameViewModel {
 	}
 
 	private func dailyBopRank(for count: Int) -> String {
-		let ranks = [
-			String(localized: "WordBopper Newbie"),
-			String(localized: "Bubble Scout"),
-			String(localized: "Bop Cadet"),
-			String(localized: "Word Wrangler"),
-			String(localized: "Bopologist"),
-			String(localized: "Bubble Captain"),
-			String(localized: "Grid Maestro"),
-			String(localized: "Daily Bop Dynamo"),
-			String(localized: "Word Wizard"),
-			String(localized: "Bop Commander"),
-			String(localized: "Letter Legend"),
-			String(localized: "Bop Supreme"),
-			String(localized: "Vocabulary Virtuoso"),
-			String(localized: "Daily Bop Champion"),
-			String(localized: "Grand Bopmaster")
-		]
-		return ranks[min(count / 10, ranks.count - 1)]
+		Self.playerRanks.last { count >= $0.threshold }?.title ?? Self.fallbackPlayerRanks[0].title
 	}
+
+	private static func loadPlayerRanks() -> [PlayerRank] {
+		guard let url = Bundle.main.url(forResource: "ranks-en", withExtension: "txt"),
+			  let contents = try? String(contentsOf: url, encoding: .utf8) else {
+			return fallbackPlayerRanks
+		}
+
+		let parsedRanks = contents
+			.components(separatedBy: .newlines)
+			.compactMap(parseRankLine)
+			.sorted { $0.threshold < $1.threshold }
+
+		return parsedRanks.isEmpty ? fallbackPlayerRanks : parsedRanks
+	}
+
+	private static func parseRankLine(_ line: String) -> PlayerRank? {
+		let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !trimmed.isEmpty, !trimmed.hasPrefix("#") else { return nil }
+		let pieces = trimmed.split(maxSplits: 1, whereSeparator: { $0 == "\t" || $0 == " " })
+		guard pieces.count == 2, let threshold = Int(pieces[0]) else { return nil }
+		let title = pieces[1].trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !title.isEmpty else { return nil }
+		return PlayerRank(threshold: threshold, title: title)
+	}
+
+	private static let fallbackPlayerRanks: [PlayerRank] = [
+		PlayerRank(threshold: 0, title: "WordBopper Newbie"),
+		PlayerRank(threshold: 10, title: "Bubble Scout"),
+		PlayerRank(threshold: 20, title: "Bop Apprentice")
+	]
 
 	// MARK: - Bubble management
 

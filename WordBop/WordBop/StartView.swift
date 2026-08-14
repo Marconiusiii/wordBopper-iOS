@@ -541,6 +541,7 @@ private struct InstructionsSheet: View {
 		"BopQuest gives you a themed list of words to find before the quest ends.",
 		"Any game mode counts, so you can find BopQuest words while playing Timed, Bopple, Non-Stop, or Daily Bop.",
 		"Each BopQuest word adds to your rank the first time you find it.",
+		"Find every word in a BopQuest to earn a completion bonus equal to the number of words in that quest.",
 		"Open BopQuest from the home screen or pause menu to review your progress."
 	]
 
