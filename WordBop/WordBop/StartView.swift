@@ -10,6 +10,15 @@ struct StartView: View {
 	@State private var showingBopHunt = false
 	@State private var showingGameSettings = false
 	@State private var announcedInitialScreen = false
+	@State private var sheetTrigger: HomeSheetTrigger?
+	@AccessibilityFocusState private var focusedHomeTrigger: HomeSheetTrigger?
+
+	private enum HomeSheetTrigger: Hashable {
+		case howToPlay
+		case gameSettings
+		case dailyBop
+		case bopHunt
+	}
 
 	var body: some View {
 		GeometryReader { geo in
@@ -64,21 +73,21 @@ struct StartView: View {
 			vm.audio.prepareDailyBopAnthemPreview()
 			vm.prepareDailyBopEntries()
 		}
-		.sheet(isPresented: $showingInstructions) {
+		.sheet(isPresented: $showingInstructions, onDismiss: restoreSheetTriggerFocus) {
 			InstructionsSheet()
 				.presentationDragIndicator(.hidden)
 		}
-		.sheet(isPresented: $showingDailyBop) {
+		.sheet(isPresented: $showingDailyBop, onDismiss: restoreSheetTriggerFocus) {
 			DailyBopSheet()
 				.environment(vm)
 				.presentationDragIndicator(.hidden)
 		}
-		.sheet(isPresented: $showingBopHunt) {
+		.sheet(isPresented: $showingBopHunt, onDismiss: restoreSheetTriggerFocus) {
 			BopHuntSheet()
 				.environment(vm)
 				.presentationDragIndicator(.hidden)
 		}
-			.sheet(isPresented: $showingGameSettings) {
+			.sheet(isPresented: $showingGameSettings, onDismiss: restoreSheetTriggerFocus) {
 				GameSettingsSheet()
 					.environment(vm)
 					.presentationDragIndicator(.hidden)
@@ -117,6 +126,7 @@ struct StartView: View {
 
 	private var dailyBopButton: some View {
 		Button {
+			sheetTrigger = .dailyBop
 			showingDailyBop = true
 		} label: {
 			Text("Daily Bop")
@@ -136,10 +146,12 @@ struct StartView: View {
 				.contentShape(Rectangle())
 		}
 		.buttonStyle(.plain)
+		.accessibilityFocused($focusedHomeTrigger, equals: .dailyBop)
 	}
 
 	private var bopHuntButton: some View {
 		Button {
+			sheetTrigger = .bopHunt
 			showingBopHunt = true
 		} label: {
 			Text("Bop Hunt")
@@ -159,6 +171,7 @@ struct StartView: View {
 				.contentShape(Rectangle())
 		}
 		.buttonStyle(.plain)
+		.accessibilityFocused($focusedHomeTrigger, equals: .bopHunt)
 	}
 
 	private var startGameButton: some View {
@@ -186,6 +199,7 @@ struct StartView: View {
 
 	private var howToPlayButton: some View {
 		Button {
+			sheetTrigger = .howToPlay
 			showingInstructions = true
 		} label: {
 			Text("How to Play")
@@ -199,10 +213,12 @@ struct StartView: View {
 				.contentShape(Rectangle())
 		}
 		.buttonStyle(.plain)
+		.accessibilityFocused($focusedHomeTrigger, equals: .howToPlay)
 	}
 
 	private var gameSettingsButton: some View {
 		Button {
+			sheetTrigger = .gameSettings
 			showingGameSettings = true
 		} label: {
 			Text("Game Settings")
@@ -216,6 +232,16 @@ struct StartView: View {
 				.contentShape(Rectangle())
 		}
 		.buttonStyle(.plain)
+		.accessibilityFocused($focusedHomeTrigger, equals: .gameSettings)
+	}
+
+	private func restoreSheetTriggerFocus() {
+		guard let sheetTrigger else { return }
+		Task { @MainActor in
+			await Task.yield()
+			focusedHomeTrigger = sheetTrigger
+			self.sheetTrigger = nil
+		}
 	}
 
 }
