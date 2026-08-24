@@ -618,6 +618,21 @@ final class GameViewModel {
 		return String(localized: "\(foundCount) of \(totalCount) words found", comment: "BopQuest progress summary")
 	}
 
+	var activeBopHuntDaysRemainingText: String {
+		guard let activeBopHunt else { return "" }
+		let calendar = Calendar.current
+		let startOfToday = calendar.startOfDay(for: Date())
+		let startOfEndDate = calendar.startOfDay(for: activeBopHunt.ends)
+		guard let daysRemaining = calendar.dateComponents([.day], from: startOfToday, to: startOfEndDate).day,
+			  daysRemaining >= 0 else {
+			return ""
+		}
+		if daysRemaining == 0 {
+			return String(localized: "Last day of your quest!")
+		}
+		return String(localized: "\(daysRemaining + 1) days left to finish your quest!", comment: "BopQuest days remaining message")
+	}
+
 	var activeBopHuntWords: [BopHuntWord] {
 		guard let activeBopHunt else { return [] }
 		let foundWords = foundBopHuntWords(language: dictionaryLanguage)

@@ -423,6 +423,17 @@
         }
       }
     },
+    "%lld days left to finish your quest!" : {
+      "comment" : "BopQuest days remaining message",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%lld days left to finish your quest!"
+          }
+        }
+      }
+    },
     "%lld of 3 chains" : {
       "comment" : "Chain meter VoiceOver value",
       "extractionState" : "manual",
@@ -4029,6 +4040,9 @@
           }
         }
       }
+    },
+    "Last day of your quest!" : {
+
     },
     "Loading Daily Bops..." : {
 

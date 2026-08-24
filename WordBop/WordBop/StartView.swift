@@ -425,6 +425,14 @@ struct BopHuntSheet: View {
 							.contentShape(Rectangle())
 
 						if vm.activeBopHuntIsAvailableForCurrentLanguage {
+							Text(vm.activeBopHuntDaysRemainingText)
+								.font(.headline.weight(.black))
+								.foregroundStyle(Color.wbAccent1)
+								.fixedSize(horizontal: false, vertical: true)
+								.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+								.padding(.horizontal, 24)
+								.contentShape(Rectangle())
+
 							Text(vm.activeBopHuntProgressText)
 								.font(.headline.weight(.black))
 								.foregroundStyle(Color.wbAccent5)
