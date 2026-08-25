@@ -412,17 +412,6 @@
         }
       }
     },
-    "%lld of %lld words found" : {
-      "comment" : "BopQuest progress summary",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld of %2$lld words found"
-          }
-        }
-      }
-    },
     "%lld days left to finish your quest!" : {
       "comment" : "BopQuest days remaining message",
       "localizations" : {
@@ -430,6 +419,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%lld days left to finish your quest!"
+          }
+        }
+      }
+    },
+    "%lld of %lld words found" : {
+      "comment" : "BopQuest progress summary",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld words found"
           }
         }
       }
@@ -3264,7 +3264,7 @@
         }
       }
     },
-    "Find as many themed words as you can before the hunt ends. Any game mode counts." : {
+    "Find as many themed words as you can before the quest ends. Any game mode counts." : {
 
     },
     "Find It, Bop It" : {
@@ -3836,6 +3836,9 @@
         }
       }
     },
+    "Last day of your quest!" : {
+
+    },
     "Left-Handed Mode" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4040,9 +4043,6 @@
           }
         }
       }
-    },
-    "Last day of your quest!" : {
-
     },
     "Loading Daily Bops..." : {
 

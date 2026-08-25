@@ -416,7 +416,7 @@ struct BopHuntSheet: View {
 							.frame(maxWidth: .infinity, minHeight: 72)
 							.contentShape(Rectangle())
 
-						Text("Find as many themed words as you can before the hunt ends. Any game mode counts.")
+						Text("Find as many themed words as you can before the quest ends. Any game mode counts.")
 							.font(.body)
 							.foregroundStyle(Color.wbText)
 							.fixedSize(horizontal: false, vertical: true)
