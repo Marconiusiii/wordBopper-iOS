@@ -1,0 +1,4 @@
+title: Spooky BopQuest
+starts: 2026-10-01
+ends: 2026-10-31
+bonus: 25
