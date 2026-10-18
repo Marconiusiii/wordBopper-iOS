@@ -16,6 +16,10 @@ final class AudioEngine {
 	private var dailyBopAnthemBuffer: AVAudioPCMBuffer?
 	private var isPreparingDailyBopAnthem = false
 	private var shouldPlayDailyBopAnthemWhenReady = false
+	private let anthemPlayer = AVAudioPlayerNode()
+	private var anthemElapsed: (() -> TimeInterval)?
+	private var anthemEndsAt = Date.distantPast
+	private var idleWorkItem: DispatchWorkItem?
 
 	var volume: Float = 0.82 {
 		didSet {
@@ -26,7 +30,6 @@ final class AudioEngine {
 	// MARK: - Init
 
 	init() {
-		setupSession()
 		setupEngine()
 	}
 
@@ -39,6 +42,8 @@ final class AudioEngine {
 
 	private func setupEngine() {
 		let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1, interleaved: false)
+		engine.attach(anthemPlayer)
+		engine.connect(anthemPlayer, to: engine.mainMixerNode, format: format)
 		for _ in 0..<playerCount {
 			let player = AVAudioPlayerNode()
 			engine.attach(player)
@@ -376,29 +381,46 @@ final class AudioEngine {
 	}
 
 	func playDailyBopAnthemPreview() {
-		if let dailyBopAnthemBuffer {
-			play(dailyBopAnthemBuffer, priority: .ambient)
-			return
-		}
+		playDailyBopAnthem(elapsed: { 0 })
+	}
 
+	func playDailyBopAnthem(elapsed: @escaping () -> TimeInterval) {
+		anthemElapsed = elapsed
 		prepareDailyBopAnthem(playWhenReady: true)
 	}
 
-	func playDailyBopAnthem() {
-		playDailyBopAnthemPreview()
+	func stopDailyBopAnthem() {
+		shouldPlayDailyBopAnthemWhenReady = false
+		anthemElapsed = nil
+		anthemPlayer.stop()
+		anthemEndsAt = .distantPast
+		scheduleIdlePause()
 	}
 
-	func stopDailyBopAnthem() {
-		for index in voices.indices where voices[index].priority == .ambient {
-			voices[index].player.stop()
-			voices[index].reservedUntil = .distantPast
+	private func playPreparedAnthem(_ buffer: AVAudioPCMBuffer?) {
+		guard let buffer, let elapsed = anthemElapsed else { return }
+		let offset = AVAudioFrameCount(min(Double(buffer.frameLength), max(0, elapsed() * sampleRate)))
+		let length = buffer.frameLength - offset
+		guard length > 0,
+			  let remaining = AVAudioPCMBuffer(pcmFormat: buffer.format, frameCapacity: length),
+			  let source = buffer.floatChannelData, let destination = remaining.floatChannelData else { return }
+		remaining.frameLength = length
+		for channel in 0..<Int(buffer.format.channelCount) {
+			destination[channel].update(from: source[channel].advanced(by: Int(offset)), count: Int(length))
 		}
+		anthemPlayer.stop()
+		setupSession()
+		if !engine.isRunning { try? engine.start() }
+		anthemEndsAt = Date().addingTimeInterval(Double(length) / sampleRate)
+		anthemPlayer.scheduleBuffer(remaining)
+		anthemPlayer.play()
+		scheduleIdlePause()
 	}
 
 	private func prepareDailyBopAnthem(playWhenReady: Bool) {
 		if let dailyBopAnthemBuffer {
 			if playWhenReady {
-				play(dailyBopAnthemBuffer, priority: .ambient)
+				playPreparedAnthem(dailyBopAnthemBuffer)
 			}
 			return
 		}
@@ -421,7 +443,7 @@ final class AudioEngine {
 				let shouldPlay = self.shouldPlayDailyBopAnthemWhenReady
 				self.shouldPlayDailyBopAnthemWhenReady = false
 				if shouldPlay {
-					self.play(buffer, priority: .ambient)
+					self.playPreparedAnthem(buffer)
 				}
 			}
 		}
@@ -654,9 +676,37 @@ final class AudioEngine {
 		player.stop()
 		voices[voiceIndex].priority = priority
 		voices[voiceIndex].reservedUntil = Date().addingTimeInterval(duration + 0.035)
-		if !engine.isRunning { try? engine.start() }
+		if !engine.isRunning {
+			setupSession()
+			try? engine.start()
+		}
 		player.scheduleBuffer(buffer, completionHandler: nil)
 		player.play()
+		scheduleIdlePause()
+	}
+
+	private func scheduleIdlePause() {
+		idleWorkItem?.cancel()
+		let end = max(anthemEndsAt, voices.map(\.reservedUntil).max() ?? .distantPast)
+		let item = DispatchWorkItem { [weak self] in
+			guard let self else { return }
+			self.engine.pause()
+			try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+		}
+		idleWorkItem = item
+		DispatchQueue.main.asyncAfter(deadline: .now() + max(0, end.timeIntervalSinceNow) + 0.1, execute: item)
+	}
+
+	func suspend() {
+		stopDailyBopAnthem()
+		stopPowerUpChimes()
+		for index in voices.indices {
+			voices[index].player.stop()
+			voices[index].reservedUntil = .distantPast
+		}
+		idleWorkItem?.cancel()
+		engine.pause()
+		try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
 	}
 
 	private func nextVoiceIndex(for priority: SoundPriority) -> Int? {

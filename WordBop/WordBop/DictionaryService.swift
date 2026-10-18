@@ -335,6 +335,7 @@ final class DictionaryService {
 	private var cachedDailyCandidates: [DictionaryLanguage: [String]] = [:]
 	private var cachedDailyWords: [String: String] = [:]
 	private let queue = DispatchQueue(label: "com.marconius.WordBop.DictionaryService", qos: .userInitiated)
+	private let dailyQueue = DispatchQueue(label: "com.marconius.WordBop.DailyWords", qos: .utility)
 
 	private init() {}
 
@@ -352,7 +353,7 @@ final class DictionaryService {
 	}
 
 	func preloadDailyBopCandidates(for language: DictionaryLanguage) {
-		queue.async {
+		dailyQueue.async {
 			_ = self.dailyCandidatesOnQueue(for: language)
 		}
 	}
@@ -365,7 +366,7 @@ final class DictionaryService {
 
 	func dailyWord(for language: DictionaryLanguage, date: Date = Date(), calendar: Calendar = .current) -> String {
 		let dateKey = dailyDateKey(for: date, calendar: calendar)
-		return queue.sync {
+		return dailyQueue.sync {
 			dailyWordOnQueue(for: language, dateKey: dateKey)
 		}
 	}

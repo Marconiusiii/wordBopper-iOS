@@ -342,6 +342,11 @@ struct BopHuntEvent: Identifiable {
 	func words(for language: DictionaryLanguage) -> [String] {
 		wordsByLanguage[language] ?? []
 	}
+
+	func isActive(on date: Date, calendar: Calendar = .current) -> Bool {
+		let today = calendar.startOfDay(for: date)
+		return today >= calendar.startOfDay(for: starts) && today <= calendar.startOfDay(for: ends)
+	}
 }
 
 struct BopHuntProgress: Codable, Identifiable {
@@ -350,6 +355,20 @@ struct BopHuntProgress: Codable, Identifiable {
 	var awardedCompletionBonusLanguages: [DictionaryLanguage] = []
 
 	var id: String { huntID }
+
+	mutating func record(_ word: String, in event: BopHuntEvent, language: DictionaryLanguage,
+					 date: Date = Date(), calendar: Calendar = .current) -> Int {
+		guard event.id == huntID, event.isActive(on: date, calendar: calendar) else { return 0 }
+		let words = event.words(for: language)
+		var found = Set(foundWordsByLanguage[language] ?? [])
+		guard words.contains(word), found.insert(word).inserted else { return 0 }
+		foundWordsByLanguage[language] = words.filter { found.contains($0) }
+		if Set(words).isSubset(of: found), !awardedCompletionBonusLanguages.contains(language) {
+			awardedCompletionBonusLanguages.append(language)
+			return 1 + words.count
+		}
+		return 1
+	}
 }
 
 struct BestGame: Codable {
@@ -548,6 +567,10 @@ final class GameViewModel {
 	private var dailyBopBoostTimer: Timer?
 	private var announcementWorkItem: DispatchWorkItem?
 	private var dailyBopEntriesGeneration = UUID()
+	private var dailyBopEntriesDateKey: String?
+	private var dailyBopTargetDateKey: String?
+	private var dailyBopBoostDeadline: TimeInterval?
+	private var dailyBopBoostRemaining: TimeInterval = 0
 	private static let playerRanks = loadPlayerRanks()
 
 	// MARK: - Computed
@@ -742,6 +765,15 @@ final class GameViewModel {
 	}
 
 	func prepareDailyBopEntries() {
+		let date = Date()
+		let calendar = Calendar.current
+		let dateKey = dailyBopDateKey(date: date, calendar: calendar)
+		if dailyBopEntriesDateKey != dateKey {
+			dailyBopEntriesGeneration = UUID()
+			dailyBopEntriesReady = false
+			dailyBopEntriesLoading = false
+			dailyBopEntriesDateKey = dateKey
+		}
 		guard !dailyBopEntriesReady else { return }
 		guard !dailyBopEntriesLoading else { return }
 		let languages = normalizedDailyBopLanguages()
@@ -751,12 +783,16 @@ final class GameViewModel {
 		dailyBopEntriesLoading = true
 		DispatchQueue.global(qos: .utility).async { [dictionary] in
 			let entries = languages.compactMap { language -> DailyBopEntry? in
-				let word = dictionary.dailyWord(for: language)
+				let word = dictionary.dailyWord(for: language, date: date, calendar: calendar)
 				guard !word.isEmpty else { return nil }
 				return DailyBopEntry(language: language, word: word)
 			}
 			DispatchQueue.main.async {
 				guard self.dailyBopEntriesGeneration == generation else { return }
+				guard self.dailyBopDateKey() == dateKey else {
+					self.prepareDailyBopEntries()
+					return
+				}
 				self.dailyBopEntries = entries
 				self.dailyBopEntriesLoading = false
 				self.dailyBopEntriesReady = true
@@ -766,6 +802,11 @@ final class GameViewModel {
 
 	func refreshActiveBopHunt() {
 		activeBopHunt = loadActiveBopHunt()
+	}
+
+	func refreshCalendarContent() {
+		refreshActiveBopHunt()
+		prepareDailyBopEntries()
 	}
 
 	func isDailyBopLanguageEnabled(_ language: DictionaryLanguage) -> Bool {
@@ -809,8 +850,9 @@ final class GameViewModel {
 		connectedWordStreak = 0
 		chainPowerUpActive = false
 		chainPowerUpSecondsLeft = 0
-		dailyBopTargetWord = dailyBopEntry?.word
+		dailyBopTargetWord = dailyBopEntry.map { dictionary.dailyWord(for: $0.language) }
 		dailyBopTargetLanguage = dailyBopEntry?.language
+		dailyBopTargetDateKey = dailyBopEntry == nil ? nil : dailyBopDateKey()
 		dailyBopFoundThisRound = false
 		dailyBopBoostActive = false
 		dailyBopBoostSecondsLeft = 0
@@ -858,7 +900,7 @@ final class GameViewModel {
 		gamePaused = false
 		audio.playResumeSound()
 		if showsTimer { startTimer() }
-		if dailyBopBoostActive { resumeDailyBopBoost(audioDelay: 0.55) }
+		if dailyBopBoostActive { resumeDailyBopBoost() }
 		if chainPowerUpActive { startPowerUpCountdown(audioDelay: 0.55) }
 	}
 
@@ -1170,23 +1212,16 @@ final class GameViewModel {
 	// MARK: - BopQuest
 
 	private func recordBopHuntWordIfNeeded(_ word: String) -> Bool {
-		guard let activeBopHunt else { return false }
-		let huntWords = activeBopHunt.words(for: dictionaryLanguage)
-		guard huntWords.contains(word) else { return false }
-		var progress = bopHuntProgress(for: activeBopHunt.id)
-		var foundWords = Set(progress.foundWordsByLanguage[dictionaryLanguage] ?? [])
-		guard !foundWords.contains(word) else { return false }
-
-		foundWords.insert(word)
-		progress.foundWordsByLanguage[dictionaryLanguage] = huntWords.filter { foundWords.contains($0) }
-		bestGame.bopHuntRankPoints += 1
-		bopHuntWordsFoundThisRound.append(word)
-
-		if foundWords.count == huntWords.count,
-		   !progress.awardedCompletionBonusLanguages.contains(dictionaryLanguage) {
-			progress.awardedCompletionBonusLanguages.append(dictionaryLanguage)
-			bestGame.bopHuntRankPoints += huntWords.count
+		if activeBopHunt?.isActive(on: Date()) != true {
+			refreshActiveBopHunt()
 		}
+		guard let activeBopHunt else { return false }
+		guard activeBopHunt.isActive(on: Date()) else { return false }
+		var progress = bopHuntProgress(for: activeBopHunt.id)
+		let points = progress.record(word, in: activeBopHunt, language: dictionaryLanguage)
+		guard points > 0 else { return false }
+		bestGame.bopHuntRankPoints += points
+		bopHuntWordsFoundThisRound.append(word)
 
 		saveBopHuntProgress(progress)
 		saveBestGame()
@@ -1212,8 +1247,7 @@ final class GameViewModel {
 
 	private func loadActiveBopHunt(date: Date = Date(), calendar: Calendar = .current) -> BopHuntEvent? {
 		loadBopHuntEventIDs().compactMap { loadBopHuntEvent(id: $0) }.first { event in
-			let startOfToday = calendar.startOfDay(for: date)
-			return startOfToday >= event.starts && startOfToday <= event.ends
+			event.isActive(on: date, calendar: calendar)
 		}
 	}
 
@@ -1313,24 +1347,26 @@ final class GameViewModel {
 		}
 	}
 
-	private static let bopHuntDateFormatter: DateFormatter = {
+	private static var bopHuntDateFormatter: DateFormatter {
 		let formatter = DateFormatter()
 		formatter.calendar = Calendar(identifier: .gregorian)
 		formatter.locale = Locale(identifier: "en_US_POSIX")
 		formatter.timeZone = .current
 		formatter.dateFormat = "yyyy-MM-dd"
 		return formatter
-	}()
+	}
 
 	// MARK: - Daily Bop
 
 	private func isDailyBopWord(_ word: String) -> Bool {
+		guard dailyBopTargetDateKey == dailyBopDateKey() else { return false }
 		guard let dailyBopTargetWord, let dailyBopTargetLanguage else { return false }
 		guard dailyBopTargetLanguage == dictionaryLanguage else { return false }
 		return word == dailyBopTargetWord
 	}
 
 	private func activateDailyBopBoostIfNeeded() -> Bool {
+		guard dailyBopTargetDateKey == dailyBopDateKey() else { return false }
 		guard !dailyBopFoundThisRound else { return false }
 		guard let language = dailyBopTargetLanguage else { return false }
 		guard !dailyBopWasFoundToday(language: language) else { return false }
@@ -1339,19 +1375,13 @@ final class GameViewModel {
 		pausePowerUpCountdown()
 		dailyBopBoostActive = true
 		dailyBopBoostSecondsLeft = 45
-		audio.playDailyBopAnthem()
-		dailyBopBoostTimer?.invalidate()
-		dailyBopBoostTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-			guard let self else { return }
-			self.dailyBopBoostSecondsLeft -= 1
-			if self.dailyBopBoostSecondsLeft <= 0 {
-				self.stopDailyBopBoost()
-			}
-		}
+		dailyBopBoostRemaining = 45
+		resumeDailyBopBoost()
 		return true
 	}
 
 	private func canActivateDailyBopBoostToday() -> Bool {
+		guard dailyBopTargetDateKey == dailyBopDateKey() else { return false }
 		guard !dailyBopFoundThisRound else { return false }
 		guard let language = dailyBopTargetLanguage else { return false }
 		return !dailyBopWasFoundToday(language: language)
@@ -1359,39 +1389,51 @@ final class GameViewModel {
 
 	private func stopDailyBopBoost() {
 		dailyBopBoostActive = false
+		dailyBopBoostDeadline = nil
+		dailyBopBoostRemaining = 0
 		dailyBopBoostSecondsLeft = 0
 		dailyBopBoostTimer?.invalidate()
 		dailyBopBoostTimer = nil
 		audio.stopDailyBopAnthem()
-		if chainPowerUpActive, !gamePaused {
+		if chainPowerUpActive, gameActive, !gamePaused {
 			startPowerUpCountdown(audioDelay: 0.2)
 		}
 	}
 
 	private func pauseDailyBopBoost() {
+		if let deadline = dailyBopBoostDeadline {
+			dailyBopBoostRemaining = max(0, deadline - ProcessInfo.processInfo.systemUptime)
+			dailyBopBoostSecondsLeft = Int(ceil(dailyBopBoostRemaining))
+		}
+		dailyBopBoostDeadline = nil
 		dailyBopBoostTimer?.invalidate()
 		dailyBopBoostTimer = nil
 		audio.stopDailyBopAnthem()
 	}
 
-	private func resumeDailyBopBoost(audioDelay: TimeInterval = 0) {
-		guard dailyBopBoostActive, dailyBopBoostSecondsLeft > 0 else { return }
-		if audioDelay > 0 {
-			DispatchQueue.main.asyncAfter(deadline: .now() + audioDelay) { [weak self] in
-				guard let self, self.dailyBopBoostActive, !self.gamePaused else { return }
-				self.audio.playDailyBopAnthem()
-			}
-		} else {
-			audio.playDailyBopAnthem()
+	private func resumeDailyBopBoost() {
+		guard dailyBopBoostActive else { return }
+		guard dailyBopBoostRemaining > 0 else {
+			stopDailyBopBoost()
+			return
+		}
+		dailyBopBoostDeadline = ProcessInfo.processInfo.systemUptime + dailyBopBoostRemaining
+		audio.playDailyBopAnthem { [weak self] in
+			guard let deadline = self?.dailyBopBoostDeadline else { return 45 }
+			return 45 - max(0, deadline - ProcessInfo.processInfo.systemUptime)
 		}
 		dailyBopBoostTimer?.invalidate()
-		dailyBopBoostTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-			guard let self else { return }
-			self.dailyBopBoostSecondsLeft -= 1
-			if self.dailyBopBoostSecondsLeft <= 0 {
+		let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
+			guard let self, let deadline = self.dailyBopBoostDeadline else { return }
+			let remaining = max(0, deadline - ProcessInfo.processInfo.systemUptime)
+			let seconds = Int(ceil(remaining))
+			if self.dailyBopBoostSecondsLeft != seconds { self.dailyBopBoostSecondsLeft = seconds }
+			if remaining <= 0 {
 				self.stopDailyBopBoost()
 			}
 		}
+		dailyBopBoostTimer = timer
+		RunLoop.main.add(timer, forMode: .common)
 	}
 
 	private func recordDailyBopFound(language: DictionaryLanguage) {

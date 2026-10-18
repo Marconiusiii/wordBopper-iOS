@@ -11,6 +11,73 @@ import Testing
 
 struct WordBopTests {
 
+	@Test func dailyWordsFollowLocalMidnight() throws {
+		let dictionary = DictionaryService.shared
+		var local = Calendar(identifier: .gregorian)
+		local.timeZone = try #require(TimeZone(identifier: "America/Los_Angeles"))
+		var utc = Calendar(identifier: .gregorian)
+		utc.timeZone = try #require(TimeZone(secondsFromGMT: 0))
+		let midnight = try date(from: "20261101", calendar: local)
+		let october = try date(from: "20261031", calendar: utc)
+		let november = try date(from: "20261101", calendar: utc)
+		for language in DictionaryLanguage.allCases {
+			#expect(dictionary.dailyWord(for: language, date: midnight.addingTimeInterval(-1), calendar: local)
+				== dictionary.dailyWord(for: language, date: october, calendar: utc))
+			#expect(dictionary.dailyWord(for: language, date: midnight, calendar: local)
+				== dictionary.dailyWord(for: language, date: november, calendar: utc))
+		}
+	}
+
+	@MainActor
+	@Test func questUsesInclusiveLocalDatesAcrossDaylightSaving() throws {
+		var calendar = Calendar(identifier: .gregorian)
+		calendar.timeZone = try #require(TimeZone(identifier: "America/Los_Angeles"))
+		let start = try date(from: "20261101", calendar: calendar)
+		let end = try date(from: "20261130", calendar: calendar)
+		let quest = BopHuntEvent(id: "harvest", title: "Harvest", starts: start, ends: end,
+			completionBonus: 0, wordsByLanguage: [.english: ["leaf", "harvest"]])
+		#expect(!quest.isActive(on: start.addingTimeInterval(-1), calendar: calendar))
+		#expect(quest.isActive(on: start, calendar: calendar))
+		let december = try date(from: "20261201", calendar: calendar)
+		#expect(quest.isActive(on: december.addingTimeInterval(-1), calendar: calendar))
+		#expect(!quest.isActive(on: december, calendar: calendar))
+	}
+
+	@MainActor
+	@Test func questRewardsSurviveSavingWithoutAwardingDuplicates() throws {
+		var calendar = Calendar(identifier: .gregorian)
+		calendar.timeZone = try #require(TimeZone(secondsFromGMT: 0))
+		let start = try date(from: "20261101", calendar: calendar)
+		let end = try date(from: "20261130", calendar: calendar)
+		let quest = BopHuntEvent(id: "harvest", title: "Harvest", starts: start, ends: end,
+			completionBonus: 99, wordsByLanguage: [.english: ["leaf", "harvest"]])
+		var progress = BopHuntProgress(huntID: quest.id)
+		#expect(progress.record("leaf", in: quest, language: .english, date: start, calendar: calendar) == 1)
+		#expect(progress.record("leaf", in: quest, language: .english, date: start, calendar: calendar) == 0)
+		let saved = try JSONEncoder().encode(progress)
+		progress = try JSONDecoder().decode(BopHuntProgress.self, from: saved)
+		#expect(progress.record("harvest", in: quest, language: .english, date: end, calendar: calendar) == 3)
+		let completed = try JSONEncoder().encode(progress)
+		progress = try JSONDecoder().decode(BopHuntProgress.self, from: completed)
+		#expect(progress.record("harvest", in: quest, language: .english, date: end, calendar: calendar) == 0)
+		#expect(progress.awardedCompletionBonusLanguages == [.english])
+	}
+
+	@MainActor
+	@Test func expiredQuestCannotAwardWords() throws {
+		var calendar = Calendar(identifier: .gregorian)
+		calendar.timeZone = try #require(TimeZone(secondsFromGMT: 0))
+		let start = try date(from: "20261101", calendar: calendar)
+		let end = try date(from: "20261130", calendar: calendar)
+		let quest = BopHuntEvent(id: "harvest", title: "Harvest", starts: start, ends: end,
+			completionBonus: 0, wordsByLanguage: [.english: ["leaf"]])
+		var progress = BopHuntProgress(huntID: quest.id)
+		let expired = try date(from: "20261201", calendar: calendar)
+		#expect(progress.record("leaf", in: quest, language: .english, date: expired, calendar: calendar) == 0)
+		#expect(progress.foundWordsByLanguage.isEmpty)
+		#expect(progress.awardedCompletionBonusLanguages.isEmpty)
+	}
+
 	@Test func dailyCandidateResourcesMatchFullDictionaries() throws {
 		let dictionary = DictionaryService.shared
 

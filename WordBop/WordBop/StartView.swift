@@ -314,6 +314,7 @@ private struct DailyBopSheet: View {
 		}
 		.preferredColorScheme(.dark)
 		.onAppear {
+			vm.prepareDailyBopEntries()
 			if !vm.dailyBopEntriesReady {
 				showedLoadingState = true
 				vm.prepareDailyBopEntries()
@@ -474,6 +475,7 @@ struct BopHuntSheet: View {
 			}
 		}
 		.preferredColorScheme(.dark)
+		.onAppear { vm.refreshActiveBopHunt() }
 	}
 
 	private func sheetContentWidth(in geo: GeometryProxy) -> CGFloat {

@@ -5,6 +5,7 @@ import DeclaredAgeRange
 
 struct ContentView: View {
 	@Environment(GameViewModel.self) private var vm
+	@Environment(\.scenePhase) private var scenePhase
 
 	var body: some View {
 		ZStack {
@@ -20,6 +21,20 @@ struct ContentView: View {
 			}
 		}
 		.preferredColorScheme(.dark)
+		.onChange(of: scenePhase) { _, phase in
+			if phase == .active {
+				vm.refreshCalendarContent()
+			} else {
+				vm.pauseGame(playSound: false)
+				vm.audio.suspend()
+			}
+		}
+		.onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+			vm.refreshCalendarContent()
+		}
+		.onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+			vm.refreshCalendarContent()
+		}
 		.task {
 			await checkDeclaredAgeRangeIfRequired()
 		}
