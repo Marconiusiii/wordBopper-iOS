@@ -1,0 +1,4 @@
+title: Merry BopQuest
+starts: 2026-12-01
+ends: 2026-12-31
+bonus: 50

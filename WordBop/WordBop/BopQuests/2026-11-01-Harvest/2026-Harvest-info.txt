@@ -1,0 +1,4 @@
+title: Harvest BopQuest
+starts: 2026-11-01
+ends: 2026-11-30
+bonus: 50

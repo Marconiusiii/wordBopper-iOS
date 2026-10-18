@@ -2,3 +2,5 @@
 2026-08-01-LateSummer
 2026-09-01-BackToSchool
 2026-10-01-SpookyQuest
+2026-11-01-Harvest
+2026-12-01-Merry
