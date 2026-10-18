@@ -10,6 +10,28 @@ import Testing
 @testable import WordBop
 
 struct WordBopTests {
+	#if DEBUG
+	@MainActor
+	@Test func debugDailyBopFollowsConnectedRowsAndPreservesOtherBubbles() {
+		var bubbles = (0..<16).map { Bubble(letter: "z", colorIndex: $0 % 3, row: $0 / 4, col: $0 % 4) }
+		let original = bubbles
+		GameViewModel.seedDailyBopForTesting("abcdefghij", in: &bubbles, gridSize: 4)
+		let path = [0, 1, 2, 3, 7, 6, 5, 4, 8, 9]
+		#expect(path.map { bubbles[$0].letter }.joined() == "abcdefghij")
+		for index in bubbles.indices {
+			#expect(bubbles[index].id == original[index].id)
+			#expect(bubbles[index].colorIndex == original[index].colorIndex)
+			if !path.contains(index) { #expect(bubbles[index].letter == "z") }
+		}
+	}
+
+	@MainActor
+	@Test func debugDailyBopDoesNotPartiallySeedAnOversizedWord() {
+		var bubbles = (0..<9).map { Bubble(letter: "z", colorIndex: 0, row: $0 / 3, col: $0 % 3) }
+		GameViewModel.seedDailyBopForTesting("abcdefghij", in: &bubbles, gridSize: 3)
+		#expect(bubbles.allSatisfy { $0.letter == "z" })
+	}
+	#endif
 
 	@Test func dailyWordsFollowLocalMidnight() throws {
 		let dictionary = DictionaryService.shared

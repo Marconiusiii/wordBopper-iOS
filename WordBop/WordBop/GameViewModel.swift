@@ -868,6 +868,11 @@ final class GameViewModel {
 			}
 		}
 		enforceCompactGridVowelMinimum()
+		#if DEBUG
+		if let dailyBopTargetWord {
+			Self.seedDailyBopForTesting(dailyBopTargetWord, in: &bubbles, gridSize: gridSize)
+		}
+		#endif
 
 		screen = .game
 		if dailyBopEntry != nil {
@@ -877,6 +882,20 @@ final class GameViewModel {
 		}
 		if showsTimer { startTimer() }
 	}
+
+	#if DEBUG
+	static func seedDailyBopForTesting(_ word: String, in bubbles: inout [Bubble], gridSize: Int) {
+		let letters = word.map(String.init)
+		guard gridSize > 0, bubbles.count == gridSize * gridSize, letters.count <= bubbles.count else { return }
+		// Follow adjacent cells in alternating row directions without changing bubble identity.
+		for (offset, letter) in letters.enumerated() {
+			let row = offset / gridSize
+			let columnOffset = offset % gridSize
+			let col = row.isMultiple(of: 2) ? columnOffset : gridSize - 1 - columnOffset
+			bubbles[row * gridSize + col].letter = letter
+		}
+	}
+	#endif
 
 	func playAgain() {
 		if let dailyBopTargetWord, let dailyBopTargetLanguage {
