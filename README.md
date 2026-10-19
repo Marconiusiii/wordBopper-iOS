@@ -37,7 +37,11 @@ Accessibility is part of the core game design, not an add-on.
 
 ## Word Lists
 
-WordBopper includes built-in word lists for supported bubble languages. Word list credits and license acknowledgements are available in the app under Game Settings, About WordBopper, Acknowledgements.
+WordBopper includes built-in word lists for supported bubble languages. Word list credits and license acknowledgements are available in the app under Settings, About WordBopper, Acknowledgements.
+
+## Settings
+
+Open Settings from the home screen to choose game, speech, appearance, sound, and control preferences. Open Help within Settings for explanations of each control. Open Daily Bop Languages to choose which languages receive a daily word.
 
 ## Privacy
 

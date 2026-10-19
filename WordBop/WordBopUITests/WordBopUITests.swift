@@ -93,11 +93,104 @@ final class WordBopUITests: XCTestCase {
     }
 
     @MainActor
+    func testSettingsGridWheel() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US",
+                                "-wordBopGameMode", "timed", "-wordBopGridSize", "5"]
+        app.launch()
+        openSettings(in: app)
+        let wheel = app.pickerWheels.firstMatch
+        XCTAssertTrue(wheel.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.otherElements["Grid Size"].exists)
+        wheel.adjust(toPickerWheelValue: "4 by 4")
+        XCTAssertEqual(wheel.value as? String, "4 by 4")
+        capture("settings-grid-wheel")
+        closeSettings(in: app)
+        openSettings(in: app)
+        XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "4 by 4")
+    }
+
+    @MainActor
+    func testSettingsHelpAndDailyLanguages() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        openSettings(in: app)
+        app.buttons["Help"].tap()
+        XCTAssertTrue(app.navigationBars["Help"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Timed mode gives you 2 minutes to make as many words as possible. Used letters are replaced after each word."].exists)
+        capture("settings-help")
+        app.navigationBars.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        let languages = app.buttons["Daily Bop Languages"]
+        scrollSettingsTo(languages, in: app)
+        languages.tap()
+        XCTAssertTrue(app.navigationBars["Daily Bop Languages"].waitForExistence(timeout: 5))
+        let hierarchy = XCTAttachment(string: app.switches.debugDescription)
+        hierarchy.name = "daily-languages-native-switches"
+        hierarchy.lifetime = .keepAlways
+        add(hierarchy)
+        let languageNames = ["English", "Spanish", "French", "German", "Dutch", "Italian", "Brazilian Portuguese"]
+        XCTAssertEqual(Set(app.switches.allElementsBoundByIndex.map(\.label).filter { !$0.isEmpty }), Set(languageNames))
+        for language in languageNames {
+            XCTAssertTrue(app.switches[language].firstMatch.isHittable)
+        }
+        let english = app.switches["English"].firstMatch
+        let previous = english.value as? String
+        english.tap()
+        if app.switches.allElementsBoundByIndex.filter({ $0.value as? String == "1" }).count > 0,
+           english.value as? String != previous {
+            english.tap()
+        }
+        capture("settings-daily-languages")
+        app.navigationBars.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testSettingsWheelsWithLargeTextAndLandscape() throws {
+        XCUIDevice.shared.orientation = .portrait
+        defer { XCUIDevice.shared.orientation = .portrait }
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US",
+                                "-wordBopGameMode", "bopple",
+                                "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        openSettings(in: app)
+        let timer = app.otherElements["Bopple Timer"].pickerWheels.firstMatch
+        scrollSettingsTo(timer, in: app)
+        timer.adjust(toPickerWheelValue: "Non-Stop Boppling!")
+        XCTAssertEqual(timer.value as? String, "Non-Stop Boppling!")
+        capture("settings-large-text-bopple")
+        let announcements = app.otherElements["Game Announcements"].pickerWheels.firstMatch
+        scrollSettingsTo(announcements, in: app)
+        announcements.adjust(toPickerWheelValue: "Low")
+        XCTAssertEqual(announcements.value as? String, "Low")
+        capture("settings-large-text-announcements")
+        XCUIDevice.shared.orientation = .landscapeLeft
+        capture("settings-landscape-large-text")
+        XCTAssertTrue(app.buttons["Close"].isHittable)
+    }
+
+    @MainActor
+    private func scrollSettingsTo(_ element: XCUIElement, in app: XCUIApplication) {
+        for _ in 0..<16 {
+            if element.exists && element.isHittable { return }
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.8))
+            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.25))
+            start.press(forDuration: 0.01, thenDragTo: end)
+        }
+        XCTAssertTrue(element.isHittable)
+    }
+
+    @MainActor
     private func openSettings(in app: XCUIApplication) {
-        let settings = app.buttons["Game Settings"]
+        let settings = app.buttons["Settings"]
         XCTAssertTrue(settings.waitForExistence(timeout: 5))
         settings.tap()
-        XCTAssertTrue(app.staticTexts["Game Settings"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
     }
 
     @MainActor
