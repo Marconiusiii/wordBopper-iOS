@@ -7,193 +7,251 @@ struct SettingsView: View {
 	@AccessibilityFocusState private var isLetterPositionFocused: Bool
 	@AccessibilityFocusState private var isBubbleColorThemeFocused: Bool
 	@State private var showingAbout = false
+	@Namespace private var settingsLabels
 
 	var body: some View {
 		@Bindable var settings = vm
 		NavigationStack {
-			List {
-				NavigationLink("Help") {
-					SettingsHelpView()
-				}
-				.listRowBackground(Color.wbBackground)
-
-				Section("Game Mode") {
-					Picker("Game Mode", selection: $settings.gameMode) {
-						ForEach(GameMode.allCases) { mode in
-							Text(mode.label).tag(mode)
-						}
+			ScrollView {
+				VStack(alignment: .leading, spacing: 0) {
+					NavigationLink {
+						SettingsHelpView()
+					} label: {
+						Text("Help")
+							.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
 					}
-					.pickerStyle(.segmented)
 
-					if vm.gameMode == .bopple {
+					Text("Game")
+						.font(.headline)
+						.accessibilityAddTraits(.isHeader)
+						.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+					Group {
+						VStack(alignment: .leading, spacing: 8) {
+							Text("Game Mode")
+								.accessibilityLabeledPair(role: .label, id: "gameMode", in: settingsLabels)
+							Picker("", selection: $settings.gameMode) {
+								ForEach(GameMode.allCases) { mode in
+									Text(mode.label).tag(mode)
+								}
+							}
+							.pickerStyle(.segmented)
+							.accessibilityLabeledPair(role: .content, id: "gameMode", in: settingsLabels)
+						}
+
+						if vm.gameMode == .bopple {
+							VStack(alignment: .leading, spacing: 0) {
+								Text("Bopple Timer")
+									.accessibilityHidden(true)
+								Picker("Bopple Timer", selection: $settings.boppleTimerOption) {
+									ForEach(BoppleTimerOption.allCases) { option in
+										Text(option.label).tag(option)
+									}
+								}
+								.pickerStyle(.wheel)
+								.accessibilityElement(children: .contain)
+								.accessibilityLabel("Bopple Timer")
+							}
+						}
+
 						VStack(alignment: .leading, spacing: 0) {
-							Text("Bopple Timer")
+							Text("Grid Size")
 								.accessibilityHidden(true)
-							Picker("Bopple Timer", selection: $settings.boppleTimerOption) {
-								ForEach(BoppleTimerOption.allCases) { option in
+							Picker("Grid Size", selection: $settings.gridSizeOption) {
+								ForEach(GridSizeOption.allCases) { option in
 									Text(option.label).tag(option)
 								}
 							}
 							.pickerStyle(.wheel)
 							.accessibilityElement(children: .contain)
-							.accessibilityLabel("Bopple Timer")
+							.accessibilityLabel("Grid Size")
 						}
-					}
 
-					VStack(alignment: .leading, spacing: 0) {
-						Text("Grid Size")
-							.accessibilityHidden(true)
-						Picker("Grid Size", selection: $settings.gridSizeOption) {
-							ForEach(GridSizeOption.allCases) { option in
-								Text(option.label).tag(option)
+						LabeledContent("Bubble Language") {
+							Picker(
+								"",
+								selection: Binding(
+									get: { vm.dictionaryLanguage },
+									set: { language in
+										vm.dictionaryLanguage = language
+										refocusDictionaryLanguagePicker()
+									}
+								)
+							) {
+								ForEach(DictionaryLanguage.allCases) { language in
+									Text(language.label).tag(language)
+								}
 							}
+							.pickerStyle(.menu)
+							.accessibilityFocused($isDictionaryLanguageFocused)
 						}
-						.pickerStyle(.wheel)
-						.accessibilityElement(children: .contain)
-						.accessibilityLabel("Grid Size")
+
+						Toggle("BopAway", isOn: $settings.bopAway)
 					}
+					.padding(.vertical, 8)
 
-					Picker("Bubble Language", selection: Binding(
-						get: { vm.dictionaryLanguage },
-						set: { language in
-							vm.dictionaryLanguage = language
-							refocusDictionaryLanguagePicker()
-						}
-					)) {
-						ForEach(DictionaryLanguage.allCases) { language in
-							Text(language.label).tag(language)
-						}
-					}
-					.pickerStyle(.menu)
-					.accessibilityFocused($isDictionaryLanguageFocused)
-
-					Toggle("BopAway", isOn: $settings.bopAway)
-				}
-				.listRowBackground(Color.wbBackground)
-
-				Section("Speech and announcements") {
-					Picker("Letter Positions", selection: Binding(
-						get: { vm.letterPositionMode },
-						set: { mode in
-							vm.letterPositionMode = mode
-							refocusLetterPositionPicker()
-						}
-					)) {
-						ForEach(LetterPositionMode.allCases) { mode in
-							Text(mode.label).tag(mode)
-						}
-					}
-					.pickerStyle(.menu)
-					.accessibilityFocused($isLetterPositionFocused)
-
-					Toggle("Speak Letter Phonetics", isOn: $settings.speakLetterPhonetics)
-
-					VStack(alignment: .leading, spacing: 0) {
-						Text("Game Announcements")
-							.accessibilityHidden(true)
-						Picker("Game Announcements", selection: $settings.gameAnnouncementVerbosity) {
-							ForEach(GameAnnouncementVerbosity.allCases) { option in
-								Text(option.label).tag(option)
+					Text("Speech and announcements")
+						.font(.headline)
+						.accessibilityAddTraits(.isHeader)
+						.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+					Group {
+						LabeledContent("Letter Positions") {
+							Picker(
+								"",
+								selection: Binding(
+									get: { vm.letterPositionMode },
+									set: { mode in
+										vm.letterPositionMode = mode
+										refocusLetterPositionPicker()
+									}
+								)
+							) {
+								ForEach(LetterPositionMode.allCases) { mode in
+									Text(mode.label).tag(mode)
+								}
 							}
+							.pickerStyle(.menu)
+							.accessibilityFocused($isLetterPositionFocused)
 						}
-						.pickerStyle(.wheel)
-						.accessibilityElement(children: .contain)
-						.accessibilityLabel("Game Announcements")
-					}
-				}
 
-				.listRowBackground(Color.wbBackground)
+						Toggle("Speak Letter Phonetics", isOn: $settings.speakLetterPhonetics)
 
-				Section("Appearance") {
-					VStack(alignment: .leading, spacing: 8) {
-						Text("Bubble Letter Style")
-							.accessibilityHidden(true)
-						Picker("Bubble Letter Style", selection: $settings.bubbleLetterStyle) {
-							ForEach(BubbleLetterStyle.allCases) { option in
-								Text(option.label)
-									.font(.system(.body, design: option.fontDesign).weight(.bold))
-									.tag(option)
+						VStack(alignment: .leading, spacing: 0) {
+							Text("Game Announcements")
+								.accessibilityHidden(true)
+							Picker("Game Announcements", selection: $settings.gameAnnouncementVerbosity) {
+								ForEach(GameAnnouncementVerbosity.allCases) { option in
+									Text(option.label).tag(option)
+								}
 							}
+							.pickerStyle(.wheel)
+							.accessibilityElement(children: .contain)
+							.accessibilityLabel("Game Announcements")
 						}
-						.pickerStyle(.segmented)
 					}
 
-					VStack(alignment: .leading, spacing: 8) {
-						Text("Bubble Text Color")
-							.accessibilityHidden(true)
-						Picker("Bubble Text Color", selection: $settings.bubbleTextColorOption) {
-							ForEach(BubbleTextColorOption.allCases) { option in
-								Text(option.label).tag(option)
+					.padding(.vertical, 8)
+
+					Text("Appearance")
+						.font(.headline)
+						.accessibilityAddTraits(.isHeader)
+						.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+					Group {
+						VStack(alignment: .leading, spacing: 8) {
+							Text("Bubble Letter Style")
+								.accessibilityLabeledPair(role: .label, id: "letterStyle", in: settingsLabels)
+							Picker("", selection: $settings.bubbleLetterStyle) {
+								ForEach(BubbleLetterStyle.allCases) { option in
+									Text(option.label)
+										.font(
+											.system(.body, design: option.fontDesign).weight(
+												.bold)
+										)
+										.tag(option)
+								}
 							}
+							.pickerStyle(.segmented)
+							.accessibilityLabeledPair(role: .content, id: "letterStyle", in: settingsLabels)
 						}
-						.pickerStyle(.segmented)
+
+						VStack(alignment: .leading, spacing: 8) {
+							Text("Bubble Text Color")
+								.accessibilityLabeledPair(role: .label, id: "textColor", in: settingsLabels)
+							Picker("", selection: $settings.bubbleTextColorOption) {
+								ForEach(BubbleTextColorOption.allCases) { option in
+									Text(option.label).tag(option)
+								}
+							}
+							.pickerStyle(.segmented)
+							.accessibilityLabeledPair(role: .content, id: "textColor", in: settingsLabels)
+						}
+
+						LabeledContent("Bubble Color Theme") {
+							Picker(
+								"",
+								selection: Binding(
+									get: { vm.bubbleColorTheme },
+									set: { theme in
+										vm.bubbleColorTheme = theme
+										refocusBubbleColorThemePicker()
+									}
+								)
+							) {
+								ForEach(BubbleColorTheme.options(for: vm.bubbleTextColorOption)) { theme in
+									Text(theme.label).tag(theme)
+								}
+							}
+							.pickerStyle(.menu)
+							.accessibilityFocused($isBubbleColorThemeFocused)
+						}
+
+						BubbleThemePreview(
+							textColorOption: vm.bubbleTextColorOption,
+							colorTheme: vm.bubbleColorTheme, letterStyle: vm.bubbleLetterStyle)
 					}
+					.padding(.vertical, 8)
 
-					Picker("Bubble Color Theme", selection: Binding(
-						get: { vm.bubbleColorTheme },
-						set: { theme in
-							vm.bubbleColorTheme = theme
-							refocusBubbleColorThemePicker()
-						}
-					)) {
-						ForEach(BubbleColorTheme.options(for: vm.bubbleTextColorOption)) { theme in
-							Text(theme.label).tag(theme)
-						}
-					}
-					.pickerStyle(.menu)
-					.accessibilityFocused($isBubbleColorThemeFocused)
-
-					BubbleThemePreview(textColorOption: vm.bubbleTextColorOption,
-						colorTheme: vm.bubbleColorTheme, letterStyle: vm.bubbleLetterStyle)
-				}
-				.listRowBackground(Color.wbBackground)
-
-				Section("Sound and feedback") {
-					VStack(alignment: .leading, spacing: 8) {
-						Text("Game Volume")
-							.accessibilityHidden(true)
-						Slider(value: $settings.gameVolume, in: 0...1) {
+					Text("Sound and feedback")
+						.font(.headline)
+						.accessibilityAddTraits(.isHeader)
+						.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+					Group {
+						VStack(alignment: .leading, spacing: 8) {
 							Text("Game Volume")
+								.accessibilityHidden(true)
+							Slider(value: $settings.gameVolume, in: 0...1) {
+								Text("Game Volume")
+							}
+							.accessibilityValue("\(Int((vm.gameVolume * 100).rounded())) percent")
 						}
-						.accessibilityValue("\(Int((vm.gameVolume * 100).rounded())) percent")
+						Toggle("Game Haptics", isOn: $settings.gameHapticsEnabled)
 					}
-					Toggle("Game Haptics", isOn: $settings.gameHapticsEnabled)
-				}
-				.listRowBackground(Color.wbBackground)
+					.padding(.vertical, 8)
 
-				Section("Daily Bop") {
-					NavigationLink("Daily Bop Languages") {
+					Text("Daily Bop")
+						.font(.headline)
+						.accessibilityAddTraits(.isHeader)
+						.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+					NavigationLink {
 						DailyBopLanguagesView()
+					} label: {
+						Text("Daily Bop Languages")
+							.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+					}
+					.accessibilityHint("Double-tap to choose your Daily Bop Languages")
+					.accessibilityValue(selectedDailyBopLanguages)
+
+					Text("Controls")
+						.font(.headline)
+						.accessibilityAddTraits(.isHeader)
+						.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+					Toggle("Left-Handed Mode", isOn: $settings.leftHandedMode)
+						.frame(minHeight: 56)
+
+					Text("About")
+						.font(.headline)
+						.accessibilityAddTraits(.isHeader)
+						.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+					Button {
+						showingAbout = true
+					} label: {
+						Text("About WordBopper")
+							.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
 					}
 				}
-				.listRowBackground(Color.wbBackground)
-
-				Section("Controls") {
-					Toggle("Left-Handed Mode", isOn: $settings.leftHandedMode)
-				}
-				.listRowBackground(Color.wbBackground)
-
-				Section("About") {
-					Button("About WordBopper") { showingAbout = true }
-				}
-				.listRowBackground(Color.wbBackground)
+				.padding(.horizontal, 16)
+				.frame(maxWidth: .infinity, alignment: .leading)
 			}
-			.listStyle(.plain)
-			.listSectionSpacing(0)
-			.environment(\.defaultMinListRowHeight, 56)
-			.textCase(nil)
-			.scrollContentBackground(.hidden)
 			.background(Color.wbBackground)
 			.ignoresSafeArea(edges: .horizontal)
 			.foregroundStyle(Color.wbText)
 			.tint(Color.wbAccent5)
-			.navigationTitle("Settings")
-			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
-				ToolbarItem(placement: .topBarTrailing) {
+				ToolbarItem(placement: .topBarLeading) {
 					Button("Close") { dismiss() }
 				}
 			}
+			.navigationTitle("Settings")
+			.navigationBarTitleDisplayMode(.inline)
 		}
 		.sheet(isPresented: $showingAbout) {
 			AboutWordBopperSheet()
@@ -201,6 +259,13 @@ struct SettingsView: View {
 				.presentationDragIndicator(.hidden)
 		}
 		.preferredColorScheme(.dark)
+	}
+
+	private var selectedDailyBopLanguages: String {
+		DictionaryLanguage.allCases
+			.filter { vm.isDailyBopLanguageEnabled($0) }
+			.map(\.label)
+			.joined(separator: ", ")
 	}
 
 	private func refocusDictionaryLanguagePicker() {

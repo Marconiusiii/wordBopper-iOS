@@ -1,334 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Settings" : {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Einstellungen"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajustes"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réglages"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Impostazioni"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Instellingen"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Configurações"
-          }
-        }
-      }
-    },
-    "Help" : {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hilfe"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ayuda"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aide"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aiuto"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Help"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajuda"
-          }
-        }
-      }
-    },
-    "Speech and announcements" : {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sprache und Ansagen"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Voz y anuncios"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Parole et annonces"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Voce e annunci"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spraak en aankondigingen"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fala e anúncios"
-          }
-        }
-      }
-    },
-    "Appearance" : {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Darstellung"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apariencia"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apparence"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aspetto"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Weergave"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aparência"
-          }
-        }
-      }
-    },
-    "Sound and feedback" : {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ton und Feedback"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sonido y respuesta"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Son et retour"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Suono e feedback"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Geluid en feedback"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Som e resposta"
-          }
-        }
-      }
-    },
-    "Daily Bop Languages" : {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Daily-Bop-Sprachen"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Idiomas de Daily Bop"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Langues du Daily Bop"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lingue del Daily Bop"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Daily Bop-talen"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Idiomas do Daily Bop"
-          }
-        }
-      }
-    },
-    "Controls" : {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Steuerung"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Controles"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Commandes"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Comandi"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bediening"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Controles"
-          }
-        }
-      }
-    },
-    "About" : {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Über"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Acerca de"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "À propos"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Informazioni"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Over"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sobre"
-          }
-        }
-      }
-    },
     ", %@" : {
       "comment" : "Joins the spoken word to its point count",
       "extractionState" : "manual",
@@ -1325,6 +997,47 @@
     "A Good Day to Bop" : {
 
     },
+    "About" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acerca de"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À propos"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informazioni"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Over"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sobre"
+          }
+        }
+      }
+    },
     "About WordBopper" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1496,6 +1209,47 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "App Version: %1$@ (%2$@)\nOS: %3$@\n\nPlease describe your feedback below:\n"
+          }
+        }
+      }
+    },
+    "Appearance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Darstellung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apariencia"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apparence"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aspetto"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weergave"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aparência"
           }
         }
       }
@@ -1963,6 +1717,9 @@
         }
       }
     },
+    "BopAway applies to Timed and Non-Stop modes. Bopple keeps its letters in place." : {
+
+    },
     "Boplift Your Vocabulary!" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2130,6 +1887,9 @@
           }
         }
       }
+    },
+    "Bopple keeps the letters in place. Make words using letters that are next to each other in the grid. Each word counts once per round." : {
+
     },
     "Bopple Mode" : {
       "comment" : "Best-game section; Bopple is a brand term",
@@ -2605,9 +2365,6 @@
     "Chase the Daily Bop" : {
 
     },
-    "Choose a bubble color set that feels good to play with. Every theme keeps the letter contrast strong." : {
-
-    },
     "Choose a smaller grid for a quicker, easier bop, or a larger grid for a bigger challenge. 5 by 5 is the classic size." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2689,6 +2446,15 @@
           }
         }
       }
+    },
+    "Choose how many rows and columns appear in the letter grid, from 3 by 3 to 6 by 6. 5 by 5 is the classic size. Smaller grids have fewer, larger bubbles." : {
+
+    },
+    "Choose Normal for full game announcements, Low for shorter updates, or Off to turn off game announcements. This does not turn off VoiceOver navigation or the game sounds." : {
+
+    },
+    "Choose the language used for bubble letters, accepted words, letter phonetics, and spoken words during play." : {
+
     },
     "Choose the language you want to Bop in. The rest of the app stays in English for now." : {
       "extractionState" : "manual",
@@ -2772,7 +2538,7 @@
         }
       }
     },
-    "Choose which languages get a Daily Bop word each day. Fewer languages make Daily Bop load faster." : {
+    "Choose whether the game speaks each letter's position in the grid and whether columns and rows use numbers or letters." : {
 
     },
     "Classic Bright" : {
@@ -3273,6 +3039,47 @@
         }
       }
     },
+    "Controls" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steuerung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commandes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comandi"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bediening"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controles"
+          }
+        }
+      }
+    },
     "Controls spoken game announcements for scoring, invalid words, and cleared letters." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3322,6 +3129,47 @@
     },
     "Daily Bop found! 3 times boost active!" : {
 
+    },
+    "Daily Bop Languages" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily-Bop-Sprachen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idiomas de Daily Bop"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langues du Daily Bop"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lingue del Daily Bop"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily Bop-talen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idiomas do Daily Bop"
+          }
+        }
+      }
     },
     "Daily Bop Word: " : {
 
@@ -3380,6 +3228,9 @@
 
     },
     "Dictionary Lookup" : {
+
+    },
+    "Double-tap to choose your Daily Bop Languages" : {
 
     },
     "Dutch" : {
@@ -3693,6 +3544,9 @@
     "Galaxy" : {
 
     },
+    "Game" : {
+
+    },
     "Game Announcements" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3951,6 +3805,47 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tamanho da grade"
+          }
+        }
+      }
+    },
+    "Help" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hilfe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayuda"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aide"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aiuto"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Help"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuda"
           }
         }
       }
@@ -4886,6 +4781,9 @@
         }
       }
     },
+    "Non-Stop mode removes the timer so you can keep playing until you choose End Game." : {
+
+    },
     "None yet" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5687,8 +5585,46 @@
         }
       }
     },
-    "Set how loud the game sounds should be." : {
-
+    "Settings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazioni"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellingen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurações"
+          }
+        }
+      }
     },
     "Simple" : {
       "extractionState" : "manual",
@@ -5739,6 +5675,47 @@
     },
     "Soft White" : {
 
+    },
+    "Sound and feedback" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton und Feedback"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonido y respuesta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son et retour"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suono e feedback"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geluid en feedback"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Som e resposta"
+          }
+        }
+      }
     },
     "Spanish" : {
       "comment" : "Bubble Language name",
@@ -5942,6 +5919,47 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fala o número da coluna seguido do número da linha após a letra, como \"W, 2 3\" ou \"A, 1 5\"."
+          }
+        }
+      }
+    },
+    "Speech and announcements" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprache und Ansagen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voz y anuncios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parole et annonces"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voce e annunci"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spraak en aankondigingen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fala e anúncios"
           }
         }
       }
@@ -6377,10 +6395,19 @@
         }
       }
     },
+    "Timed mode gives you 2 minutes to make as many words as possible. Used letters are replaced after each word." : {
+
+    },
     "Today’s Bop Begins" : {
 
     },
     "Today’s Word Wants You" : {
+
+    },
+    "Turn on the languages you want to receive a Daily Bop word each day. At least one language must stay on." : {
+
+    },
+    "Turn this on to hear a phonetic word after each letter, such as \"A, Alpha.\"" : {
 
     },
     "Typewriter" : {
@@ -6506,6 +6533,9 @@
           }
         }
       }
+    },
+    "When BopAway is on, each tapped letter moves directly into the word tray and is replaced on the grid. Clearing the word discards those letters." : {
+
     },
     "Winter" : {
 

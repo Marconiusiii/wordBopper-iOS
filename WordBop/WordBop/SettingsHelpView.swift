@@ -3,71 +3,41 @@ import SwiftUI
 struct SettingsHelpView: View {
 	var body: some View {
 		List {
+			Text("Welcome to WordBopper! Tap letter bubbles, build words, and see where your vocabulary takes you. Race the clock, settle in for a leisurely bop, or take on a fresh word challenge. Find your favorite way to play and get bopping!")
+				.listRowBackground(Color.wbBackground)
 			Section("Game Mode") {
-				Text("Timed mode gives you 2 minutes to make as many words as possible. Used letters are replaced after each word.")
-				Text("Bopple keeps the letters in place. Make words using letters that are next to each other in the grid. Each word counts once per round.")
-				Text("Non-Stop mode removes the timer so you can keep playing until you choose End Game.")
-			}
-			.listRowBackground(Color.wbBackground)
-			Section("Bopple Timer") {
-				Text("Choose 3, 4, 5, or 6 minutes for a Bopple round. 3 minutes is the default. Choose Non-Stop Boppling! to play without a timer and end the round yourself.")
+				Text("Timed gives you 2 minutes to make as many words as you can. Bopped letters are replaced, keeping fresh possibilities coming.")
+				Text("Bopple keeps the board steady. Build words from neighboring letters and see how many you can find. Each word counts once per round.")
+				Text("Non-timed mode lets you bop 'til you drop! Removes the timer so you can just make as many words as you want without stress or pressure until you choose to end the game.")
 			}
 			.listRowBackground(Color.wbBackground)
 			Section("Grid Size") {
-				Text("Choose how many rows and columns appear in the letter grid, from 3 by 3 to 6 by 6. 5 by 5 is the classic size. Smaller grids have fewer, larger bubbles.")
+				Text("Choose a grid from 3 by 3 to 6 by 6. Smaller grids give you fewer, larger bubbles; bigger grids give you more letters to work with. 5 by 5 is the classic.")
 			}
 			.listRowBackground(Color.wbBackground)
 			Section("Bubble Language") {
-				Text("Choose the language used for bubble letters, accepted words, letter phonetics, and spoken words during play.")
+				Text("Choose the language for your letters, words, phonetics, and spoken word announcements. Bop beyond borders!")
 			}
 			.listRowBackground(Color.wbBackground)
 			Section("BopAway") {
-				Text("For an extra challenge, BopAway instantly moves each tapped letter into the word tray and replaces it with a new letter. If you clear the word, those letters are lost. Bop wisely!")
-				Text("BopAway applies to Timed and Non-Stop modes. Bopple keeps its letters in place.")
+				Text("Each letter you tap moves into your word and is immediately replaced by a fresh bubble. Clearing your word discards those letters. Bop wisely!")
+				Text("Available in Timed and Non-Stop games.")
 			}
 			.listRowBackground(Color.wbBackground)
 			Section("Letter Positions") {
-				Text("Off leaves letter positions out of the spoken bubble information.")
-				Text("Column Number, Row Number speaks the column followed by the row, such as \"W, 2 3.\"")
-				Text("Column Letter, Row Number uses letters for columns and numbers for rows, such as \"G, B3\" for the second column, third row.")
-				Text("Column Number, Row Letter uses numbers for columns and letters for rows, such as \"W, 3A\" for the third column, first row.")
+				Text("Hear each bubble's column followed by its row. Choose numbers for both, or use a letter for either the column or row: \"2 3,\" \"B3,\" or \"2C.\"")
 			}
 			.listRowBackground(Color.wbBackground)
 			Section("Speak Letter Phonetics") {
-				Text("Adds the phonetic version of the bubble letters to the announcement, such as \"a, Alpha.\"")
+				Text("Hear a phonetic word with each letter, such as \"A, Alpha.\" Phonetics follow your chosen bubble language.")
 			}
 			.listRowBackground(Color.wbBackground)
 			Section("Game Announcements") {
-				Text("Choose Normal for full game announcements, Low for shorter updates, or Off to turn off game announcements. This does not turn off VoiceOver navigation or the game sounds.")
-			}
-			.listRowBackground(Color.wbBackground)
-			Section("Bubble Letter Style") {
-				Text("Choose the letter shape that is easiest for you to read in the bubbles and word tray.")
-			}
-			.listRowBackground(Color.wbBackground)
-			Section("Bubble Text Color") {
-				Text("Pick your preference of light or dark text for the bubbles. Either option will still have colorful bubbles to bop!")
-			}
-			.listRowBackground(Color.wbBackground)
-			Section("Bubble Color Theme") {
-				Text("Choose a bubble color set that feels good to play with. Every theme keeps the letter contrast strong.")
-				Text("The available themes depend on your Bubble Text Color choice. The BOP sample shows your chosen letter style and colors.")
-			}
-			.listRowBackground(Color.wbBackground)
-			Section("Game Volume") {
-				Text("Set how loud the game sounds should be.")
-			}
-			.listRowBackground(Color.wbBackground)
-			Section("Game Haptics") {
-				Text("Feel the Bop more with subtle game event vibrations.")
+				Text("Choose Normal for full spoken game updates, Low for shorter updates, or Off for quiet.")
 			}
 			.listRowBackground(Color.wbBackground)
 			Section("Daily Bop Languages") {
-				Text("Turn on the languages you want to receive a Daily Bop word each day. At least one language must stay on.")
-			}
-			.listRowBackground(Color.wbBackground)
-			Section("Left-Handed Mode") {
-				Text("Mirrors gameplay controls for easier left-handed play.")
+				Text("Choose which languages join your daily word challenge. Keep at least one selected and see what's waiting to be bopped.")
 			}
 			.listRowBackground(Color.wbBackground)
 		}
