@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
+
+    },
     ", %@" : {
       "comment" : "Joins the spoken word to its point count",
       "extractionState" : "manual",
@@ -1254,6 +1257,9 @@
         }
       }
     },
+    "Available in Timed and Non-Stop games." : {
+
+    },
     "Average length" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1717,9 +1723,6 @@
         }
       }
     },
-    "BopAway applies to Timed and Non-Stop modes. Bopple keeps its letters in place." : {
-
-    },
     "Boplift Your Vocabulary!" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1888,7 +1891,7 @@
         }
       }
     },
-    "Bopple keeps the letters in place. Make words using letters that are next to each other in the grid. Each word counts once per round." : {
+    "Bopple keeps the board steady. Build words from neighboring letters and see how many you can find. Each word counts once per round." : {
 
     },
     "Bopple Mode" : {
@@ -2365,6 +2368,9 @@
     "Chase the Daily Bop" : {
 
     },
+    "Choose a grid from 3 by 3 to 6 by 6. Smaller grids give you fewer, larger bubbles; bigger grids give you more letters to work with. 5 by 5 is the classic." : {
+
+    },
     "Choose a smaller grid for a quicker, easier bop, or a larger grid for a bigger challenge. 5 by 5 is the classic size." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2447,13 +2453,10 @@
         }
       }
     },
-    "Choose how many rows and columns appear in the letter grid, from 3 by 3 to 6 by 6. 5 by 5 is the classic size. Smaller grids have fewer, larger bubbles." : {
+    "Choose Normal for full spoken game updates, Low for shorter updates, or Off for quiet." : {
 
     },
-    "Choose Normal for full game announcements, Low for shorter updates, or Off to turn off game announcements. This does not turn off VoiceOver navigation or the game sounds." : {
-
-    },
-    "Choose the language used for bubble letters, accepted words, letter phonetics, and spoken words during play." : {
+    "Choose the language for your letters, words, phonetics, and spoken word announcements. Bop beyond borders!" : {
 
     },
     "Choose the language you want to Bop in. The rest of the app stays in English for now." : {
@@ -2538,7 +2541,7 @@
         }
       }
     },
-    "Choose whether the game speaks each letter's position in the grid and whether columns and rows use numbers or letters." : {
+    "Choose which languages join your daily word challenge. Keep at least one selected and see what's waiting to be bopped." : {
 
     },
     "Classic Bright" : {
@@ -3275,6 +3278,9 @@
         }
       }
     },
+    "Each letter you tap moves into your word and is immediately replaced by a fresh bubble. Clearing your word discards those letters. Bop wisely!" : {
+
+    },
     "End game" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3808,6 +3814,12 @@
           }
         }
       }
+    },
+    "Hear a phonetic word with each letter, such as \"A, Alpha.\" Phonetics follow your chosen bubble language." : {
+
+    },
+    "Hear each bubble's column followed by its row. Choose numbers for both, or use a letter for either the column or row: \"2 3,\" \"B3,\" or \"2C.\"" : {
+
     },
     "Help" : {
       "extractionState" : "manual",
@@ -4781,7 +4793,7 @@
         }
       }
     },
-    "Non-Stop mode removes the timer so you can keep playing until you choose End Game." : {
+    "Non-timed mode lets you bop 'til you drop! Removes the timer so you can just make as many words as you want without stress or pressure until you choose to end the game." : {
 
     },
     "None yet" : {
@@ -6354,6 +6366,9 @@
         }
       }
     },
+    "Timed gives you 2 minutes to make as many words as you can. Bopped letters are replaced, keeping fresh possibilities coming." : {
+
+    },
     "Timed Mode" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6395,19 +6410,10 @@
         }
       }
     },
-    "Timed mode gives you 2 minutes to make as many words as possible. Used letters are replaced after each word." : {
-
-    },
     "Today’s Bop Begins" : {
 
     },
     "Today’s Word Wants You" : {
-
-    },
-    "Turn on the languages you want to receive a Daily Bop word each day. At least one language must stay on." : {
-
-    },
-    "Turn this on to hear a phonetic word after each letter, such as \"A, Alpha.\"" : {
 
     },
     "Typewriter" : {
@@ -6493,6 +6499,9 @@
         }
       }
     },
+    "Welcome to WordBopper! Tap letter bubbles, build words, and see where your vocabulary takes you. Race the clock, settle in for a leisurely bop, or take on a fresh word challenge. Find your favorite way to play and get bopping!" : {
+
+    },
     "Whack A Braille!" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6533,9 +6542,6 @@
           }
         }
       }
-    },
-    "When BopAway is on, each tapped letter moves directly into the word tray and is replaced on the grid. Clearing the word discards those letters." : {
-
     },
     "Winter" : {
 

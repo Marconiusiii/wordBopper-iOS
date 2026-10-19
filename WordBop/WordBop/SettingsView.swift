@@ -7,7 +7,6 @@ struct SettingsView: View {
 	@AccessibilityFocusState private var isLetterPositionFocused: Bool
 	@AccessibilityFocusState private var isBubbleColorThemeFocused: Bool
 	@State private var showingAbout = false
-	@Namespace private var settingsLabels
 
 	var body: some View {
 		@Bindable var settings = vm
@@ -28,15 +27,16 @@ struct SettingsView: View {
 					Group {
 						VStack(alignment: .leading, spacing: 8) {
 							Text("Game Mode")
-								.accessibilityLabeledPair(role: .label, id: "gameMode", in: settingsLabels)
+								.accessibilityHidden(true)
 							Picker("", selection: $settings.gameMode) {
 								ForEach(GameMode.allCases) { mode in
 									Text(mode.label).tag(mode)
 								}
 							}
 							.pickerStyle(.segmented)
-							.accessibilityLabeledPair(role: .content, id: "gameMode", in: settingsLabels)
 						}
+						.accessibilityElement(children: .contain)
+						.accessibilityLabel("Game Mode")
 
 						if vm.gameMode == .bopple {
 							VStack(alignment: .leading, spacing: 0) {
@@ -138,7 +138,7 @@ struct SettingsView: View {
 					Group {
 						VStack(alignment: .leading, spacing: 8) {
 							Text("Bubble Letter Style")
-								.accessibilityLabeledPair(role: .label, id: "letterStyle", in: settingsLabels)
+								.accessibilityHidden(true)
 							Picker("", selection: $settings.bubbleLetterStyle) {
 								ForEach(BubbleLetterStyle.allCases) { option in
 									Text(option.label)
@@ -150,20 +150,22 @@ struct SettingsView: View {
 								}
 							}
 							.pickerStyle(.segmented)
-							.accessibilityLabeledPair(role: .content, id: "letterStyle", in: settingsLabels)
 						}
+						.accessibilityElement(children: .contain)
+						.accessibilityLabel("Bubble Letter Style")
 
 						VStack(alignment: .leading, spacing: 8) {
 							Text("Bubble Text Color")
-								.accessibilityLabeledPair(role: .label, id: "textColor", in: settingsLabels)
+								.accessibilityHidden(true)
 							Picker("", selection: $settings.bubbleTextColorOption) {
 								ForEach(BubbleTextColorOption.allCases) { option in
 									Text(option.label).tag(option)
 								}
 							}
 							.pickerStyle(.segmented)
-							.accessibilityLabeledPair(role: .content, id: "textColor", in: settingsLabels)
 						}
+						.accessibilityElement(children: .contain)
+						.accessibilityLabel("Bubble Text Color")
 
 						LabeledContent("Bubble Color Theme") {
 							Picker(
