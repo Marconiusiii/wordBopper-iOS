@@ -84,6 +84,58 @@ final class WordBopUITests: XCTestCase {
 
 
     @MainActor
+    func testAppStoreSettingsScreenshots() throws {
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-AppleLanguages", "(en)", "-AppleLocale", "en_US",
+            "-wordBopGameMode", "nonStop",
+            "-wordBopDictionaryLanguage", "english",
+            "-wordBopLetterPositionMode", "columnNumberRowNumber",
+            "-wordBopSpeakLetterPhonetics", "YES",
+            "-wordBopGameAnnouncementVerbosity", "normal"
+        ]
+        XCUIDevice.shared.orientation = .portrait
+        app.launch()
+        openSettings(in: app)
+
+        let language = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS 'English'")
+        ).firstMatch
+        scrollToHittable(language, in: app)
+        language.tap()
+        for name in ["English", "Spanish", "French", "German", "Dutch", "Italian", "Brazilian Portuguese"] {
+            XCTAssertTrue(app.buttons[name].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons[name].isHittable)
+        }
+        capture("04-seven-languages")
+        app.buttons["English"].tap()
+
+        let announcements = app.pickerWheels.matching(NSPredicate(format: "value == 'Normal'")).firstMatch
+        let speechHeading = app.staticTexts["Speech and announcements"]
+        let phonetics = app.switches["Speak Letter Phonetics"]
+        let positions = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS 'Column Number, Row Number'")
+        ).firstMatch
+        // Scroll beside the controls so the wheel values stay unchanged.
+        let scrollView = app.scrollViews.containing(.staticText, identifier: "Speech and announcements").firstMatch
+        let headingTop = app.navigationBars["Settings"].frame.maxY + 40
+        for _ in 0..<4 {
+            let distance = speechHeading.frame.minY - headingTop
+            if distance < 20 { break }
+            let start = scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.85))
+            let drag = min(distance, scrollView.frame.height * 0.55)
+            start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -drag)), withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        XCTAssertTrue(speechHeading.isHittable)
+        XCTAssertGreaterThanOrEqual(speechHeading.frame.minY, app.navigationBars["Settings"].frame.maxY)
+        XCTAssertTrue(positions.isHittable)
+        XCTAssertTrue(phonetics.isHittable)
+        XCTAssertEqual(phonetics.value as? String, "1")
+        XCTAssertTrue(announcements.isHittable)
+        capture("05-accessibility")
+    }
+
+    @MainActor
     private func openSettings(in app: XCUIApplication) {
         let settings = app.buttons["Settings"]
         XCTAssertTrue(settings.waitForExistence(timeout: 5))
