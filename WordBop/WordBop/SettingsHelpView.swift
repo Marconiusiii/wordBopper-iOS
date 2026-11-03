@@ -36,6 +36,11 @@ struct SettingsHelpView: View {
 				Text("Choose Normal for full spoken game updates, Low for shorter updates, or Off for quiet.")
 			}
 			.listRowBackground(Color.wbBackground)
+			Section("Sound and feedback") {
+				Text("Adjust Sound Volume for letter selection, deselection, invalid words, and countdown cues. Adjust Music Volume for scoring melodies, celebrations, round-start and round-end music, pause and resume melodies, power-up chimes, and the Daily Bop anthem.")
+				Text("Each volume slider plays a short cue as you adjust it. Set a slider to zero to silence its sounds.")
+			}
+			.listRowBackground(Color.wbBackground)
 			Section("Daily Bop Languages") {
 				Text("Choose which languages join your daily word challenge. Keep at least one selected and see what's waiting to be bopped.")
 			}

@@ -198,12 +198,32 @@ struct SettingsView: View {
 						.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
 					Group {
 						VStack(alignment: .leading, spacing: 8) {
-							Text("Game Volume")
+							Text("Sound Volume")
 								.accessibilityHidden(true)
-							Slider(value: $settings.gameVolume, in: 0...1) {
-								Text("Game Volume")
+							Slider(value: Binding(
+								get: { vm.soundVolume },
+								set: { value in
+									vm.soundVolume = value
+									vm.audio.previewSoundVolume()
+								}
+							), in: 0...1) {
+								Text("Sound Volume")
 							}
-							.accessibilityValue("\(Int((vm.gameVolume * 100).rounded())) percent")
+							.accessibilityValue("\(Int((vm.soundVolume * 100).rounded())) percent")
+						}
+						VStack(alignment: .leading, spacing: 8) {
+							Text("Music Volume")
+								.accessibilityHidden(true)
+							Slider(value: Binding(
+								get: { vm.musicVolume },
+								set: { value in
+									vm.musicVolume = value
+									vm.audio.previewMusicVolume()
+								}
+							), in: 0...1) {
+								Text("Music Volume")
+							}
+							.accessibilityValue("\(Int((vm.musicVolume * 100).rounded())) percent")
 						}
 						Toggle("Game Haptics", isOn: $settings.gameHapticsEnabled)
 					}
@@ -260,6 +280,7 @@ struct SettingsView: View {
 				.environment(vm)
 				.presentationDragIndicator(.hidden)
 		}
+		.onDisappear { vm.audio.stopVolumePreviews() }
 		.preferredColorScheme(.dark)
 	}
 

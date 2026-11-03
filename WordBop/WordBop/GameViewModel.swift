@@ -505,15 +505,26 @@ final class GameViewModel {
 			saveGameHapticsEnabled()
 		}
 	}
-	var gameVolume: Double = 0.82 {
+	var soundVolume: Double = 0.82 {
 		didSet {
-			let clampedVolume = min(max(gameVolume, 0), 1)
-			if clampedVolume != gameVolume {
-				gameVolume = clampedVolume
+			let normalized = AudioVolumeSettings.clamp(soundVolume)
+			if normalized != soundVolume {
+				soundVolume = normalized
 				return
 			}
-			audio.volume = Float(clampedVolume)
-			saveGameVolume()
+			audio.soundVolume = Float(soundVolume)
+			UserDefaults.standard.set(soundVolume, forKey: AudioVolumeSettings.soundKey)
+		}
+	}
+	var musicVolume: Double = 0.82 {
+		didSet {
+			let normalized = AudioVolumeSettings.clamp(musicVolume)
+			if normalized != musicVolume {
+				musicVolume = normalized
+				return
+			}
+			audio.musicVolume = Float(musicVolume)
+			UserDefaults.standard.set(musicVolume, forKey: AudioVolumeSettings.musicKey)
 		}
 	}
 	var leftHandedMode = false {
@@ -752,8 +763,11 @@ final class GameViewModel {
 		gameAnnouncementVerbosity = loadGameAnnouncementVerbosity()
 		gameHapticsEnabled = loadGameHapticsEnabled()
 		haptics.isEnabled = gameHapticsEnabled
-		gameVolume = loadGameVolume()
-		audio.volume = Float(gameVolume)
+		let volumes = AudioVolumeSettings.load(from: .standard)
+		soundVolume = volumes.sound
+		musicVolume = volumes.music
+		audio.soundVolume = Float(soundVolume)
+		audio.musicVolume = Float(musicVolume)
 		leftHandedMode = loadLeftHandedMode()
 		let savedDictionaryLanguage = loadDictionaryLanguage()
 		dailyBopEnabledLanguages = loadDailyBopEnabledLanguages(fallback: savedDictionaryLanguage)
@@ -874,6 +888,7 @@ final class GameViewModel {
 		}
 		#endif
 
+		audio.setGameplayActive(true)
 		screen = .game
 		if dailyBopEntry != nil {
 			audio.playDailyBopIntroSound()
@@ -911,12 +926,14 @@ final class GameViewModel {
 		stopTimer()
 		pausePowerUpCountdown()
 		pauseDailyBopBoost()
+		audio.setGameplayActive(false)
 		if playSound { audio.playPauseSound() }
 	}
 
 	func resumeGame() {
 		guard gameActive, gamePaused else { return }
 		gamePaused = false
+		audio.setGameplayActive(true)
 		audio.playResumeSound()
 		if showsTimer { startTimer() }
 		if dailyBopBoostActive { resumeDailyBopBoost() }
@@ -930,6 +947,7 @@ final class GameViewModel {
 		stopTimer()
 		stopPowerUp()
 		stopDailyBopBoost()
+		audio.setGameplayActive(false)
 		audio.playRoundEndSound()
 		haptics.roundEnded()
 		DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) { [weak self] in
@@ -945,6 +963,7 @@ final class GameViewModel {
 	func goHome() {
 		announcementWorkItem?.cancel()
 		announcementWorkItem = nil
+		audio.setGameplayActive(false)
 		screen = .start
 	}
 
@@ -1820,13 +1839,6 @@ final class GameViewModel {
 		return UserDefaults.standard.bool(forKey: "wordBopGameHapticsEnabled")
 	}
 
-	private func loadGameVolume() -> Double {
-		if UserDefaults.standard.object(forKey: "wordBopGameVolume") == nil {
-			return 0.82
-		}
-		return min(max(UserDefaults.standard.double(forKey: "wordBopGameVolume"), 0), 1)
-	}
-
 	private func loadLeftHandedMode() -> Bool {
 		UserDefaults.standard.bool(forKey: "wordBopLeftHandedMode")
 	}
@@ -1890,10 +1902,6 @@ final class GameViewModel {
 
 	private func saveGameHapticsEnabled() {
 		UserDefaults.standard.set(gameHapticsEnabled, forKey: "wordBopGameHapticsEnabled")
-	}
-
-	private func saveGameVolume() {
-		UserDefaults.standard.set(gameVolume, forKey: "wordBopGameVolume")
 	}
 
 	private func saveLeftHandedMode() {
@@ -1978,4 +1986,23 @@ final class GameViewModel {
 
 		return changed
 	}
+}
+
+// Migrate each missing setting independently; zero is a saved value, not a default.
+enum AudioVolumeSettings {
+    static let soundKey = "wordBopSoundVolume"
+    static let musicKey = "wordBopMusicVolume"
+
+    static func clamp(_ value: Double) -> Double {
+        value.isFinite ? min(max(value, 0), 1) : 0.82
+    }
+
+    static func load(from defaults: UserDefaults) -> (sound: Double, music: Double) {
+        let legacy = defaults.object(forKey: "wordBopGameVolume") == nil ? 0.82 : defaults.double(forKey: "wordBopGameVolume")
+        let sound = clamp(defaults.object(forKey: soundKey) == nil ? legacy : defaults.double(forKey: soundKey))
+        let music = clamp(defaults.object(forKey: musicKey) == nil ? legacy : defaults.double(forKey: musicKey))
+        defaults.set(sound, forKey: soundKey)
+        defaults.set(music, forKey: musicKey)
+        return (sound, music)
+    }
 }

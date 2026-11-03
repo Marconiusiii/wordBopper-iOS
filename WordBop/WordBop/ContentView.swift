@@ -23,6 +23,7 @@ struct ContentView: View {
 		.preferredColorScheme(.dark)
 		.onChange(of: scenePhase) { _, phase in
 			if phase == .active {
+				vm.audio.resumeForeground()
 				vm.refreshCalendarContent()
 			} else {
 				vm.pauseGame(playSound: false)

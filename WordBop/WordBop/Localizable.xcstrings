@@ -1,6 +1,18 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Each volume slider plays a short cue as you adjust it. Set a slider to zero to silence its sounds." : {
+
+    },
+    "Adjust Sound Volume for letter selection, deselection, invalid words, and countdown cues. Adjust Music Volume for scoring melodies, celebrations, round-start and round-end music, pause and resume melodies, power-up chimes, and the Daily Bop anthem." : {
+
+    },
+    "Music Volume" : {
+
+    },
+    "Sound Volume" : {
+
+    },
     "" : {
 
     },
@@ -3722,9 +3734,6 @@
           }
         }
       }
-    },
-    "Game Volume" : {
-
     },
     "Garden" : {
 
