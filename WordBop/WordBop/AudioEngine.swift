@@ -13,7 +13,8 @@ final class AudioEngine {
     private let library: SoundLibrary
     private let logger = Logger(subsystem: "com.marconius.WordBop", category: "Audio")
     private var observers: [NSObjectProtocol] = []
-    private var sessionActive = false
+    private(set) var sessionActive = false
+    private var audioEnabled = true
     private var interrupted = false
     private var interruptedAnthem: (() -> TimeInterval)?
     private var interruptedChimes: PowerUpPlayback?
@@ -99,7 +100,7 @@ final class AudioEngine {
 
     @discardableResult
     private func startEngine() -> Bool {
-        guard !suspended, !interrupted else { return false }
+        guard audioEnabled, !suspended, !interrupted else { return false }
         if engine.isRunning { return true }
         do {
             let session = AVAudioSession.sharedInstance()
@@ -116,6 +117,20 @@ final class AudioEngine {
         } catch {
             logger.error("Audio startup failed: \(error.localizedDescription, privacy: .public)")
             return false
+        }
+    }
+
+    func setAudioEnabled(_ enabled: Bool) {
+        guard enabled != audioEnabled else { return }
+        audioEnabled = enabled
+        if enabled {
+            if gameplayActive { startEngine() }
+        } else {
+            interruptedAnthem = nil
+            interruptedChimes = nil
+            stopPlayback()
+            engine.stop()
+            deactivateSession()
         }
     }
 
@@ -161,7 +176,7 @@ final class AudioEngine {
     func playTickSound(secondsLeft: Int) { request(.tick(min(max(secondsLeft, 1), 10))) }
 
     private func request(_ cue: SoundCue, gain: Float = 1) {
-        guard !suspended, !interrupted, (cue.isSound ? soundVolume : musicVolume) > 0 else { return }
+        guard audioEnabled, !suspended, !interrupted, (cue.isSound ? soundVolume : musicVolume) > 0 else { return }
         requestSequence += 1
         let sequence = requestSequence
         let requestedAt = ProcessInfo.processInfo.systemUptime
@@ -231,6 +246,7 @@ final class AudioEngine {
     func previewMusicVolume() { preview(.musicPreview) }
 
     private func preview(_ cue: SoundCue) {
+        guard audioEnabled else { return }
         suspended = false
         previewGeneration += 1
         let token = previewGeneration
@@ -286,6 +302,7 @@ final class AudioEngine {
     }
 
     func startPowerUpChimes(duration: Double) {
+        guard audioEnabled else { return }
         stopPowerUpChimes()
         guard duration > 0 else { return }
         powerUpStartedAt = ProcessInfo.processInfo.systemUptime
@@ -334,6 +351,7 @@ final class AudioEngine {
 
     func playDailyBopAnthemPreview() { playDailyBopAnthem(elapsed: { 0 }) }
     func playDailyBopAnthem(elapsed: @escaping () -> TimeInterval) {
+        guard audioEnabled else { return }
         anthemElapsed = elapsed
         if anthemBuffer != nil { playPreparedAnthem() }
         else { prepareDailyBopAnthemPreview() }

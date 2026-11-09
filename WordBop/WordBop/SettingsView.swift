@@ -197,6 +197,9 @@ struct SettingsView: View {
 						.accessibilityAddTraits(.isHeader)
 						.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
 					Group {
+						if GameViewModel.hasAudioDiagnostic {
+							Toggle("Enable game audio", isOn: $settings.gameAudioEnabled)
+						}
 						VStack(alignment: .leading, spacing: 8) {
 							Text("Sound Volume")
 								.accessibilityHidden(true)

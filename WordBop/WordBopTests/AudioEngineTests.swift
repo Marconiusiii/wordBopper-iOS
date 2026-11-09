@@ -5,6 +5,31 @@ import Testing
 
 @Suite(.serialized)
 struct AudioEngineTests {
+    @MainActor
+    @Test func diagnosticSwitchReleasesSessionAndBlocksRestarts() async {
+        let library = SoundLibrary(prewarm: false)
+        _ = await prepared(.select(0), in: library)
+        let audio = AudioEngine(library: library)
+        defer { audio.suspend() }
+        audio.setGameplayActive(true)
+        #expect(audio.isRunning && audio.sessionActive)
+        audio.setAudioEnabled(false)
+        let starts = audio.engineStartCount
+        audio.resumeForeground()
+        audio.setGameplayActive(true)
+        audio.playSelectSound()
+        audio.previewMusicVolume()
+        NotificationCenter.default.post(name: AVAudioSession.mediaServicesWereResetNotification, object: nil)
+        #expect(!audio.isRunning && !audio.sessionActive)
+        #expect(audio.engineStartCount == starts)
+        #expect(audio.scheduledSoundCount == 0 && audio.previewPlayCount == 0)
+        audio.setAudioEnabled(true)
+        audio.resetSelectSound()
+        audio.playSelectSound()
+        #expect(audio.isRunning && audio.sessionActive)
+        #expect(audio.scheduledSoundCount == 1)
+    }
+
     @Test func volumeMigrationPreservesMuteAndIndependentValues() throws {
         let name = "WordBopperAudioTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: name))

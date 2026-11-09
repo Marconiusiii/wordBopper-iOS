@@ -505,6 +505,17 @@ final class GameViewModel {
 			saveGameHapticsEnabled()
 		}
 	}
+	static let hasAudioDiagnostic = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String == "1.11.3"
+		&& Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String == "3"
+	private static let diagnosticAudioKey = "wordBopDiagnostic113Build3AudioEnabled"
+	var gameAudioEnabled = true {
+		didSet {
+			guard Self.hasAudioDiagnostic else { return }
+			audio.setAudioEnabled(gameAudioEnabled)
+			UserDefaults.standard.set(gameAudioEnabled, forKey: Self.diagnosticAudioKey)
+		}
+	}
+
 	var soundVolume: Double = 0.82 {
 		didSet {
 			let normalized = AudioVolumeSettings.clamp(soundVolume)
@@ -764,6 +775,10 @@ final class GameViewModel {
 		gameHapticsEnabled = loadGameHapticsEnabled()
 		haptics.isEnabled = gameHapticsEnabled
 		let volumes = AudioVolumeSettings.load(from: .standard)
+		if Self.hasAudioDiagnostic {
+			gameAudioEnabled = UserDefaults.standard.object(forKey: Self.diagnosticAudioKey) as? Bool ?? true
+			audio.setAudioEnabled(gameAudioEnabled)
+		}
 		soundVolume = volumes.sound
 		musicVolume = volumes.music
 		audio.soundVolume = Float(soundVolume)
