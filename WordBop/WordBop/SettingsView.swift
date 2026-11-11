@@ -8,11 +8,6 @@ struct SettingsView: View {
 	@AccessibilityFocusState private var isLetterPositionFocused: Bool
 	@AccessibilityFocusState private var isBubbleColorThemeFocused: Bool
 	@State private var showingAbout = false
-	@State private var showingLetterDiscovery = false
-
-	private static let hasLetterDiscoveryTest =
-		Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String == "1.11.3"
-		&& Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String == "4"
 
 	var body: some View {
 		@Bindable var settings = vm
@@ -24,15 +19,6 @@ struct SettingsView: View {
 					} label: {
 						Text("Help")
 							.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
-					}
-
-					if Self.hasLetterDiscoveryTest {
-						Button {
-							showingLetterDiscovery = true
-						} label: {
-							Text("Letter discovery test")
-								.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
-						}
 					}
 
 					Text("Game")
@@ -295,9 +281,6 @@ struct SettingsView: View {
 			.navigationTitle("Settings")
 			.navigationBarTitleDisplayMode(.inline)
 		}
-		.sheet(isPresented: $showingLetterDiscovery) {
-			LetterDiscoverySheet(gridSize: vm.gridSize)
-		}
 		.sheet(isPresented: $showingAbout) {
 			AboutWordBopperSheet()
 				.environment(vm)
@@ -419,58 +402,6 @@ private struct DailyBopLanguagesView: View {
 		.tint(Color.wbAccent5)
 		.navigationTitle("Daily Bop Languages")
 		.navigationBarTitleDisplayMode(.inline)
-	}
-}
-
-private struct LetterDiscoverySheet: View {
-	@Environment(\.dismiss) private var dismiss
-	@State private var activatedLetter: String?
-	let gridSize: Int
-	private let alphabet = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-	var body: some View {
-		NavigationStack {
-			VStack {
-				if let activatedLetter {
-					Text("Activated letter: \(activatedLetter)")
-				} else {
-					Text("No letter activated")
-				}
-
-				GeometryReader { geometry in
-					let side = min(geometry.size.width, geometry.size.height)
-					let cell = side / CGFloat(gridSize)
-					VStack(spacing: 0) {
-						ForEach(0..<gridSize, id: \.self) { row in
-							HStack(spacing: 0) {
-								ForEach(0..<gridSize, id: \.self) { column in
-									let index = (row * gridSize + column) % alphabet.count
-									let letter = String(alphabet[index])
-									Button {
-										activatedLetter = letter
-									} label: {
-										Text(verbatim: letter)
-											.font(.title)
-											.frame(width: cell, height: cell)
-											.contentShape(Rectangle())
-									}
-									.buttonStyle(.plain)
-								}
-							}
-						}
-					}
-					.frame(maxWidth: .infinity, maxHeight: .infinity)
-				}
-			}
-			.padding(.horizontal, 4)
-			.navigationTitle("Letter discovery test")
-			.navigationBarTitleDisplayMode(.inline)
-			.toolbar {
-				ToolbarItem(placement: .topBarLeading) {
-					Button("Close") { dismiss() }
-				}
-			}
-		}
 	}
 }
 

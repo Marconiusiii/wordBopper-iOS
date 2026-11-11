@@ -1574,9 +1574,6 @@
         }
       }
     },
-    "Activated letter: %@" : {
-
-    },
     "Adds the phonetic version of the bubble letters to the announcement, such as \"a, Alpha.\"" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4575,9 +4572,6 @@
         }
       }
     },
-    "Letter discovery test" : {
-
-    },
     "Letter Phonetics" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5092,9 +5086,6 @@
 
     },
     "Neon" : {
-
-    },
-    "No letter activated" : {
 
     },
     "No words made — try again!" : {
