@@ -1,0 +1,4 @@
+title: Fresh Start BopQuest
+starts: 2027-01-01
+ends: 2027-01-31
+bonus: 50

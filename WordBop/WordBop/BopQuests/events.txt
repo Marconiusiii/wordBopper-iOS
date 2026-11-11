@@ -4,3 +4,5 @@
 2026-10-01-SpookyQuest
 2026-11-01-Harvest
 2026-12-01-Merry
+2027-01-01-FreshStart
+2027-02-01-Lovely

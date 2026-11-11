@@ -1,0 +1,4 @@
+title: Lovely BopQuest
+starts: 2027-02-01
+ends: 2027-02-28
+bonus: 50
