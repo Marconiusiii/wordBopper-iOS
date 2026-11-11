@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 struct SettingsView: View {
 	@Environment(GameViewModel.self) private var vm
@@ -7,6 +8,11 @@ struct SettingsView: View {
 	@AccessibilityFocusState private var isLetterPositionFocused: Bool
 	@AccessibilityFocusState private var isBubbleColorThemeFocused: Bool
 	@State private var showingAbout = false
+	@State private var showingLetterDiscovery = false
+
+	private static let hasLetterDiscoveryTest =
+		Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String == "1.11.3"
+		&& Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String == "4"
 
 	var body: some View {
 		@Bindable var settings = vm
@@ -18,6 +24,15 @@ struct SettingsView: View {
 					} label: {
 						Text("Help")
 							.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+					}
+
+					if Self.hasLetterDiscoveryTest {
+						Button {
+							showingLetterDiscovery = true
+						} label: {
+							Text("Letter discovery test")
+								.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+						}
 					}
 
 					Text("Game")
@@ -252,6 +267,8 @@ struct SettingsView: View {
 					Toggle("Left-Handed Mode", isOn: $settings.leftHandedMode)
 						.frame(minHeight: 56)
 
+					WordBopperSupportSection()
+
 					Text("About")
 						.font(.headline)
 						.accessibilityAddTraits(.isHeader)
@@ -277,6 +294,9 @@ struct SettingsView: View {
 			}
 			.navigationTitle("Settings")
 			.navigationBarTitleDisplayMode(.inline)
+		}
+		.sheet(isPresented: $showingLetterDiscovery) {
+			LetterDiscoverySheet(gridSize: vm.gridSize)
 		}
 		.sheet(isPresented: $showingAbout) {
 			AboutWordBopperSheet()
@@ -399,5 +419,123 @@ private struct DailyBopLanguagesView: View {
 		.tint(Color.wbAccent5)
 		.navigationTitle("Daily Bop Languages")
 		.navigationBarTitleDisplayMode(.inline)
+	}
+}
+
+private struct LetterDiscoverySheet: View {
+	@Environment(\.dismiss) private var dismiss
+	@State private var activatedLetter: String?
+	let gridSize: Int
+	private let alphabet = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	var body: some View {
+		NavigationStack {
+			VStack {
+				if let activatedLetter {
+					Text("Activated letter: \(activatedLetter)")
+				} else {
+					Text("No letter activated")
+				}
+
+				GeometryReader { geometry in
+					let side = min(geometry.size.width, geometry.size.height)
+					let cell = side / CGFloat(gridSize)
+					VStack(spacing: 0) {
+						ForEach(0..<gridSize, id: \.self) { row in
+							HStack(spacing: 0) {
+								ForEach(0..<gridSize, id: \.self) { column in
+									let index = (row * gridSize + column) % alphabet.count
+									let letter = String(alphabet[index])
+									Button {
+										activatedLetter = letter
+									} label: {
+										Text(verbatim: letter)
+											.font(.title)
+											.frame(width: cell, height: cell)
+											.contentShape(Rectangle())
+									}
+									.buttonStyle(.plain)
+								}
+							}
+						}
+					}
+					.frame(maxWidth: .infinity, maxHeight: .infinity)
+				}
+			}
+			.padding(.horizontal, 4)
+			.navigationTitle("Letter discovery test")
+			.navigationBarTitleDisplayMode(.inline)
+			.toolbar {
+				ToolbarItem(placement: .topBarLeading) {
+					Button("Close") { dismiss() }
+				}
+			}
+		}
+	}
+}
+
+private struct WordBopperSupportSection: View {
+	@Environment(SupportStore.self) private var store
+	@State private var confirmation = false
+	@State private var notice: String?
+
+	var body: some View {
+		Section {
+			Text("If you enjoy WordBopper, send a bop to support future updates. Thanks for playing!")
+			if let thanks = store.thankYou { Text(thanks) }
+			if store.loading { ProgressView("Loading support options") }
+			if store.loadFailed {
+				Text("Support options could not load. Check your connection and try again.")
+				Button("Try Again") { Task { await store.loadProducts() } }
+			}
+			ForEach(SupportStore.options) { option in
+				let product = store.products[option.id]
+				Button {
+					Task {
+						switch await store.purchase(option) {
+						case .success: confirmation = true
+						case .pending: notice = String(localized: "Your purchase is waiting for approval.")
+						case .failed: notice = String(localized: "The purchase could not be completed. Please try again.")
+						case .unverified: notice = String(localized: "The App Store could not verify this purchase.")
+						case .cancelled: break
+						}
+					}
+				} label: {
+					VStack(alignment: .leading, spacing: 4) {
+						Text(verbatim: product?.displayName ?? option.name)
+						Text(verbatim: product?.displayPrice ?? String(localized: "Price unavailable"))
+					}
+					.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+				}
+				.disabled(product == nil || store.purchasing)
+			}
+		} header: {
+			Text("Support WordBopper")
+				.font(.headline)
+				.accessibilityHeading(.h2)
+				.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+		}
+		.task { await store.loadProducts() }
+		.sheet(isPresented: $confirmation) {
+			ScrollView {
+				VStack(alignment: .leading, spacing: 16) {
+					Text("Bop Received")
+						.font(.title2)
+						.accessibilityHeading(.h1)
+					if let thanks = store.thankYou { Text(thanks) }
+					Button("Done") { confirmation = false }
+						.buttonStyle(.borderedProminent)
+				}
+				.frame(maxWidth: .infinity, alignment: .leading)
+				.padding()
+			}
+		}
+		.alert("Support WordBopper", isPresented: Binding(
+			get: { notice != nil }, set: { if !$0 { notice = nil } }
+		)) {
+			Button("Done") { }
+		} message: {
+			Text(notice ?? "")
+		}
 	}
 }

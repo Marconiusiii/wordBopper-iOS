@@ -1,0 +1,214 @@
+{
+  "appPolicies": {
+    "eula": "",
+    "policies": [
+      {
+        "locale": "en_US",
+        "policyText": "",
+        "policyURL": ""
+      }
+    ]
+  },
+  "identifier": "WORDBOPPERSUPPORT",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "WORDBOPPER001",
+      "localizations": [
+        {
+          "description": "Support future WordBopper updates.",
+          "displayName": "Little Bop",
+          "locale": "en_US"
+        },
+        {
+          "description": "Unterstütze künftige WordBopper-Updates.",
+          "displayName": "Little Bop",
+          "locale": "de_DE"
+        },
+        {
+          "description": "Apoya futuras mejoras de WordBopper.",
+          "displayName": "Little Bop",
+          "locale": "es_ES"
+        },
+        {
+          "description": "Soutenez les mises à jour de WordBopper.",
+          "displayName": "Little Bop",
+          "locale": "fr_FR"
+        },
+        {
+          "description": "Sostieni gli aggiornamenti di WordBopper.",
+          "displayName": "Little Bop",
+          "locale": "it"
+        },
+        {
+          "description": "Steun toekomstige WordBopper-updates.",
+          "displayName": "Little Bop",
+          "locale": "nl_NL"
+        },
+        {
+          "description": "Apoie futuras atualizações do WordBopper.",
+          "displayName": "Little Bop",
+          "locale": "pt_BR"
+        }
+      ],
+      "productID": "com.marconius.WordBop.support.littleBop",
+      "referenceName": "Little Bop",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "WORDBOPPER002",
+      "localizations": [
+        {
+          "description": "Support future WordBopper updates.",
+          "displayName": "Big Bop",
+          "locale": "en_US"
+        },
+        {
+          "description": "Unterstütze künftige WordBopper-Updates.",
+          "displayName": "Big Bop",
+          "locale": "de_DE"
+        },
+        {
+          "description": "Apoya futuras mejoras de WordBopper.",
+          "displayName": "Big Bop",
+          "locale": "es_ES"
+        },
+        {
+          "description": "Soutenez les mises à jour de WordBopper.",
+          "displayName": "Big Bop",
+          "locale": "fr_FR"
+        },
+        {
+          "description": "Sostieni gli aggiornamenti di WordBopper.",
+          "displayName": "Big Bop",
+          "locale": "it"
+        },
+        {
+          "description": "Steun toekomstige WordBopper-updates.",
+          "displayName": "Big Bop",
+          "locale": "nl_NL"
+        },
+        {
+          "description": "Apoie futuras atualizações do WordBopper.",
+          "displayName": "Big Bop",
+          "locale": "pt_BR"
+        }
+      ],
+      "productID": "com.marconius.WordBop.support.bigBop",
+      "referenceName": "Big Bop",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "WORDBOPPER003",
+      "localizations": [
+        {
+          "description": "Support future WordBopper updates.",
+          "displayName": "Super Bop",
+          "locale": "en_US"
+        },
+        {
+          "description": "Unterstütze künftige WordBopper-Updates.",
+          "displayName": "Super Bop",
+          "locale": "de_DE"
+        },
+        {
+          "description": "Apoya futuras mejoras de WordBopper.",
+          "displayName": "Super Bop",
+          "locale": "es_ES"
+        },
+        {
+          "description": "Soutenez les mises à jour de WordBopper.",
+          "displayName": "Super Bop",
+          "locale": "fr_FR"
+        },
+        {
+          "description": "Sostieni gli aggiornamenti di WordBopper.",
+          "displayName": "Super Bop",
+          "locale": "it"
+        },
+        {
+          "description": "Steun toekomstige WordBopper-updates.",
+          "displayName": "Super Bop",
+          "locale": "nl_NL"
+        },
+        {
+          "description": "Apoie futuras atualizações do WordBopper.",
+          "displayName": "Super Bop",
+          "locale": "pt_BR"
+        }
+      ],
+      "productID": "com.marconius.WordBop.support.superBop",
+      "referenceName": "Super Bop",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": false,
+      "internalID": "WORDBOPPER004",
+      "localizations": [
+        {
+          "description": "Support future WordBopper updates.",
+          "displayName": "Bop to the Top",
+          "locale": "en_US"
+        },
+        {
+          "description": "Unterstütze künftige WordBopper-Updates.",
+          "displayName": "Bop to the Top",
+          "locale": "de_DE"
+        },
+        {
+          "description": "Apoya futuras mejoras de WordBopper.",
+          "displayName": "Bop to the Top",
+          "locale": "es_ES"
+        },
+        {
+          "description": "Soutenez les mises à jour de WordBopper.",
+          "displayName": "Bop to the Top",
+          "locale": "fr_FR"
+        },
+        {
+          "description": "Sostieni gli aggiornamenti di WordBopper.",
+          "displayName": "Bop to the Top",
+          "locale": "it"
+        },
+        {
+          "description": "Steun toekomstige WordBopper-updates.",
+          "displayName": "Bop to the Top",
+          "locale": "nl_NL"
+        },
+        {
+          "description": "Apoie futuras atualizações do WordBopper.",
+          "displayName": "Bop to the Top",
+          "locale": "pt_BR"
+        }
+      ],
+      "productID": "com.marconius.WordBop.support.bopToTheTop",
+      "referenceName": "Bop to the Top",
+      "type": "Consumable"
+    }
+  ],
+  "settings": {
+    "_askToBuyEnabled": false,
+    "_billingGracePeriodEnabled": false,
+    "_billingIssuesEnabled": false,
+    "_disableDialogs": false,
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_renewalBillingIssuesEnabled": false,
+    "_storefront": "USA",
+    "_storeKitErrors": [],
+    "_timeRate": 0
+  },
+  "subscriptionGroups": [],
+  "subscriptionSuiteGroups": [],
+  "version": {
+    "major": 6,
+    "minor": 3
+  }
+}
