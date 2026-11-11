@@ -407,6 +407,10 @@ private struct DailyBopLanguagesView: View {
 
 private struct WordBopperSupportSection: View {
 	@Environment(SupportStore.self) private var store
+	@Environment(\.scenePhase) private var scenePhase
+	@AccessibilityFocusState(for: .voiceOver) private var focusedProductID: String?
+	@State private var confirmationProductID: String?
+	@State private var returnFocusID: String?
 	@State private var confirmation = false
 	@State private var notice: String?
 
@@ -424,11 +428,13 @@ private struct WordBopperSupportSection: View {
 				Button {
 					Task {
 						switch await store.purchase(option) {
-						case .success: confirmation = true
+						case .success:
+							confirmationProductID = option.id
+							confirmation = true
 						case .pending: notice = String(localized: "Your purchase is waiting for approval.")
 						case .failed: notice = String(localized: "The purchase could not be completed. Please try again.")
 						case .unverified: notice = String(localized: "The App Store could not verify this purchase.")
-						case .cancelled: break
+						case .cancelled: returnFocusID = option.id
 						}
 					}
 				} label: {
@@ -439,27 +445,41 @@ private struct WordBopperSupportSection: View {
 					.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
 				}
 				.disabled(product == nil || store.purchasing)
+				.accessibilityFocused($focusedProductID, equals: option.id)
 			}
 		} header: {
 			Text("Support WordBopper")
 				.font(.headline)
-				.accessibilityHeading(.h2)
+				.accessibilityAddTraits(.isHeader)
 				.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
 		}
 		.task { await store.loadProducts() }
-		.sheet(isPresented: $confirmation) {
+		.task(id: scenePhase == .active && !store.purchasing ? returnFocusID : nil) {
+			guard scenePhase == .active, !store.purchasing, let returnFocusID else { return }
+			focusedProductID = returnFocusID
+			self.returnFocusID = nil
+		}
+		.sheet(isPresented: $confirmation, onDismiss: {
+			returnFocusID = confirmationProductID
+			confirmationProductID = nil
+		}) {
 			ScrollView {
 				VStack(alignment: .leading, spacing: 16) {
 					Text("Bop Received")
 						.font(.title2)
-						.accessibilityHeading(.h1)
+						.accessibilityAddTraits(.isHeader)
 					if let thanks = store.thankYou { Text(thanks) }
 					Button("Done") { confirmation = false }
 						.buttonStyle(.borderedProminent)
+						.tint(Color.wbAccent5)
+						.foregroundStyle(Color.black)
 				}
 				.frame(maxWidth: .infinity, alignment: .leading)
 				.padding()
 			}
+			.foregroundStyle(Color.wbText)
+			.presentationBackground(Color.wbBackground)
+			.preferredColorScheme(.dark)
 		}
 		.alert("Support WordBopper", isPresented: Binding(
 			get: { notice != nil }, set: { if !$0 { notice = nil } }
