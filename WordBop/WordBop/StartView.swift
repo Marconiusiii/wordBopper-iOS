@@ -735,9 +735,6 @@ struct AboutWordBopperSheet: View {
 
 								otherGameLink("Whack A Braille!", icon: "WhackABrailleIcon",
 								              destination: URL(string: "https://apps.apple.com/us/app/whack-a-braille/id6760976367")!)
-									.accessibilityAddTraits(.isLink)
-									.accessibilityRemoveTraits(.isButton)
-									.accessibilityHint("Opens in the App Store")
 
 								otherGameLink("Audio Showdown", icon: "AudioShowdownIcon",
 								              destination: URL(string: "https://apps.apple.com/us/app/audio-showdown/id6783993586")!)
@@ -860,6 +857,9 @@ struct AboutWordBopperSheet: View {
 			.contentShape(Rectangle())
 		}
 		.foregroundStyle(Color.wbAccent5)
+		.accessibilityAddTraits(.isLink)
+		.accessibilityRemoveTraits(.isButton)
+		.accessibilityHint("Opens in the App Store")
 	}
 
 	private func sendMail(_ draft: WordBopMailDraft) {
