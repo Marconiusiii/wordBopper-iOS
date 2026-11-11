@@ -730,32 +730,17 @@ struct AboutWordBopperSheet: View {
 								Text("Chancey wanted this game to exist and vibe coded the initial version, then passed it to Marco to refine it into the original web game. Marco then decided to rewrite the whole game for iOS, and now here you are bopping away. Thanks for playing!")
 									.foregroundStyle(Color.wbText)
 
-								Text("If you enjoy this game, try out our other game on the App Store:")
+								Text("If you enjoy this game, try our other games on the App Store.")
 									.foregroundStyle(Color.wbText)
 
-								Link(destination: URL(string: "https://apps.apple.com/us/app/whack-a-braille/id6760976367")!) {
-									HStack(spacing: 12) {
-										Image("WhackABrailleIcon")
-											.resizable()
-											.scaledToFit()
-											.frame(width: 44, height: 44)
-											.clipShape(RoundedRectangle(cornerRadius: 10))
-											.accessibilityHidden(true)
+								otherGameLink("Whack A Braille!", icon: "WhackABrailleIcon",
+								              destination: URL(string: "https://apps.apple.com/us/app/whack-a-braille/id6760976367")!)
+									.accessibilityAddTraits(.isLink)
+									.accessibilityRemoveTraits(.isButton)
+									.accessibilityHint("Opens in the App Store")
 
-										Text("Whack A Braille!")
-											.font(.headline.weight(.black))
-											.underline()
-											.multilineTextAlignment(.leading)
-											.fixedSize(horizontal: false, vertical: true)
-									}
-									.frame(maxWidth: .infinity)
-									.frame(minHeight: 56)
-									.contentShape(Rectangle())
-								}
-								.foregroundStyle(Color.wbAccent5)
-								.accessibilityAddTraits(.isLink)
-								.accessibilityRemoveTraits(.isButton)
-								.accessibilityHint("Opens in the App Store")
+								otherGameLink("Audio Showdown", icon: "AudioShowdownIcon",
+								              destination: URL(string: "https://apps.apple.com/us/app/audio-showdown/id6783993586")!)
 							}
 							.font(.body)
 							.multilineTextAlignment(.leading)
@@ -853,6 +838,29 @@ struct AboutWordBopperSheet: View {
 		private func sheetContentWidth(in geo: GeometryProxy) -> CGFloat {
 			geo.size.width + geo.safeAreaInsets.leading + geo.safeAreaInsets.trailing
 		}
+
+	private func otherGameLink(_ title: LocalizedStringKey, icon: String, destination: URL) -> some View {
+		Link(destination: destination) {
+			HStack(spacing: 12) {
+				Image(icon)
+					.resizable()
+					.scaledToFit()
+					.frame(width: 44, height: 44)
+					.clipShape(RoundedRectangle(cornerRadius: 10))
+					.accessibilityHidden(true)
+
+				Text(title)
+					.font(.headline.weight(.black))
+					.underline()
+					.multilineTextAlignment(.leading)
+					.fixedSize(horizontal: false, vertical: true)
+			}
+			.frame(maxWidth: .infinity)
+			.frame(minHeight: 56)
+			.contentShape(Rectangle())
+		}
+		.foregroundStyle(Color.wbAccent5)
+	}
 
 	private func sendMail(_ draft: WordBopMailDraft) {
 		activeMailDraft = draft

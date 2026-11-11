@@ -3997,43 +3997,43 @@
     "Hunt the Daily Bop" : {
 
     },
-    "If you enjoy this game, try out our other game on the App Store:" : {
+    "If you enjoy this game, try our other games on the App Store." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wenn dir dieses Spiel gefällt, probiere unser anderes Spiel im App Store aus:"
+            "value" : "Wenn dir dieses Spiel gefällt, probiere unsere anderen Spiele im App Store aus."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Si te gusta este juego, prueba nuestro otro juego en el App Store:"
+            "value" : "Si te gusta este juego, prueba nuestros otros juegos en el App Store."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Si vous aimez ce jeu, essayez notre autre jeu sur l’App Store :"
+            "value" : "Si vous aimez ce jeu, essayez nos autres jeux sur l'App Store."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Se ti piace questo gioco, prova il nostro altro gioco sull’App Store:"
+            "value" : "Se ti piace questo gioco, prova gli altri nostri giochi sull'App Store."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vind je dit spel leuk? Probeer dan ons andere spel in de App Store:"
+            "value" : "Vind je dit spel leuk? Probeer dan onze andere spellen in de App Store."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Se você gosta deste jogo, experimente nosso outro jogo na App Store:"
+            "value" : "Se você gosta deste jogo, experimente nossos outros jogos na App Store."
           }
         }
       }
